@@ -1,4 +1,4 @@
-Here's the markdown with GitHub-style code blocks:
+
 
 ```markdown
 # Linux Troubleshooting Runbook
