@@ -3,7 +3,7 @@
 
 Think of the Linux file system as the way Linux organizes, stores, and finds files on your computer. It’s both a structure (how folders are arranged) and a set of rules for managing files.
 
-OS store and manage data on disk or partitions using a structure called filessytem.
+OS store and manage data on disk or partitions using a structure called filesystem.
 Filesystem includes files , directories and it's related permissions.
 it stores data in hierarchy of directories and files.
 
