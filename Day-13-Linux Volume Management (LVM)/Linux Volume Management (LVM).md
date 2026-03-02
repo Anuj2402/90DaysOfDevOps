@@ -1,4 +1,4 @@
-# Q-> What is Linux Colume Management 
+# Q-> What is Linux Volume Management 
 - Linux Volume Management refers to how storage (hard drives, SSDs, partitions) is organized, allocated, and managed in a Linux system. It allows you to control disk space more flexibly than traditional fixed partitions.
 - The most common system used in Linux for this is Logical Volume Manager (LVM).
 
