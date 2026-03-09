@@ -285,3 +285,295 @@ Google Internal Network
   ↓
 Google Server
 ```
+
+4. Open Ports / Listening Services
+
+Now we check what services are running on our machine.
+
+These commands show which services are listening for network connections
+
+Run : 
+```bash
+ss -tulpn
+```
+If not available:
+```bash 
+netstat -tulpn
+```
+Output : 
+![alt text](image-4.png)
+
+From Output : 
+
+i. SSH Service (For Remote access)
+
+```bash 
+tcp LISTEN 0.0.0.0:22 users:(("sshd",pid=1186))
+```
+Meaning : 
+- Port: 22
+- Protocol: TCP
+- Service: SSH (sshd)
+- Purpose: Remote login to the system
+
+Important detail:
+        
+        0.0.0.0:22
+This means SSH is accessible from any network interface.
+
+Observation:
+
+The system allows remote SSH connections on port 22.
+
+ii. DNS Resolver Service
+
+Example :
+```bash 
+127.0.0.53:53
+127.0.0.54:53
+```
+Service:
+```bash 
+systemd-resolve
+```
+Meaning:
+
+- Port: 53
+
+- Protocol: TCP/UDP
+
+- Purpose: DNS resolution
+
+The system uses systemd-resolved for local DNS caching and name resolution.
+
+iii. Docker / Container Runtime
+Example : 
+```bash 
+127.0.0.1:44805 containerd
+```
+Meaning:
+- Docker container runtime communication
+- Local-only service
+
+Observation:
+
+Container runtime (containerd) exposes a local port for container management.
+
+Summary : 
+- The system has several listening services including SSH on port 22, DNS resolver on port 53, and a Node.js application on port 40205. SSH is accessible from all interfaces, while DNS and container services run locally.
+
+Networking Layer Mapping (Important Concept)
+Example stack for SSH:
+```bash 
+Application Layer → SSH
+Transport Layer → TCP
+Internet Layer → IP (Network layer)
+Link Layer → Ethernet. (physical layer )
+```
+
+5. DNS Resolution
+
+Command used : 
+```bash 
+dig google.com
+```
+and 
+
+```bash 
+nslookup google.com
+```
+![alt text](image-5.png)
+
+Form Output : 
+i. DNS server Used 
+   
+     SERVER: 8.8.8.8#53
+
+This means your system is using    
+- 8.8.8.8 → Google Public DNS Server
+- Port: 53
+- Protocol: UDP
+
+Observation : 
+
+The system sends DNS queries to Google's public DNS server (8.8.8.8).
+
+ii. Multiple IP Addresses Returned
+
+Form **dig** :
+```bash 
+74.125.200.102
+74.125.200.113
+74.125.200.139
+74.125.200.101
+74.125.200.138
+74.125.200.100
+````
+
+This happens because google.com is load balanced.
+
+Google returns multiple IP addresses for load balancing and high availability.
+Meaning:
+```bash 
+Client request
+      ↓
+DNS returns multiple servers
+      ↓
+Client connects to nearest/fastest server
+```
+
+iii. IPv6 Addresses (from nslookup)
+Example : 
+
+```bash 
+2404:6800:4003:c0f::71
+```
+These are IPv6 addresses for Google servers.
+
+Meaning Google supports dual stack networking:
+```bash 
+IPv4 + IPv6
+```
+Summary : 
+- The DNS query for google.com was resolved by Google's DNS server (8.8.8.8). Multiple IPv4 and IPv6 addresses were returned, indicating load balancing across several Google servers. The query time was 1 ms, showing a fast DNS response.
+
+
+
+6. HTTP Check
+
+Now we test web communication using curl.
+
+Run: 
+```bash 
+curl -I https://google.com
+```
+-I = fetch only HTTP headers.
+This sends a HTTP request and returns only headers.
+
+Output: 
+
+![alt text](image-6.png)
+
+From Output : 
+
+i. HTTP Status Code
+ 
+        HTTP/2 301
+
+Meaning:
+
+- 301 = Permanent Redirect
+
+The server is redirecting:
+```bash 
+https://google.com
+      ↓
+https://www.google.com
+```
+Header showing this:
+```bash 
+location: https://www.google.com/
+```
+Observation:
+
+- Google redirects the root domain to www.google.com
+ using HTTP 301.
+ 
+ ii. Protocol Used
+
+        HTTP/2
+
+This means:
+
+- The connection used HTTP/2
+
+- HTTP/2 improves performance with:
+
+   - multiplexing
+
+    - header compression
+
+    - faster loading
+
+iii. Server Identification
+
+From header:
+        
+        server: gws
+
+This means the request was handled by Google Web Server.
+
+Server belongs to Google infrastructure.
+
+summary : 
+
+-  The curl request to https://google.com
+ returned HTTP/2 301, indicating a permanent redirect to https://www.google.com
+. The response included several security headers and showed that the server supports modern protocols like HTTP/2 and HTTP/3.
+
+
+
+
+7. Connection Snapshot
+
+Here we check active network connections 
+
+RUN : 
+```bash 
+netstat -an | head
+```
+
+OR 
+
+```bash
+ss -tan | head
+```
+These commands show current TCP connections and listening ports.
+
+i. Listening Services (Waiting for Connections)
+Examples from our output:
+
+        0.0.0.0:22        LISTEN
+        0.0.0.0:40200     LISTEN
+        0.0.0.0:40205     LISTEN
+        127.0.0.53:53     LISTEN
+        127.0.0.1:44805   LISTEN
+
+
+Meaning:
+
+        Port	Service	  Purpose
+        22	     SSH	  Remote login
+        53	     DNS	  Local DNS resolver
+
+Observation:
+ 
+ Several services are listening on the system including SSH, DNS resolver, and application services.
+
+
+
+ ii. Established Connections
+
+Example:
+
+```bash 
+172.30.1.2:40205 → 10.244.3.246:56784  ESTABLISHED
+172.30.1.2:40200 → 10.244.4.187:50812  ESTABLISHED
+
+```
+Meaning:
+
+ - Your machine has active TCP sessions
+
+ - They are communicating with internal cluster/container network IPs
+
+
+ Observation:
+
+- Two active TCP connections are established between the host and internal cluster network nodes.
+
+Summary : 
+- The system shows multiple listening services including SSH and DNS. Two TCP connections were in the ESTABLISHED state, communicating with internal cluster network addresses (10.244.x.x), indicating active application communication.
+
+
+
