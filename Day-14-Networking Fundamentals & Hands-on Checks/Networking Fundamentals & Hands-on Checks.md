@@ -528,6 +528,11 @@ OR
 ```bash
 ss -tan | head
 ```
+Example :
+
+![alt text](image-7.png)
+
+
 These commands show current TCP connections and listening ports.
 
 i. Listening Services (Waiting for Connections)
