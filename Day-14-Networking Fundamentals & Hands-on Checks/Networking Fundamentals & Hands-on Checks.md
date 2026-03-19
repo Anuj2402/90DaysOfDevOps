@@ -582,3 +582,58 @@ Summary :
 
 
 
+## Reflection (Till Now )
+Q1. Which command gives you the fastest signal when something is broken?
+- The fastest command is ping because it quickly checks basic network reachability using ICMP packets. If ping fails, it immediately indicates a connectivity issue such as network outage, routing problem, or firewall blocking ICMP.
+
+Example : 
+```bash 
+ping -c 4 google.com
+```
+Observation: If packets are lost or there is no response, the network path or connectivity may be broken.
+
+Q2. What layer would you inspect next If DNS Fails?
+  
+  IF DNS FAils : 
+- I would inspect the Application Layer (OSI Layer 7) or Application layer in the TCP/IP model, because DNS is an application-level protocol that resolves domain names to IP addresses.
+
+Checks Might includes : 
+```bash 
+dig google.com
+cat /etc/resolv.conf
+```
+
+IF HTTP 500 appears : 
+- A 500 error means the request reached the server but the server failed internally. I would inspect the Application Layer (OSI Layer 7) because the issue is likely in the web server or application logic.
+
+Checks might include:
+
+- Web server logs (Nginx/Apache)
+
+- Application logs
+
+- Backend service status
+
+Q3. List Two Follow up Checks you will do in a real incident 
+
+i. Service Status Check: 
+```bash 
+systemctl status ssh
+```
+OR 
+
+```bash 
+systemctl status nginx
+```
+
+ii. Port Listening Check
+
+Verify that the service is listening on the expected port.
+```bash 
+ss -tulpn
+```
+This confirms whether the application is actively accepting network connections.
+
+
+
+
