@@ -53,4 +53,271 @@ DNS Record Types :
 - NS record ->  Defines the authoritative name servers for a domain
 
 
+### Q-> Run: dig google.com — identify the A record and TTL from the output
+
+Output : 
+```bash 
+
+; <<>> DiG 9.11.36-RedHat-9.11.36-16.el8_10.4 <<>> google.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 32727
+;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 4, ADDITIONAL: 9
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;google.com.			IN	A
+
+;; ANSWER SECTION:
+google.com.		221	IN	A	64.233.170.102
+google.com.		221	IN	A	64.233.170.139
+google.com.		221	IN	A	64.233.170.100
+google.com.		221	IN	A	64.233.170.113
+google.com.		221	IN	A	64.233.170.138
+google.com.		221	IN	A	64.233.170.101
+
+;; AUTHORITY SECTION:
+google.com.		105106	IN	NS	ns1.google.com.
+google.com.		105106	IN	NS	ns4.google.com.
+google.com.		105106	IN	NS	ns3.google.com.
+google.com.		105106	IN	NS	ns2.google.com.
+
+;; ADDITIONAL SECTION:
+ns1.google.com.		80852	IN	AAAA	2001:4860:4802:32::a
+ns2.google.com.		77643	IN	AAAA	2001:4860:4802:34::a
+ns3.google.com.		758	IN	AAAA	2001:4860:4802:36::a
+ns4.google.com.		131256	IN	AAAA	2001:4860:4802:38::a
+ns1.google.com.		221030	IN	A	216.239.32.10
+ns2.google.com.		77643	IN	A	216.239.34.10
+ns3.google.com.		758	IN	A	216.239.36.10
+ns4.google.com.		131256	IN	A	216.239.38.10
+
+;; Query time: 0 msec
+;; SERVER: ::1#53(::1)
+;; WHEN: Thu Mar 19 14:29:31 UTC 2026
+;; MSG SIZE  rcvd: 635
+
+```
+Observations : 
+
+i) A Record (IPv4 mapping)
+From output :
+```bash 
+google.com. 221 IN A 64.233.170.102
+```
+Meaning:
+
+ - A record maps domain → IPv4 address
+ - we got multiple A records
+ - This is load balancing by Google
+
+ii) AAAA Record (IPv6 mapping)
+From output :
+```bash 
+ns1.google.com. IN AAAA 2001:4860:4802:32::a
+```
+Meaning:
+
+ - AAAA record maps domain → IPv6 address
+ - Google supports IPv6
+ - These are for name servers
+
+
+iii) NS Record (Name Servers)
+From output : 
+```bash 
+google.com. IN NS ns1.google.com.
+```
+Meaning:
+
+- NS record tells which servers are authoritative for the domain
+- google has multiple NS servers
+- Helps with redundancy & high availability
+
+Summary : 
+- The dig output shows multiple A records for google.com, indicating load balancing. NS records define authoritative name servers, and AAAA records provide IPv6 addresses for those servers. CNAME and MX records are not shown because the query was specifically for A records.
+
+
+# Task 2: IP Addressing
+Q-> What is an IPv4 address? How is it structured? (e.g., 192.168.1.10)
+- An IPv4 address is a unique identifier assigned to a device on a network, used to identify and communicate with it over IP networks (like the internet).
+
+Structure of an IPv4 Address
+
+Example:
+```bash 
+192.168.1.10
+
+[192].[168].[1].[10]
+```
+Format
+
+ - Written in dotted decimal notation
+
+- Consists of 4 octets (numbers)
+
+- Each octet ranges from 0 to 255
+
+Binary Representation:
+ - Each octet = 8 bits
+ 
+ So total:
+```bash 
+32 bits (8 × 4)
+
+example:
+
+192 → 11000000
+168 → 10101000
+1   → 00000001
+10  → 00001010
+
+```
+
+Network vs Host Part: 
+
+ - An IPv4 address is divided into:
+ ```bash 
+ [ Network Portion ] [ Host Portion ]
+ 
+ Example with subnet 
+ 192.168.1.10/24
+
+ ```
+
+/24 → first 24 bits = network
+
+Remaining 8 bits = host
+ 
+ Meaning:
+
+- Network: 192.168.1
+
+ - Host: 10
+
+
+
+Summary : 
+- An IPv4 address is a 32-bit numerical label written in dotted decimal format, divided into four octets, used to identify devices on a network and split into network and host portions.
+
+
+Q2 -> Difference between public and private IPs — give one example of each
+
+Public IP Address: 
+   - A public IP is globally unique and accessible over the internet
+
+   - Assigned by ISP and used for communication between networks worldwide
+
+   - Can be reached from anywhere on the internet 
+
+Example:
+```bash 
+8.8.8.8 (Google DNS server )
+```
+
+Private IP Address: 
+- A private IP is used by a local  network (LAN)
+- Not directly accessible from the internet
+- Used for internal communication (home, office, cloud VPC)
+Common ranges:
+```bash 
+10.0.0.0 – 10.255.255.255
+172.16.0.0 – 172.31.255.255
+192.168.0.0 – 192.168.255.255
+```
+
+summery : 
+- Public IP is internet-facing and globally reachable, while private IP is internal and used within a local network only.
+
+Q3-> What are the private IP ranges?
+
+10.x.x.x, 172.16.x.x – 172.31.x.x, 192.168.x.x
+
+These IP ranges are reserved for internal (private) networks:
+```bash
+10.0.0.0 – 10.255.255.255 → (10/8 range)
+
+172.16.0.0 – 172.31.255.255 → (172.16/12 range)
+
+192.168.0.0 – 192.168.255.255 → (192.168/16 range)
+
+```
+- Private IP ranges are 10/8, 172.16/12, and 192.168/16, used for internal networks and not routable on the public internet.
+
+### Quick Trick to Identify Private vs Public IP: 
+
+ Step01 -> Look at the FIRST numbers
+ - if it start  with **10.** It is Private Ip 
+ - If it starts with **192.168.** It is private IP 
+ - If it starts with **172.16 - 172.31.** It is private IP 
+ - Anything else usually public 
+ 
+ Super Fast Mental Rule
+
+ ```bash 
+ 10 → always private  
+192.168 → always private  
+172 → check (16–31 only private)
+```
+Summary : 
+- Check the first octet: 10.x.x.x and 192.168.x.x are always private, and 172.x.x.x is private only if it falls between 172.16 and 172.31.
+
+
+
+
+
+Q4 ->RUN :  ip addr show — identify which of your IPs are private
+
+Output : 
+
+![alt text](Untitled.png)
+
+Command: 
+```bash 
+ip addr show
+```
+ANALYSIS : 
+
+i. Loopback Interface (lo)    
+  ```bash 
+            127.0.0.1
+   ```
+- Type : loopback 
+- Used for: communication within the same machine
+- Not public, not private (special reserved)
+
+ii. Main Network Interface (enp1s0)
+```bash 
+172.30.1.2/24
+```
+- Type: Private IP
+- Why? Falls in range: 172.16.0.0 – 172.31.255.255
+- So this is your primary private IP
+- This is what your system uses to communicate inside your network.
+
+iii. Docker Interface (docker0)
+```bash 
+172.17.0.1/16
+```
+- Type: Private IP
+- Why? Falls in the range -> 172.16 – 172.31 range
+
+
+- Used by Docker containers
+
+- Acts as a bridge network
+
+iv. IPv6 Address
+```bash 
+fe80::5dc0:ec8a:e062:d280
+```
+- Type: Link-local IPv6
+
+- Scope: only within local network
+
+Summary : 
+- My system has two private IPs: 172.30.1.2 on the main interface and 172.17.0.1 used by Docker. Both fall within the 172.16–31 private range. Additionally, 127.0.0.1 is a loopback address used for local communication.
+
+
 
