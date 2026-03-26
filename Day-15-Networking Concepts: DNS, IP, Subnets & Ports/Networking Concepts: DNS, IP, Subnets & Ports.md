@@ -319,5 +319,187 @@ fe80::5dc0:ec8a:e062:d280
 Summary : 
 - My system has two private IPs: 172.30.1.2 on the main interface and 172.17.0.1 used by Docker. Both fall within the 172.16–31 private range. Additionally, 127.0.0.1 is a loopback address used for local communication.
 
+# Task 3 : CIDR & Subnetting
+
+### Q -> What does /24 mean in 192.168.1.0/24?
+- In 192.168.1.0/24 , the /24 is CIDR Notation 
+
+- It tells you how many bits are used for the network part of the IP.
+- BreakDown 
+  
+   - IPv4 address = 32 bits total 
+   - /24 means : 
+       
+       - first 24 bits = network 
+       - Remaining 8 bits = host
+
+ - CONVERT /24 to subnet mask
+
+    ```bash 
+           /24 -> 255.255.255.0      
+    ```
+
+    - What range does it give?
+       
+       - for 192.168.1.0/24 -> network address is 192.168.1.0 usable ips is 192.168.1.1 → 192.168.1.254
+
+       - TOTAL HOSTS : 
+        ```bash 
+             2^(32 - 24) = 256 IPs
+               Usable = 254
+        ```
+           
+           
+        - Simple way to remember is /24 = last octet is for hosts so 192.168.1.X  (X = 1–254 usable)
+
+        - REAL WORLD Meaning 
+          
+          When you see: -> 172.30.1.2/24
+    
+          It means your machine is in: -> Network: 172.30.1.0/24
+
+          And can directly talk to: 172.30.1.1 – 172.30.1.254
+### Q -> How many usable hosts in a /24? A /16? A /28?
+
+ CIDR QUICK MASTERY 
+ 
+ i. **/16** -> Large Network 
+  
+   ``` bash 
+                Example: 172.16.0.0/16
+
+                Subnet mask: 255.255.0.0
+
+                Network bits: 16
+
+                Host bits: 16      
+```
+ - Range : 172.16.0.1 → 172.16.255.254
+  - Total IPs: 2^16 = 65,536
+ - Use case: Big corporate networks
+
+ii. **/24** : Most Common (YOU WILL SEE THIS EVERYWHERE)
+
+```bash 
+Example: 192.168.1.0/24
+
+Subnet mask: 255.255.255.0
+
+Host bits: 8
+
+```
+- Range: 192.168.1.1 → 192.168.1.254
+
+- Total: 256 IPs (254 usable)
+
+- Use case: Office LAN , VM networks , Kubernetes node networks
 
 
+iii. **/32** -> Single IP (VERY IMPORTANT)
+```bash 
+Example: 10.0.0.5/32
+
+Subnet mask: 255.255.255.255
+
+Host bits: 0
+```
+ - Only ONE IP : 10.0.0.5
+ - Use case:
+   - Firewall rules
+
+    - Allow/deny specific host
+
+    - Routing (loopback, VIPs)
+
+
+iv. **/28** : CIDR Range 
+
+```bash 
+Example: 192.168.1.0/28
+
+
+
+Total bits = 32
+
+Network bits = 28
+
+Host bits = 4
+
+```
+
+
+Summary : 
+```bash 
+/16 → 65K IPs
+/24 → 256 IPs
+/32 → 1 IP
+```
+- Subnet Mask : /28 → 255.255.255.240
+
+Total IPs
+```bash 
+2^(32 - 28) = 2^4 = 16 IPs
+```
+Usable:
+```bash 
+16 - 2 = 14 usable IPs
+```
+- we have subtracted 2 here because 2 IP addresses are reserved for network and broadcast and cannot be assigned to hosts
+
+
+### Q-> Explain in your own words: why do we subnet?
+- Subnetting is used to divide a large network into smaller, secure, and efficient segments for better management, performance, and control. 
+
+Why do we subnet? (Concise)
+
+- Organize networks into smaller segments (Dev, Prod, DB)
+
+- Improve security by isolating traffic
+
+- Reduce congestion (limit broadcast traffic)
+
+- Use IPs efficiently
+
+- Easier troubleshooting
+
+One-line: Subnetting divides a network into smaller, secure, and manageable parts
+
+
+### Quick exercise — fill in:
+```bash 
+
+CIDR	Subnet  Mask	 Total IPs	   Usable Hosts
+/24	     255.255.255.0	    256	          254
+/16	     255.255.0.0	   65,536	    65,534
+/28	     255.255.255.240	  16	      14
+```
+
+Quick trick to remember
+
+Total IPs = 2^(32 - CIDR)
+
+Usable = Total - 2
+
+
+STEPS For FAST Mental Math :
+
+Step: 01: Remember this 
+
+
+IPV4 = 32 bits 
+
+fromula : 
+```bash 
+Total IPs = 2^(32 - CIDR)
+Usable = Total - 2
+```
+
+Step 2: Memorize these powers (very important)
+```bash 
+Power	Value
+2⁴	    16
+2⁸   	256
+2¹⁰	   1024 (~1K)
+2¹⁶	   65,536 (~65K)
+
+```
