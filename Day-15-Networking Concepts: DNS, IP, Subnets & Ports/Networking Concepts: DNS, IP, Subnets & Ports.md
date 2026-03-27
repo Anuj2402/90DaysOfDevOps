@@ -503,3 +503,29 @@ Power	Value
 2¹⁶	   65,536 (~65K)
 
 ```
+# Task 4: Ports – The Doors to Services
+Q - > What is Port ? 
+- A port is a number (0–65535) used by a system to identify a specific application or service on a machine.
+    - IP address = building address
+
+    - Port = room/door number
+
+Q -> Why do we need ports?
+
+- i) Multiple services on one machine
+    
+    - Same IP can run:
+
+    - Web server → port 80/443
+
+    - SSH → port 22
+
+    - Database → port 3306
+
+- ii) Direct traffic to the right app
+
+   - When a request comes:-> OS checks port number -> Sends it to the correct service
+
+Summary : 
+- A port is a logical endpoint that allows multiple services to run on a single system and ensures traffic reaches the correct application
+
