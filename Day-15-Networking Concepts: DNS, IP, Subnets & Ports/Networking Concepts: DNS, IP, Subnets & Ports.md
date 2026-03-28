@@ -529,3 +529,47 @@ Q -> Why do we need ports?
 Summary : 
 - A port is a logical endpoint that allows multiple services to run on a single system and ensures traffic reaches the correct application
 
+Q-> Document these common ports:
+```bash 
+
+
+Port	              Service
+22	  ->         SSH (Secure Shell)
+80	  ->         HTTP (Web traffic)
+443	  ->         HTTPS (Secure web traffic)
+53	  ->         DNS (Domain Name System)
+3306  -> 	     MySQL (Database)
+6379  -> 	     Redis (In-memory cache)
+27017 -> 	     MongoDB (NoSQL database)
+```
+
+Q-> Run ss -tulpn — match at least 2 listening ports to their services
+
+Ouptput after runnign -> ss -tulpn
+![alt text](image.png)
+
+- Port 22 → SSH -> service: sshd  -> line 0.0.0.0:22 and [::]:22 , Meaning: SSH is listening on all interfaces (IPv4 + IPv6)
+
+- Port 53 → DNS -> Service: systemd-resolved -> Line: 127.0.0.53:53 and 127.0.0.54:53, -> Meaning: Local DNS resolver is running
+
+summary : 
+- Port 22 is used by SSH (sshd) and port 53 is used by DNS (systemd-resolved); both are actively listening on the system.
+
+
+Q-> You run curl http://myapp.com:8080 — what networking concepts from today are involved?
+
+
+- curl http://myapp.com:8080 — what’s involved?
+
+- DNS resolves myapp.com → IP (A record), then connection goes to port 8080 over TCP.
+
+- Uses HTTP (application layer) on top of TCP/IP, routing via your network to the server.
+
+Q -> Your app can't reach a database at 10.0.1.50:3306 — what would you check first?
+
+- App can't reach DB 10.0.1.50:3306 — what to check first?
+
+- Verify network reachability (ping/traceroute) and port access (nc -zv 10.0.1.50 3306).
+
+- Then check DB service running and firewall/security rules (is port 3306 open?).
+
