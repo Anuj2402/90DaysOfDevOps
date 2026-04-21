@@ -82,3 +82,35 @@ ii.  Script for checking if file exists or not
 ![alt text](image-4.png)
 
 
+# Task 5: Combine It All
+
+1. create a file called service.sh and give it executable permissions 
+
+```bash 
+
+#!/bin/bash 
+
+read -p "Enter the service name: " service
+
+[[ "$service" != *.service  ]] && service="${service}.service"
+
+read -p "Do you want to check the status of $service? (y/n): " choice
+
+choice=$(echo "$choice" | tr 'A-Z' 'a-z')
+
+if [ "$choice" = "y" ]; then 
+
+     if systemctl is-active --quiet "$service"; then
+        echo "$service is ACTIVE"
+    else
+        echo "$service is NOT ACTIVE"
+    fi
+
+elif [ "$choice" = "n" ]; then
+    echo "Skipped."
+else
+    echo "Invalid input."
+fi
+
+
+```
