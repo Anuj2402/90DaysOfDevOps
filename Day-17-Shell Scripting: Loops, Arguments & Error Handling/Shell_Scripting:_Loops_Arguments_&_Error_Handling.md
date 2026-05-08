@@ -54,4 +54,34 @@ done
 
 echo "Done!"
 ```
+### Q-> Interview type Quesion : 
+Disk Usage Alert Script
+
+👉 Write a script that:
+
+Checks disk usage of /
+
+If usage > 80%, print:
+
+High Disk Usage
+
+Else print:
+
+Disk is OK
+
+Solution : 
+```bash 
+#!/bin/bash 
+
+#!/bin/bash
+
+usage=$(df -h / | awk 'NR==2 {print $5}' | cut -d '%' -f1)
+
+if [ $usage -gt 80 ]
+then
+    echo "High Disk Usage"
+else
+    echo "Disk is OK"
+fi
+```
 
