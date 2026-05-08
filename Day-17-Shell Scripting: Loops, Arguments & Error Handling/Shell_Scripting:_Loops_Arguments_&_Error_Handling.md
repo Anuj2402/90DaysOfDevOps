@@ -39,3 +39,19 @@ do
 done
 
 ```
+# Task 2: While Loop
+
+```bash 
+#!/bin/bash
+
+read -p "Enter the number for countdown: " num
+
+while [ $num -gt 0 ]
+do
+    echo "$num"
+    num=$((num - 1))
+done
+
+echo "Done!"
+```
+
