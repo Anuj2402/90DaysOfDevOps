@@ -71,8 +71,6 @@ Disk is OK
 
 Solution : 
 ```bash 
-#!/bin/bash 
-
 #!/bin/bash
 
 usage=$(df -h / | awk 'NR==2 {print $5}' | cut -d '%' -f1)
@@ -84,4 +82,20 @@ else
     echo "Disk is OK"
 fi
 ```
+
+
+# Task 3: Command-Line Arguments
+1) 
+```bash 
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+    echo "Usage: ./greet.sh <name>"
+else
+    echo "Hello, $1!"
+fi
+
+```
+
 
