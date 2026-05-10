@@ -97,5 +97,20 @@ else
 fi
 
 ```
+Example Output: 
+![alt text](image-1.png)
+
+2) 
+```bash 
+
+#!/bin/bash
+
+echo "Total number of arguments: $#"
+echo "All arguments: $@"
+echo "Script name: $0"
+
+```
+Example output: 
+![alt text](image.png)
 
 
