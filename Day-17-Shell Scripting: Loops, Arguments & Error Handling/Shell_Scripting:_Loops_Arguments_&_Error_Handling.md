@@ -114,3 +114,29 @@ Example output:
 ![alt text](image.png)
 
 
+# Task 4: Install Packages via Script
+
+```bash 
+#!/bin/bash
+
+packages=("nginx" "curl" "wget")
+
+for package in "${packages[@]}"
+do
+    if dpkg -s "$package" &> /dev/null
+    then
+        echo "$package is already installed"
+    else
+        echo "$package is not installed"
+        echo "Installing $package..."
+
+        sudo apt install -y "$package"
+    fi
+done
+
+```
+Example output : 
+![alt text](image-2.png)
+
+
+
