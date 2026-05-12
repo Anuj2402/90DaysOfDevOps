@@ -119,6 +119,13 @@ Example output:
 ```bash 
 #!/bin/bash
 
+# Check if script is run as root (Task 5 suggetion)
+if [ "$EUID" -ne 0 ]
+then
+    echo "Please run this script as root"
+    exit 1
+fi
+
 packages=("nginx" "curl" "wget")
 
 for package in "${packages[@]}"
@@ -135,8 +142,38 @@ do
 done
 
 ```
+- dpkg -s  -> This will check if the package is already present or not 
+- &> /dev/null -> This will send the out to null device so that we will not get the output 
+- $EUID -> Stores current user ID -> Root user -> 0 and non-root user -> non-zero 
+
 Example output : 
 ![alt text](image-2.png)
+
+
+# Task 5: Error Handling
+
+safe_script.sh 
+```bash 
+
+#!/bin/bash
+
+set -e #Exit script immediately if any command fails.
+
+mkdir -p /tmp/devops-test || { echo "Directory creation failed"; exit 1; }
+
+cd /tmp/devops-test || { echo "Cannot enter directory"; exit 1; }
+
+touch test.txt || { echo "File creation failed"; exit 1; }
+
+echo "Script completed successfully"
+
+```
+
+Exmple output: 
+![alt text](image-3.png)
+
+
+
 
 
 
