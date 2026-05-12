@@ -145,6 +145,8 @@ done
 - dpkg -s  -> This will check if the package is already present or not 
 - &> /dev/null -> This will send the out to null device so that we will not get the output 
 - $EUID -> Stores current user ID -> Root user -> 0 and non-root user -> non-zero 
+- Interview Type question -> Since package installation requires elevated(root) privileges, I first check whether the script is executed as root using $EUID. If not, the script exits safely with an error message.
+
 
 Example output : 
 ![alt text](image-2.png)
