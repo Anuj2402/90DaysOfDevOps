@@ -100,6 +100,43 @@ Q -> Why use strict mode?
 - Strict mode helps fail fast, prevents hidden bugs, and makes automation scripts more reliable in production
 
 
+# Task 4: Local Variables
+```bash 
+
+#!/bin/bash
+
+# Function using local variable
+local_function() {
+    local message="I am a local variable"
+    echo "Inside local_function: $message"
+}
+
+# Function using regular variable
+global_function() {
+    message="I am a global variable"
+    echo "Inside global_function: $message"
+}
+
+# Call local function
+local_function
+
+# Try accessing local variable outside function
+echo "Outside local_function: $message"
+
+echo "-------------------------"
+
+# Call global function
+global_function
+
+# Access global variable outside function
+echo "Outside global_function: $message"
+
+```
+Example output: 
+![alt text](image-3.png)
+
+- The local keyword limits variable scope to the function itself.
+This prevents accidental modification of global variables and makes scripts more modular and safer
 
 
 
