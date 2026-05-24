@@ -53,3 +53,55 @@ Example output :
 ![alt text](image-1.png)
 
 
+
+
+Task 3: Strict Mode — set -euo pipefail
+
+```bash 
+#!/bin/bash
+
+set -euo pipefail
+
+echo "Starting script..."
+
+# -----------------------------
+# set -u example
+# -----------------------------
+echo "Using undefined variable:"
+echo "$name"
+
+# -----------------------------
+# set -e example
+# -----------------------------
+echo "Running failed command:"
+ls /wrong-directory
+
+# -----------------------------
+# set -o pipefail example
+# -----------------------------
+echo "Pipeline example:"
+cat missingfile.txt | grep "hello"
+
+echo "Script completed"
+```
+Example output: 
+![alt text](image-2.png)
+
+Definations: 
+
+- set -e -> Exit script immediately if any command fails.Used for safer automation , CI/CD pipelines , production scripts
+
+- set -u -> Treat undefined variables as errors.
+prevents typos , unexpected empty variables
+
+- set -o pipefail -> Makes pipeline fail if any command inside pipeline fails.
+
+Q -> Why use strict mode?
+- Strict mode helps fail fast, prevents hidden bugs, and makes automation scripts more reliable in production
+
+
+
+
+
+
+
