@@ -140,5 +140,72 @@ This prevents accidental modification of global variables and makes scripts more
 
 
 
+# Task 5: Build a Script — System Info Reporter
 
+```bash 
+#!/bin/bash
 
+set -euo pipefail
+
+# -----------------------------------
+# Function: Hostname and OS Info
+# -----------------------------------
+system_info() {
+    echo "========== SYSTEM INFORMATION =========="
+    echo "Hostname : $(hostname)"
+    echo "OS       : $(uname -o)"
+    echo "Kernel   : $(uname -r)"
+    echo
+}
+
+# -----------------------------------
+# Function: Uptime
+# -----------------------------------
+uptime_info() {
+    echo "========== UPTIME =========="
+    uptime
+    echo
+}
+
+# -----------------------------------
+# Function: Disk Usage
+# -----------------------------------
+disk_usage() {
+    echo "========== TOP 5 DISK USAGE =========="
+    df -h | sort -rk5 | head -5
+    echo
+}
+
+# -----------------------------------
+# Function: Memory Usage
+# -----------------------------------
+memory_usage() {
+    echo "========== MEMORY USAGE =========="
+    free -h
+    echo
+}
+
+# -----------------------------------
+# Function: Top CPU Processes
+# -----------------------------------
+cpu_usage() {
+    echo "========== TOP 5 CPU PROCESSES =========="
+    ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%cpu | head -6
+    echo
+}
+
+# -----------------------------------
+# Main Function
+# -----------------------------------
+main() {
+    system_info
+    uptime_info
+    disk_usage
+    memory_usage
+    cpu_usage
+}
+
+# Run Main Function
+main
+
+```
