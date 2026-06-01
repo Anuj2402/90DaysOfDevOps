@@ -235,3 +235,108 @@ anujrai@lor1-app [ ~ ]$
 ```
 
 ---
+
+# Task 4: Combine — Scheduled Maintenance Script
+
+```bash 
+#!/bin/bash
+
+set -euo pipefail
+
+LOG_FILE="/var/log/maintenance.log"
+
+# -----------------------------------
+# Logging Function
+# -----------------------------------
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') : $1" >> "$LOG_FILE"
+}
+
+# -----------------------------------
+# Log Rotation Function
+# -----------------------------------
+rotate_logs() {
+
+    log_dir="/var/log/myapp"
+
+    if [ ! -d "$log_dir" ]
+    then
+        log_message "ERROR: Log directory does not exist"
+        exit 1
+    fi
+
+    compressed_count=$(find "$log_dir" -name "*.log" -mtime +7 | wc -l)
+
+    find "$log_dir" -name "*.log" -mtime +7 -exec gzip {} \;
+
+    deleted_count=$(find "$log_dir" -name "*.gz" -mtime +30 | wc -l)
+
+    find "$log_dir" -name "*.gz" -mtime +30 -delete
+
+    log_message "Compressed files: $compressed_count"
+    log_message "Deleted compressed files: $deleted_count"
+}
+
+# -----------------------------------
+# Backup Function
+# -----------------------------------
+backup_files() {
+
+    source_dir="/home/data"
+    backup_dir="/backup"
+
+    if [ ! -d "$source_dir" ]
+    then
+        log_message "ERROR: Source directory does not exist"
+        exit 1
+    fi
+
+    mkdir -p "$backup_dir"
+
+    timestamp=$(date +%F-%H-%M-%S)
+
+    archive_name="backup-$timestamp.tar.gz"
+
+    archive_path="$backup_dir/$archive_name"
+
+    tar -czf "$archive_path" "$source_dir"
+
+    if [ -f "$archive_path" ]
+    then
+        archive_size=$(du -h "$archive_path" | awk '{print $1}')
+
+        log_message "Backup created: $archive_name"
+        log_message "Backup size: $archive_size"
+    else
+        log_message "ERROR: Backup creation failed"
+        exit 1
+    fi
+
+    find "$backup_dir" -name "*.tar.gz" -mtime +14 -delete
+
+    log_message "Old backups cleaned"
+}
+
+# -----------------------------------
+# Main Function
+# -----------------------------------
+main() {
+
+    log_message "========== Maintenance Started =========="
+
+    rotate_logs
+
+    backup_files
+
+    log_message "========== Maintenance Completed =========="
+}
+
+# Run Main
+main
+
+```
+- Cron Entry (Run Daily at 1 AM)
+      
+      0 1 * * * /path/to/maintenance.sh
+
+      
