@@ -92,3 +92,49 @@ Final Output:
     Total error count : 3 
 
 
+# Task 3: Critical Events
+
+```bash 
+#!/bin/bash
+
+set -euo pipefail
+
+# ------------------
+# Input Validation
+# ------------------
+
+if [ $# -eq 0 ]
+then
+    echo "Usage: ./log_analyzer.sh <log_file>"
+    exit 1
+fi
+
+log_file="$1"
+
+if [ ! -f "$log_file" ]
+then
+    echo "Error: File does not exist: $log_file"
+    exit 1
+fi
+
+# ------------------
+# Error Count
+# ------------------
+
+error_count=$(grep -Ec "ERROR|Failed" "$log_file" | wc -l)
+
+echo "Total Errors: $error_count"
+
+echo
+
+# ------------------
+# Critical Events
+# ------------------
+
+echo "--- Critical Events ---"
+
+grep -n "CRITICAL" "$log_file" | while IFS=: read -r line_num message
+do
+    echo "Line $line_num: $message"
+done
+
