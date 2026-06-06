@@ -112,8 +112,6 @@ Share your progress on LinkedIn:
 
 ```
 #90DaysOfDevOps
-#DevOpsKaJosh
-#TrainWithShubham
 ```
 
 ---
@@ -127,4 +125,4 @@ One day at a time.
 One commit at a time.
 
 Happy Learning  
-**TrainWithShubham**
+
