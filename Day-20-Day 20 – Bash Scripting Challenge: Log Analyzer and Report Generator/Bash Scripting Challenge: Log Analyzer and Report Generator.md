@@ -138,3 +138,108 @@ do
     echo "Line $line_num: $message"
 done
 
+```
+
+
+
+
+
+
+# Task 4: Top Error Messages
+
+```bash 
+echo
+echo "--- Top 5 Error Messages ---"
+
+grep "ERROR" "$log_file" | \
+sort | \
+uniq -c | \
+sort -nr | \
+head -5
+
+```
+
+Add this line also the main script 
+Explanation: 
+
+Assume:
+```
+INFO Started
+ERROR Database connection failed
+ERROR Timeout occurred
+ERROR Database connection failed
+ERROR Disk full
+ERROR Timeout occurred
+ERROR Database connection failed
+```
+Step 1
+
+```bash 
+grep "ERROR" "$log_file"
+```
+
+Output:
+```
+ERROR Database connection failed
+ERROR Timeout occurred
+ERROR Database connection failed
+ERROR Disk full
+ERROR Timeout occurred
+ERROR Database connection failed
+```
+
+Step 2
+
+```bash 
+sort 
+```
+
+Output: Notice duplicates are now together. 
+```
+ERROR Database connection failed
+ERROR Database connection failed
+ERROR Database connection failed
+ERROR Disk full
+ERROR Timeout occurred
+ERROR Timeout occurred
+```
+Step 3
+```bash 
+uniq -c
+```
+
+Output:
+```bash 
+3 ERROR Database connection failed
+1 ERROR Disk full
+2 ERROR Timeout occurred
+
+```
+### What does uniq -c do?
+
+- Counts consecutive duplicates.
+
+ - That's why we sorted first.
+
+
+Step 4: 
+```bash 
+sort -nr
+ 
+ -n -> numeric sort 
+ -r -> reverse order
+ ```
+
+ Output:
+ ``` 
+ 3 ERROR Database connection failed
+2 ERROR Timeout occurred
+1 ERROR Disk full
+
+```
+Step 5: 
+
+```bash 
+head -5
+```
+- Returns top 5 entries.
