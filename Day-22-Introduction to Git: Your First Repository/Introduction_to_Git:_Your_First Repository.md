@@ -46,3 +46,153 @@ To check where Git is reading the configuration from:
 git config --list --show-origin
 ```
 
+
+# Task 2: Create Your Git Project
+
+Step 1: Create a New Project Directory
+```bash 
+mkdir devops-git-practice # This command will create a folder called devops-git-practice 
+cd devops-git-practice # This command will change the directory and move to the devops-git-practice directory 
+
+Pwd # we can verify your present working directory 
+
+```
+
+Step 2: Initialize a Git Repository
+
+```bash
+git init
+```
+Expected output:
+
+```
+Initialized empty Git repository in /path/to/devops-git-practice/.git/
+```
+- Git has now created a hidden **.git** directory that stores all repository metadata
+
+Step 3: Check Repository Status
+```bash 
+git status 
+```
+Expected output:
+```
+On branch main
+
+No commits yet
+
+nothing to commit (create/copy files and use "git add" to track)
+
+```
+### Understanding the Output: 
+
+- On branch main -> You are currently working on the main branch.
+
+- No commits yet -> The repository has been initialized, but no snapshots (commits) have been created.
+
+- nothing to commit -> Git is not tracking any files yet.
+
+Step 4: View Hidden Files
+```bash 
+ls -la 
+```
+
+Example Output:
+```
+.
+..
+.git
+
+```
+- The .git directory is hidden because its name starts with a dot (.).
+
+Step 5: Explore the .git Directory
+
+```bash 
+ls -la .git
+```
+You may see something like:
+```
+HEAD
+config
+description
+hooks/
+info/
+objects/
+refs/
+```
+
+## Understanding Important Git Files
+
+HEAD: 
+```bash 
+cat .git/HEAD
+```
+Output:
+```
+ref: refs/heads/main
+```
+- HEAD points to the branch you're currently working on.
+
+config: 
+```bash
+cat .git/config
+```
+- Contains repository-specific Git settings.
+Example:
+```
+[core]
+    repositoryformatversion = 0
+    filemode = true
+```
+
+objects/ : 
+```bash 
+ls .git/objects
+```
+Stores all Git data:
+
+ - Commits
+ - Trees
+ - Blobs (file contents)
+
+Initially it will be mostly empty.
+
+refs/
+```bash 
+ls -R .git/refs
+```
+Stores references to:
+
+- Branches
+- Tags
+
+Example:
+```bash 
+heads/
+tags/
+```
+hooks/
+```bash 
+ls .git/hooks
+```
+Contains sample scripts that Git can execute automatically.
+
+Examples:
+
+ - pre-commit
+ - pre-push
+ - post-merge
+
+These are commonly used in DevOps and CI/CD pipelines.
+
+### What You Learned: 
+- **mkdir** -> Create a directory
+- **git init** -> Initialize a Git repository
+- **git status** -> Check repository state
+- **ls -la** -> Show hidden files
+- **.git/** -> Git's internal database
+- **HEAD** -> Current branch pointer
+- **objects/** -> Stores Git data
+- **refs/** -> Stores branch/tag references
+- **hooks/** -> Automation scripts
+
