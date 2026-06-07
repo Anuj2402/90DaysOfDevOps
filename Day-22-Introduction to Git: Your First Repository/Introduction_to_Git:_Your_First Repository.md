@@ -351,5 +351,96 @@ git diff
 ls -la
 ```
 
+# Task 4: Stage and Commit
+
+Step 1: Check Current Status
+
+- Before staging, see what Git knows about your repository:
+
+```bash 
+git status
 ```
+Expected output:
 ```
+Untracked files:
+  git-commands.md
+
+```
+- What it means: Git sees the file, but it is not being tracked yet.
+
+Step 2: Stage the File
+- Add the file to the staging area:
+
+```bash
+git add git-commands.md
+```
+Or stage all the created and mofified files:
+```bash 
+git add .
+```
+- What it means: You're telling Git, "Include this file in the next commit."
+
+Step 3: Check What's Staged
+
+Run:
+```bash 
+git status
+```
+Expected output:
+```bash 
+Changes to be committed:
+  new file: git-commands.md
+  ```
+
+To see exactly what is staged:
+
+```bash 
+git diff --staged
+```
+- What it means: Shows the content that will be included in the next commit.
+
+Step 4: Commit with a Meaningful Message
+
+Create your first commit:
+```bash 
+git commit -m "Add Git commands reference documentation"
+```
+Expected output:
+```bash 
+[main abc1234] Add Git commands reference documentation
+ 1 file changed, 50 insertions(+)
+ create mode 100644 git-commands.md
+ ```
+ - What it means: Git created a snapshot of your staged changes.
+
+ Step 5: View Commit History
+
+ View detailed history:
+
+ ```bash 
+ git log
+ ```
+ Example:
+ ```
+ commit abc1234...
+Author: Anuj Rai <anuj@example.com>
+Date: ...
+
+    Add Git commands reference documentation
+```
+Step 6: View Compact Commit History
+```bash 
+A cleaner format used daily by developers:
+```
+Example:
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % git log --oneline
+ab6b6dc (HEAD -> main, origin/main) Day 22 task 3 Git Command referance completed
+6d38d6a Day 22 Taks 2 completed
+6bd5825 Git Intro -> Day22 Task 1 is completed
+7aa5c5a Update README to remove training 
+```
+
+
+
+
