@@ -19,6 +19,7 @@ Day-XX-<Topic Name>/
   ├── Read.md          → The day's task/challenge description
   ├── <notes>.md       → The learner's actual notes and output
   └── images/          → Screenshots (if any)
+  
 ```
 
 ---

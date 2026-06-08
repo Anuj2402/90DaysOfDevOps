@@ -5,6 +5,7 @@ Q1-> Verify Git is installed on your machine
 Command we will use to verify that is below : 
 ```bash 
 git --version 
+
 ```
 output: 
 ```

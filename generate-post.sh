@@ -66,7 +66,7 @@ if [[ ! -x "$COPILOT_BIN" ]]; then
 fi
 
 echo "✍️  Generating LinkedIn post for Day ${DAY}: ${TOPIC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━-"
 echo ""
 
 "$COPILOT_BIN" \
