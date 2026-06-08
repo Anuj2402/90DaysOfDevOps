@@ -443,5 +443,44 @@ ab6b6dc (HEAD -> main, origin/main) Day 22 task 3 Git Command referance complete
 ```
 
 
+# Task 5: Make More Changes and Build History
 
+### After Editing the git-command.md file 
 
+Check changes:
+
+```bash 
+git diff
+```
+
+Example OUTPUT: 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % git diff 
+diff --git a/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First Repository.md b/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First Repository.md
+index 3fd24ed..f6649ee 100644
+--- a/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First Repository.md  
++++ b/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First Repository.md  
+@@ -443,5 +443,13 @@ ab6b6dc (HEAD -> main, origin/main) Day 22 task 3 Git Command referance co
+diff --git a/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First 
+Repository.md b/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_Fir
+st Repository.md
+index 3fd24ed..f6649ee 100644
+--- a/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First Reposit
+ory.md  
++++ b/Day-22-Introduction to Git: Your First Repository/Introduction_to_Git:_Your_First Reposit
+ory.md  
+@@ -443,5 +443,13 @@ ab6b6dc (HEAD -> main, origin/main) Day 22 task 3 Git Command referance complete
+
+ 
+ 
++# Task 5: Make More Changes and Build History
+ 
++### After Editing the git-command.md file 
++
++Check changes:
++
++```bash 
++git diff
++```
+
+```
