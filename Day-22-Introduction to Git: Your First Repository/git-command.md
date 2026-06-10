@@ -172,3 +172,31 @@ git branch
 git checkout -b feature-login
 ```
 
+## Change 2 Of Task 5  -> Add Remote Repository Commands
+
+## Remote Repositories
+
+### `git remote -v`
+
+**What it does:** Shows configured remote repositories.
+
+**Example:**
+
+```bash
+git remote -v
+```
+
+### `git push origin main`
+
+**What it does:** Pushes commits to the remote repository.
+
+**Example:**
+
+```bash
+git push origin main
+```
+
+
+
+
+
