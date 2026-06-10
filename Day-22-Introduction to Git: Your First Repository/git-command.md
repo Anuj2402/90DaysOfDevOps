@@ -196,7 +196,28 @@ git remote -v
 git push origin main
 ```
 
+## Change #3 of Task 5: Add History Commands
 
+## History & Inspection
 
+### `git show`
+
+**What it does:** Displays details of a commit.
+
+**Example:**
+
+```bash
+git show
+```
+
+### `git log --graph --oneline`
+
+**What it does:** Shows commit history as a graph.
+
+**Example:**
+
+```bash
+git log --graph --oneline
+```
 
 
