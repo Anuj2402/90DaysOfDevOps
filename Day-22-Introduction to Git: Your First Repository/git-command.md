@@ -220,4 +220,6 @@ git show
 git log --graph --oneline
 ```
 
+## GitHub Notes
+This line was added directly on GitHub.
 
