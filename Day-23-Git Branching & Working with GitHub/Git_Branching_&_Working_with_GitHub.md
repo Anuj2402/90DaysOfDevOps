@@ -259,3 +259,140 @@ git checkout feature-login
 Summary:
 - When you switch branches, Git updates the working directory and staging area to match the state of the target branch. Files that exist only on that branch appear, modified files are updated to that branch's version, and files not present on the target branch may disappear. If uncommitted changes would be overwritten, Git prevents the branch switch until the changes are committed, stashed, or discarded.
 
+
+# Task 2: Branching Commands — Hands-On
+
+Created A **devops-git-practice** repo for practice : 
+
+i. List all Branches on The repo : 
+
+```bash 
+git branch 
+```
+Example output:
+![alt text](image.png)
+
+ii. Create a New Branch Called **feature-1**
+
+```bash 
+git branch -b feature-1
+```
+Verify:
+```bash 
+git branch 
+```
+
+Output:
+![alt text](image-1.png)
+
+iii. Switch to feature-1
+```bash 
+git checkout feature-1
+```
+Verify:
+```bash 
+git branch 
+```
+Outout : 
+![alt text](image-2.png)
+
+iv. Create and Switch to feature-2 in One Command
+Using checkout: 
+
+```bash 
+git checkout -b feature-2
+```
+Or using the modern command:
+```bash 
+git switch -c feature-2
+```
+Verify:
+```bash 
+git branch 
+```
+output: 
+![alt text](image-3.png)
+![alt text](image-4.png)
+
+v. Try git switch
+Move back to feature-1:
+```bash 
+git switch feature-1
+```
+
+Move to main:
+```bash 
+git switch main
+```
+Output : 
+![alt text](image-5.png)
+![alt text](image-6.png)
+
+### Difference Between git switch and git checkout
+
+
+- **git checkout** -> Used for switching branches and restoring files
+
+- **git switch**  -> Used only for switching branches (simpler and safer)
+
+vi. Make a Commit on feature-1
+Switch to feature-1:
+```bash 
+git switch feature-1
+```
+Add a text file 
+![alt text](image-7.png)
+
+
+![alt text](image-8.png)
+
+vii. Verify the Commit Exists on feature-1
+```bash 
+git log --oneline
+```
+Output: 
+```bash 
+sarah@dev01 devops-git-practice on  feature-1 ➜  git log --oneline
+8a607c3 (HEAD -> feature-1) Added one Text file to feature-1 branch
+4842ab8 (master, feature-2) Initial commit
+
+sarah@dev01 devops-git-practice on  feature-1 ➜  
+
+```
+
+
+viii. Switch Back to main
+```bash 
+git switch main or master 
+git checkout main or master 
+```
+check history: 
+```bash 
+git log 
+```
+
+Output: 
+
+![alt text](image-9.png)
+- This proves the commit exists only on feature-1.
+
+iX. Delete a Branch You No Longer Need
+
+Switch to main first:
+```bash 
+git checkout main/master 
+```
+Delete feature-2:
+```bash 
+git branch -d feature-2
+```
+List branches:
+```bash
+git branch 
+```
+Output: 
+![alt text](image-10.png)
+
+
+x. Add Branching Commands to git-commands.md
+
