@@ -133,3 +133,114 @@ fatal: not a git repository (or any of the parent directories): .git
 
 Summary: 
 - The **.git/** folder is a hidden directory that contains all Git metadata, including commit history, branches, configuration, and the staging area. It is what makes a directory a Git repository. If the .git/ folder is deleted, the project files remain, but all Git history and tracking information are lost, and the directory is no longer recognized as a Git repository.
+
+### Q5 -> What is the difference between a working directory, staging area, and repository?
+
+This is a fundamental Git interview question.
+
+### Git Has 3 Main Areas
+```
+Working Directory
+        |
+        | git add
+        v
+Staging Area
+        |
+        | git commit
+        v
+Repository
+
+```
+1. Working Directory
+- The eorking directory is where you actually create and edit files. 
+Example: 
+
+```bash 
+echo "Hello Git" > notes.txt
+```
+or edit **git-commands.md**.
+
+At this point changes exist only on our computer and have not been staged or committed.
+
+Think of it as your workspace.
+
+2. Staging Area (Index)
+- The staging area is a temporary area where you choose which changes will be included in the next commit.
+
+Example:
+```bash 
+git add notes.txt
+```
+Now notes.txt is staged.
+
+- This file is not yet part of the git history , but git knows it should be included in the next commmit 
+ - Think of it as a shopping cart.
+
+3. Repository
+- The repository contains all committed snapshots and history.
+
+```bash 
+git commit -m "Add notes file"
+```
+- Now the changes are permanently recorded in Git history.
+
+You can view them with:
+```bash 
+git log 
+```
+- Think of it as the library/archive of all your saved work.
+
+
+Example Flow: 
+
+Create or Modify a File
+```bash 
+echo "Git Basics" > notes.txt
+```
+File is in the Working Directory.
+
+Stage the File
+```bash 
+git add notes.txt
+```
+File moves to the Staging Area.
+
+Commit the File
+```bash 
+git commit -m "Add notes"
+```
+File is now stored in the Repository.
+
+
+#### How to Check Each Area
+
+- Working Directory vs Staging Area
+```bash 
+git diff 
+```
+Shows unstaged changes.
+
+- Staging Area vs Repository
+```bash 
+git diff --staged
+```
+Shows staged changes waiting to be committed.
+
+- Repository History
+```bash 
+git log 
+```
+Shows committed changes
+
+**Working Directory**: The files you are currently editing on your local machine.
+
+**Staging Area**: A temporary area where changes are prepared for the next commit using git add.
+
+**Repository**: The Git database that stores committed snapshots and project history.
+
+Workflow:
+```bash 
+git add file.txt
+git commit -m "Add file"
+```
+- Here, file.txt moves from the working directory to the staging area, and then into the repository when committed.
