@@ -396,3 +396,542 @@ Output:
 
 x. Add Branching Commands to git-commands.md
 
+
+# Task 3: Push to GitHub
+
+Step01 -> Create a Repository on GitHub
+
+i. Go to GitHub
+
+ii.  Click New Repository
+
+iii. Repository name: devops-git-practice
+
+iv. Select Public or Private
+
+v. Do NOT check:
+
+   - Add README
+   - Add .gitignore
+   - Add License
+
+vi. Click Create Repository
+
+
+Step 2: Connect Local Repository to GitHub
+
+Copy the repository URL from GitHub.
+
+Add it as a remote:
+```bash 
+git remote add origin https://github.com/<username>/devops-git-practice.git
+```
+Verify:
+```bash 
+git remote -v
+```
+Example:
+```
+origin  https://github.com/anujrai/devops-git-practice.git (fetch)
+origin  https://github.com/anujrai/devops-git-practice.git (push)
+```
+
+Step 3: Push Main Branch
+Make sure you're on main:
+
+```bash 
+git switch main
+```
+Push:
+```bash 
+git push -u origin main
+```
+- The -u flag sets the upstream tracking branch.
+
+After this, future pushes can be done with:
+```bash 
+git push 
+```
+Step 4: Push feature-1 Branch
+Switch to feature-1:
+
+```bash 
+git checkout feature-1
+    OR 
+git switch feature-1
+```
+
+Push:
+```bash 
+git push -u origin feature-1
+```
+Step 5: Verify Branches on GitHub
+
+Check local branches:
+
+```bash 
+git branch
+```
+Check remote branches:
+```bash 
+git branch -r
+```
+Example:
+```
+origin/main
+origin/feature-1
+```
+- Now refresh your GitHub repository page and open the branch selector.
+
+You should see:
+```
+main
+feature-1
+```
+
+Q -> Difference Between Origin and Upstream
+
+Origin: 
+- **origin** is the default name given to the remote repository that you cloned from or push your changes to.
+
+Example:
+
+```bash 
+git remote -v
+```
+Output:
+```
+origin https://github.com/yourusername/devops-git-practice.git
+```
+- Most developers push and pull from origin
+
+
+Upstream: 
+- upstream usually refers to the original repository from which a fork was created.
+
+Example:
+```
+upstream -> original project repository 
+
+origin -> your fork
+```
+- Common in open-source projects:
+```
+Open Source Repo
+  ^ 
+  | 
+ upstream 
+   | 
+Your Fork 
+   ^ 
+   |
+origin
+
+```
+You can add an upstream remote:
+```
+git remote add upstream https://github.com/original-owner/project.git
+```
+Verify:
+```bash 
+git remote -v
+```
+
+Output:
+```
+origin https://github.com/yourusername/project.git 
+
+upstream https://github.com/original-owner/project.git
+```
+
+- **origin** is the default remote repository that you clone from and push to. **upstream** is typically the original repository from which a fork was created. Developers pull updates from **upstream** and push their own changes to **origin**
+
+# Task 4: Pull from GitHub
+
+Step 1: Make a Change Directly on GitHub
+
+i. Open your repository on GitHub.
+ii. Open git-commands.md.
+iii. Click the Edit (✏️) button.
+iv. Add a line such as:
+```
+## GitHub Notes
+This line was added directly on GitHub.
+```
+v. Scroll down and commit the change directly to the main branch.
+
+Step 2: Verify Local Repository is Behind
+
+In your local repository:
+```bash 
+git status
+```
+Then check the remote:
+```bash 
+git fetch 
+```
+See the difference:
+```bash 
+git log --oneline --all --graph --decorate
+```
+You should notice that origin/main is ahead of your local main
+Output: 
+![alt text](image-11.png)
+
+Step 3: Pull the Change
+
+Switch to main:
+```bash 
+git switch main
+```
+Pull the latest changes:
+```bash 
+git pull origin main
+```
+Expected output:
+```
+Updating abc123..def456
+Fast-forward
+ git-commands.md | 2 ++
+
+ ```
+
+ Step 4: Verify the Change
+
+ View the file:
+
+```bash 
+cat git-commands.md
+
+```
+Or check the latest commit:
+```bash
+git log --oneline -1
+```
+Output: 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % git log --oneline -1
+acbfcb0 (HEAD -> main, origin/main, origin/HEAD) Add GitHub notes section to git-command.md
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+
+```
+- You should see the commit that was created on GitHub.
+
+
+## Difference Between git fetch and git pull
+
+### git fetch
+
+**What it does:**
+Downloads new commits, branches, and tags from the remote repository but does NOT modify your working branch.
+
+Example:
+
+```bash
+git fetch origin
+```
+
+After fetching:
+
+```text
+Local main      -> unchanged
+origin/main     -> updated
+```
+
+You can inspect changes before applying them.
+
+---
+
+### git pull
+
+**What it does:**
+Downloads changes from the remote repository and immediately integrates them into your current branch.
+
+Example:
+
+```bash
+git pull origin main
+```
+
+This is equivalent to:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+(or fetch + rebase if configured).
+
+---
+
+### Example
+
+Suppose GitHub has a new commit:
+
+```text
+main
+A --- B --- C
+              \
+               D (origin/main)
+```
+
+#### After git fetch
+
+```text
+main
+A --- B --- C
+
+origin/main
+A --- B --- C --- D
+```
+
+Your branch is unchanged.
+
+#### After git pull
+
+```text
+main
+A --- B --- C --- D
+```
+
+Your branch is updated automatically.
+
+---
+
+### Summary
+
+| Command   | Downloads Changes | Updates Local Branch |
+| --------- | ----------------- | -------------------- |
+| git fetch | Yes               | No                   |
+| git pull  | Yes               | Yes                  |
+
+---
+
+### Best Practice
+
+Use `git fetch` when you want to inspect changes before applying them.
+
+Use `git pull` when you're ready to update your local branch immediately.
+
+
+- git fetch downloads changes from the remote repository but does not modify the current branch. git pull downloads the changes and immediately merges (or rebases) them into the current branch. Therefore, git pull is essentially git fetch followed by git merge (or rebase).
+
+# Task 5: Clone vs Fork
+
+Part 1: Clone a Public Repository
+
+Copy the repository URL and run:
+```bash 
+git clone https://github.com/github/gitignore.git
+```
+
+Verify:
+```bash 
+ cd gitignore
+ git remote -v 
+ ```
+ Output: 
+ ![alt text](image-12.png)
+![alt text](image-13.png)
+
+
+Part 2: Fork the Repository
+
+i. Open the repository on GitHub.
+ii. Click Fork.
+iii. GitHub creates a copy under your account.
+Example:
+```
+Original:
+github.com/github/gitignore.git
+
+Fork:
+github.com/<your-username>/gitignore.git
+```
+
+Part 3: Clone Your Fork
+
+Copy the URL of your fork and clone it:
+```bash 
+git clone https://github.com/<your-username>/gitignore.git
+```
+
+Verify:
+```bash 
+cd gitignore
+git remote -v 
+```
+Output:
+```bash 
+origin  https://github.com/<your-username>/gitignore.git
+
+```
+
+Part 4: Add Upstream Remote
+
+The original repository should be added as upstream.
+```bash 
+git remote add upstream https://github.com/github/gitignore.git
+```
+Verify:
+```bash 
+git remote -v
+```
+Example:
+```bash 
+origin    https://github.com/<your-username>/gitignore.git
+upstream  https://github.com/github/gitignore.git
+```
+
+Notes: 
+
+# Clone vs Fork
+
+## What is Clone?
+
+A clone creates a local copy of a Git repository on your computer.
+
+Example:
+
+```bash
+git clone https://github.com/user/project.git
+```
+
+After cloning:
+
+```text
+GitHub Repository
+        |
+        v
+Local Repository
+```
+
+The remote is usually called `origin`.
+
+---
+
+## What is Fork?
+
+A fork creates a copy of someone else's repository under your own GitHub account.
+
+Example:
+
+```text
+Original Repository
+        |
+      Fork
+        |
+        v
+Your GitHub Repository
+```
+
+You can freely modify your fork without affecting the original project.
+
+---
+
+## Difference Between Clone and Fork
+
+| Clone                                 | Fork                                             |
+| ------------------------------------- | ------------------------------------------------ |
+| Creates a local copy                  | Creates a GitHub copy                            |
+| Exists on your machine                | Exists on GitHub                                 |
+| Used to work locally                  | Used to contribute to other projects             |
+| No separate GitHub repository created | Creates a separate repository under your account |
+
+---
+
+## When Would You Clone?
+
+Use clone when:
+
+* You own the repository.
+* You have direct write access.
+* You simply want a local copy.
+
+Example:
+
+```bash
+git clone https://github.com/mycompany/project.git
+```
+
+---
+
+## When Would You Fork?
+
+Use fork when:
+
+* Contributing to open-source projects.
+* You do not have write access to the original repository.
+* You want your own copy on GitHub.
+
+Workflow:
+
+```text
+Original Repo
+      |
+    Fork
+      |
+   Clone
+      |
+   Make Changes
+      |
+ Push to Fork
+      |
+ Pull Request
+```
+
+---
+
+## How to Keep a Fork in Sync?
+
+### Add the Original Repository as Upstream
+
+```bash
+git remote add upstream https://github.com/original-owner/project.git
+```
+
+### Fetch Latest Changes
+
+```bash
+git fetch upstream
+```
+
+### Update Your Local Main Branch
+
+```bash
+git checkout main
+git merge upstream/main
+```
+
+Or:
+
+```bash
+git rebase upstream/main
+```
+
+### Push Updates to Your Fork
+
+```bash
+git push origin main
+```
+
+---
+
+## Typical Open Source Setup
+
+```text
+upstream -> Original Repository
+origin   -> Your Fork
+local    -> Your Computer
+```
+
+You fetch from `upstream` and push to `origin`.
+
+
+Sumamry: 
+- A clone creates a local copy of a repository on your machine. A fork creates a copy of a repository under your own GitHub account.
+
+When would you clone vs fork?
+- Clone when you have access to the repository and just need a local copy.
+
+- Fork when contributing to someone else's project and you need your own GitHub copy.
