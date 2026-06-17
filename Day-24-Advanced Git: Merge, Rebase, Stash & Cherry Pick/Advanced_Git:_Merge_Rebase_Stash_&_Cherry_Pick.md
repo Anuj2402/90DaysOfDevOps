@@ -283,3 +283,199 @@ You'll see something like:
 Output:
 ![alt text](image-5.png)
 
+
+# Task 2: Git Rebase — Hands-On
+
+
+### Create a branch feature-dashboard from main/master  and add 2–3 commits
+
+Switch to main/master:
+
+```bash 
+git checkout master/main  
+    OR 
+git switch main/master 
+```
+
+Create branch:
+```bash 
+git switch -c feature-dashboard
+```
+Commit #1
+```bash 
+echo "Dashboard UI" > dashboard.txt
+git add dashboard.txt
+git commit -m "Add dashboard UI"
+```
+
+Commit #2
+```bash 
+echo "Dashboard API" >> dashboard.txt
+git add dashboard.txt
+git commit -m "Add dashboard API"
+```
+Commit #3
+```bash 
+echo "Dashboard metrics" >> dashboard.txt
+git add dashboard.txt
+git commit -m "Add dashboard metrics"
+```
+Verify:
+```bash 
+git log --oneline --graph --decorate
+```
+OUTPUT: 
+![alt text](image-6.png)
+
+
+### While on main, add a new commit
+Switch back:
+```bash 
+git switch main/master 
+     OR 
+git checkout main/master 
+```
+
+Create a new commit:
+```bash 
+echo "Main branch update" > main-update.txt
+git add main-update.txt
+git commit -m "Update main branch"
+```
+Now history looks like:
+```
+
+          D---E---F (feature-dashboard)
+         /
+A---B---C---G (main)
+
+```
+Where:
+ - D,E,F = dashboard commits
+ - G = new main commit
+
+### Switch to feature-dashboard and rebase it onto main
+
+Switch:
+```bash 
+git switch feature-dashboard
+```
+Run rebase:
+```bash 
+git rebase main
+```
+
+Expected output:
+```
+Successfully rebased and updated refs/heads/feature-dashboard.
+```
+
+### Observe history
+
+Run:
+```bash 
+git log --oneline --graph --decorate --all
+```
+
+After rebase:
+```
+A---B---C---G---D'---E'---F'
+```
+Notice:
+
+- No merge commit
+- Dashboard commits appear after G
+- Git created new commit IDs (D', E', F')
+
+This is why rebase creates a cleaner history.
+
+## Compare Merge vs Rebase
+
+Merge: 
+```
+          D---E---F
+         /         \
+A---B---C---G-------M
+```
+
+Creates:
+```
+M = Merge Commit
+```
+- History branches and joins.
+
+Rebase: 
+```
+A---B---C---G---D'---E'---F'
+```
+- Single straight line.
+- No merge commit.
+
+### Add These Answers to Your Notes
+
+# Git Rebase Notes
+
+## What does rebase actually do to your commits?
+
+Rebase takes the commits from one branch and replays them on top of another branch.
+
+Example:
+
+Before:
+
+A---B---C (main)
+     \
+      D---E (feature)
+
+After:
+
+A---B---C---D'---E'
+
+Git creates new versions of D and E with new commit hashes.
+
+---
+
+## How is the history different from a merge?
+
+Merge history:
+
+      D---E
+     /     \
+A---B---C---M
+
+A merge commit (M) is created.
+
+Rebase history:
+
+A---B---C---D'---E'
+
+The history becomes linear and easier to read.
+
+---
+
+## Why should you never rebase commits that have been pushed and shared with others?
+
+Rebase rewrites commit history and creates new commit hashes.
+
+If other developers already have the old commits, rebasing can cause:
+- Confusing histories
+- Duplicate commits
+- Push/pull conflicts
+- Collaboration problems
+
+Therefore, only rebase local commits that have not been shared.
+
+---
+
+## When would you use rebase vs merge?
+
+Use Rebase:
+- Before merging a feature branch
+- To keep history clean and linear
+- For local, unpublished commits
+
+Use Merge:
+- For shared branches
+- When preserving exact history is important
+- When working in teams on public branches
+
