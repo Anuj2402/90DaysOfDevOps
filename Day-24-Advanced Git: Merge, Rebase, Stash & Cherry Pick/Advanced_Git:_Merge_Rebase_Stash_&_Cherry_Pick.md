@@ -479,3 +479,249 @@ Use Merge:
 - When preserving exact history is important
 - When working in teams on public branches
 
+
+# Task 3: Squash Commit vs Merge Commit
+
+### Create a branch feature-profile, add 4–5 small commits
+
+Switch to main:
+```bash 
+git switch main/master 
+```
+
+Create branch:
+```bash 
+git switch -c feature-profile
+```
+
+Commit #1
+```bash 
+echo "Profile Page" > profile.txt
+git add profile.txt
+git commit -m "Add profile page"
+```
+
+Commit #2
+
+```bash 
+echo "Add profile image section" >> profile.txt
+git add profile.txt
+git commit -m "Add profile image section"
+```
+Commit #3
+```bash 
+echo "Fix typo in profile page" >> profile.txt
+git add profile.txt
+git commit -m "Fix typo"
+```
+
+Commit #4
+```bash 
+echo "Improve formatting" >> profile.txt
+git add profile.txt
+git commit -m "Improve formatting"
+```
+
+Commit #5
+```bash 
+echo "Update profile styling" >> profile.txt
+git add profile.txt
+git commit -m "Update profile styling"
+```
+
+Verify:
+```bash 
+git log --oneline
+```
+- we should see 5 commits on feature-profile.
+
+### Merge it into main using --squash
+
+Switch to main:
+```bash 
+git switch main
+```
+Run squash merge:
+```bash 
+git merge --squash feature-profile
+```
+
+Output:
+```bash 
+Squash commit -- not updating HEAD
+```
+
+- Git combines all changes into one staged change.
+Check status:
+```bash 
+git status
+```
+
+Now create a single commit:
+```bash 
+git commit -m "Add complete profile feature"
+```
+### Check git log — how many commits were added to main?
+```bash 
+git log --oneline --graph --decorate
+```
+
+Result:
+```
+abc123 Add complete profile feature
+xyz456 Previous main commit
+```
+- Only ONE commit was added to main.
+- Even though feature-profile had 5 commits.
+
+### Create another branch feature-settings
+
+Create branch:
+```bash 
+git switch -c feature-settings
+```
+
+Commit #1
+```bash 
+echo "Settings Page" > settings.txt
+git add settings.txt
+git commit -m "Add settings page"
+```
+
+Commit #2
+```bash 
+echo "Notification settings" >> settings.txt
+git add settings.txt
+git commit -m "Add notification settings"
+```
+Commit #3
+```bash 
+echo "Privacy settings" >> settings.txt
+git add settings.txt
+git commit -m "Add privacy settings"
+```
+
+### Merge it into main WITHOUT --squash
+Switch back:
+
+```bash 
+git switch main/master
+```
+Merge:
+```bash 
+git merge feature-settings
+```
+Check history:
+
+```bash 
+git log --oneline --graph --decorate
+```
+You will see:
+```bash 
+Add privacy settings
+Add notification settings
+Add settings page
+Add complete profile feature
+```
+- All individual commits are preserved.
+
+
+### All individual commits are preserved.
+
+# Squash Merge vs Regular Merge
+
+## What does squash merging do?
+
+Squash merging combines all commits from a feature branch into a single commit before adding them to the target branch.
+
+Example:
+
+Feature Branch:
+
+A --- B --- C --- D --- E
+
+After squash merge:
+
+A --- S
+
+S = Single Squashed Commit
+
+The individual commits are not preserved in the target branch.
+
+---
+
+## When would you use squash merge vs regular merge?
+
+### Use Squash Merge
+
+- Small feature branches
+- Many tiny commits
+- Typo fixes
+- Formatting changes
+- Keeping history clean
+
+Example:
+
+"Fix typo"
+"Fix another typo"
+"Update spacing"
+
+can become:
+
+"Complete profile feature"
+
+### Use Regular Merge
+
+- Team projects
+- When commit history is important
+- When you want to preserve development steps
+- For debugging and auditing
+
+---
+
+## What is the trade-off of squashing?
+
+Advantages:
+- Cleaner commit history
+- Easier to read logs
+- One commit per feature
+
+Disadvantages:
+- Original commit history is lost
+- Harder to see how the feature was developed
+- Less detailed debugging information
+
+Example:
+
+Before squash:
+
+Add profile page
+Fix typo
+Update styling
+Improve formatting
+
+After squash:
+
+Add complete profile feature
+
+
+Key Difference
+Squash Merge
+Feature:
+```
+A---B---C---D
+
+Main:
+M---N---S
+
+```
+Only S is added.
+
+Regular Merge
+
+```
+      A---B---C---D
+     /             \
+M---N---------------R
+```
+- All commits are preserved and Git may create a merge commit R.
