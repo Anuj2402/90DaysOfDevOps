@@ -725,3 +725,326 @@ Regular Merge
 M---N---------------R
 ```
 - All commits are preserved and Git may create a merge commit R.
+
+
+
+
+# Task 4: Git Stash — Hands-On
+
+- **Git stash** is used when you have uncommitted work but need to temporarily switch branches without committing incomplete code.
+
+### Start Making Changes to a File but Do Not Commit
+
+Switch to your repository:
+```bash 
+git switch main/master 
+```
+
+Edit a file:
+
+```bash 
+echo "Work in progress change" >> git-commands.md
+```
+
+Check status:
+```bash 
+git status 
+```
+
+Output:
+![alt text](image-7.png)
+
+
+```
+Changes not staged for commit:
+  modified: git-commands.md
+  ```
+  - At this point, you have uncommitted changes.
+
+### Imagine You Need to Urgently Switch Branches
+
+Try switching:
+```bash 
+git switch feature-login
+```
+What Happens?
+
+Case 1: Git allows the switch if your changes don't conflict.
+
+Case 2: Git blocks the switch:
+```
+error: Your local changes to the following files would be overwritten by checkout:
+    git-commands.md
+Please commit your changes or stash them before you switch branches.
+```
+- This is where git stash helps.
+
+### Use git stash to Save Work-in-Progress
+
+Run:
+```bash 
+git stash 
+```
+Output:
+```bash
+Saved working directory and index state WIP on main
+```
+Check status:
+
+```bash 
+git status
+```
+- Your changes are safely stored away.
+
+### Switch to Another Branch, Do Some Work, Switch Back
+
+Switch branches:
+```bash
+git switch feature-login
+```
+Make a change:
+```bash 
+echo "Login enhancement" >> login.txt
+git add login.txt
+git commit -m "Enhance login feature"
+```
+
+
+Switch back:
+```bash 
+git switch master/main 
+```
+
+### Apply Your Stashed Changes Using git stash pop
+See available stashes:
+```bash 
+git stash list 
+```
+Example:
+```
+stash@{0}: WIP on main: abc123 Add branching commands
+```
+
+Restore and remove the stash:
+```bash 
+git stash pop
+```
+Output:
+```bash 
+Dropped refs/stash@{0}
+```
+
+Verify:
+```bash 
+git status
+```
+- Your earlier changes should be back.
+
+### Try Stashing Multiple Times
+
+Create first stash:
+```bash 
+echo "First stash" >> notes.txt
+git stash
+```
+
+Create second stash:
+```bash 
+echo "Second stash" >> notes.txt
+git stash
+```
+
+Create third stash:
+```bash 
+echo "Third stash" >> notes.txt
+git stash
+```
+
+List all stashes:
+```bash 
+git stash list 
+```
+
+Example:
+```bash 
+stash@{0}: WIP on main: Third stash
+stash@{1}: WIP on main: Second stash
+stash@{2}: WIP on main: First stash
+```
+- Newest stash is always stash@{0}.
+
+Apply a Specific Stash
+
+View stashes:
+```bash 
+git stash list 
+```
+Apply a specific stash:
+```bash 
+git stash apply stash@{1}
+```
+Example:
+```bash 
+git stash apply stash@{2}
+```
+Notice:
+```bash 
+- Changes are restored
+- Stash remains in the stash list
+```
+Verify:
+```bash 
+git stash list
+```
+- The stash list still exists.
+
+### Add These Answers to Your Notes
+
+# Git Stash Notes
+
+## What is the difference between git stash pop and git stash apply?
+
+### git stash pop
+
+Restores the most recent stash and removes it from the stash list.
+
+Example:
+
+```bash
+git stash pop
+```
+
+Behavior:
+
+Restore changes ✅
+Delete stash ✅
+
+
+#### git stash apply
+- Restore the stash but keep it in the stash list 
+
+Example: 
+```bash 
+git stash apply stash@{1}
+```
+Behavior:
+Restore changes -> yes  ✅
+Delete stash -> No  ❌
+
+```
+| Command         | Restores Changes | Removes Stash |
+| --------------- | ---------------- | ------------- |
+| git stash pop   | Yes              | Yes           |
+| git stash apply | Yes              | No            |
+
+````
+
+
+
+
+### Add These Answers to Your Notes
+
+# Git Stash Notes
+
+## What is the difference between git stash pop and git stash apply?
+
+### git stash pop
+
+Restores the most recent stash and removes it from the stash list.
+
+Example:
+
+```bash
+git stash pop
+```
+Before:
+```bash
+stash@{0}: WIP on main
+```
+
+After:
+```bash 
+Stash restored
+stash@{0} removed
+```
+- Use when you're sure you no longer need the backup.
+
+git stash apply
+- Restores the stashed changes.
+- Keeps the stash in the stash list.
+
+Example:
+```bash 
+git stash apply stash@{0}
+```
+Before:
+```
+stash@{0}: WIP on main
+```
+
+After:
+```bash 
+Changes restored
+stash@{0} still exists
+```
+- Use when you may want to reuse the same stash again.
+
+
+### Q -> When would you use stash in a real-world workflow?
+
+git stash is used when you have uncommitted work but need to temporarily switch context 
+
+Example 1: Production Incident
+
+You are working on a new feature:
+```bash 
+git switch feature-dashboard
+```
+you have modified files but haven't commited them. 
+suddenly a production issue occurs.
+instead of creating a temporary commit: 
+```bash 
+git stash 
+git switch hotfix-production
+```
+- Fix the issue.
+
+
+Then return:
+```bash 
+git switch feature-dashboard
+git stash  pop
+```
+- Your unfinished work is restored.
+
+Example 2: Pulling Latest Changes
+
+You are working locally and receive a message:
+- please pull the latest changes from main/master
+
+But you have unfinished work 
+```bash 
+git stash
+git pull origin main
+git stash pop
+```
+
+Key TakeAway : 
+
+Git stash acts like a tenmporary shelf for uncommitted work.
+
+Instead of: 
+```bash 
+git commit -m "temporary work"
+```
+
+you can safely save unfinished changes:
+
+```bahs 
+git stash 
+```
+and restore them later: 
+```bash 
+git stash pop 
+```
+
