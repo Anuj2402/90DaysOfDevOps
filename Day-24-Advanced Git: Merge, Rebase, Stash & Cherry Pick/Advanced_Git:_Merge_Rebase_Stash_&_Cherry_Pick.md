@@ -1048,3 +1048,278 @@ and restore them later:
 git stash pop 
 ```
 
+
+# Task 5: Cherry Picking
+
+- Cherry-pick allows you to copy a specific commit from one branch and apply it to another branch without merging the entire branch.
+
+### Create a branch feature-hotfix
+
+First switch to main/master 
+```bash 
+git switch master/main 
+```
+create branch 
+```bash 
+git switch -c feature-hotfix
+```
+### Make 3 Different Commits
+
+Commit #1
+```bash 
+echo "Hotfix 1" > hotfix.txt
+git add hotfix.txt
+git commit -m "Add hotfix file"
+```
+
+Commit #2
+```bash 
+echo "Critical bug fix" >> hotfix.txt
+git add hotfix.txt
+git commit -m "Fix critical authentication bug"
+```
+Commit #3
+```bash 
+echo "Additional cleanup" >> hotfix.txt
+git add hotfix.txt
+git commit -m "Cleanup hotfix code"
+```
+
+### View the Commit History
+```bash 
+git log --oneline 
+```
+Example:
+```
+c3d4e5f Cleanup hotfix code
+b2c3d4e Fix critical authentication bug
+a1b2c3d Add hotfix file
+```
+
+NOW Copy the hash of the SECOND commit
+In this example:
+```
+b2c3d4e
+```
+
+### Switch Back to Main/master 
+
+```bash 
+git switch main/master 
+```
+
+Check history:
+```bash 
+git log --oneline
+```
+- Notice that none of the hotfix commits exist on main.
+
+### Cherry-Pick Only the Second Commit
+
+```bash 
+git cherry-pick b2c3d4e
+```
+- Replace b2c3d4e with your actual commit hash
+
+Expected output:
+```
+[main 9f8e7d6] Fix critical authentication bug
+ 1 file changed, 1 insertion(+)
+ ```
+
+ ### Verify Only That Commit Was Applied
+
+Run:
+```bash 
+git log --oneline --graph --decorate
+```
+Example:
+```bash 
+9f8e7d6 Fix critical authentication bug
+previous-main-commit
+```
+Notice:
+
+✅ Commit #2 exists
+
+❌ Commit #1 does not exist
+
+❌ Commit #3 does not exist
+
+
+Visual Understanding
+
+Before Cherry-Pick
+```
+main
+A --- B
+
+feature-hotfix
+A --- B --- C --- D --- E
+```
+Where:
+
+- C = Add hotfix file
+- D = Fix critical authentication bug
+- E = Cleanup hotfix code
+
+After Cherry-Pick D
+```
+main
+A --- B --- D'
+
+feature-hotfix
+A --- B --- C --- D --- E
+```
+- Git creates a new copy of commit D on main.
+
+Notice:
+```bash 
+D ≠ D'
+```
+- The commit message is the same, but the commit hash is different.
+
+### Add These Answers to Your Notes
+
+# Git Cherry-Pick Notes
+
+## What does cherry-pick do?
+
+Cherry-pick copies a specific commit from one branch and applies it to another branch.
+
+Example:
+
+```bash
+git cherry-pick <commit-hash>
+```
+
+Instead of merging an entire branch, Git applies only the selected commit.
+
+---
+
+## When would you use cherry-pick in a real project?
+
+### Example 1: Urgent Production Fix
+
+A feature branch contains:
+
+- New dashboard feature
+- New reports feature
+- Critical security fix
+
+Production only needs the security fix.
+
+Instead of merging the whole branch:
+
+```bash
+git cherry-pick <security-fix-commit>
+```
+
+---
+
+### Example 2: Applying Bug Fixes Across Branches
+
+Suppose:
+
+```text
+main
+release-v1.0
+release-v2.0
+```
+
+A bug fix exists in:
+
+```text
+main
+```
+
+You can cherry-pick it into:
+
+```text
+release-v1.0
+release-v2.0
+```
+
+without merging unrelated changes.
+
+---
+
+### Example 3: Accidentally Committed to Wrong Branch
+
+You committed on:
+
+```text
+feature-login
+```
+
+but the commit belongs on:
+
+```text
+feature-dashboard
+```
+
+Use:
+
+```bash
+git cherry-pick <commit-hash>
+```
+
+to move the change.
+
+---
+
+## What can go wrong with cherry-picking?
+
+### 1. Merge Conflicts
+
+The target branch may have different code.
+
+Example:
+
+```text
+CONFLICT (content)
+```
+
+Manual conflict resolution may be required.
+
+---
+
+### 2. Duplicate Commits
+
+Cherry-picking creates a new commit with a new hash.
+
+This can lead to:
+
+- Duplicate history
+- Confusing logs
+
+---
+
+### 3. Missing Dependencies
+
+A commit may depend on earlier commits.
+
+Example:
+
+Commit B uses code added in Commit A.
+
+If you cherry-pick only B:
+
+```text
+A -> B
+```
+
+without A, the application may break.
+
+---
+
+## Summary
+
+| Operation | Purpose |
+|------------|----------|
+| git merge | Bring entire branch |
+| git rebase | Replay commits on another base |
+| git cherry-pick | Copy a specific commit |
+
+Cherry-pick is useful when you need only one or a few commits from another branch instead of the entire branch.
+
