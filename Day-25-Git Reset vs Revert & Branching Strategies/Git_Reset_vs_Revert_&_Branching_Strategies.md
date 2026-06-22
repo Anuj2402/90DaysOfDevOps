@@ -352,3 +352,248 @@ Safe Rule:
 Use reset freely on local commits.
 
 Avoid resetting pushed commits unless you fully understand the impact and coordinate with the team.
+
+# Task 2: Git Revert — Hands-On
+
+- Ulike **git reset** , git revert does not remove commits. Instead it creates a new commit that undoes the changes made by previous commit .
+
+### Make 3 Commits (X, Y, Z)
+
+- switch to main 
+```bash
+git switch main/master 
+```
+
+Create a file:
+
+Commit X
+```bash 
+echo "Feature X" > revert-demo.txt
+git add revert-demo.txt
+git commit -m "Commit X"
+```
+
+Commit Y
+```bash 
+echo "Feature Y" >> revert-demo.txt
+git add revert-demo.txt
+git commit -m "Commit Y"
+```
+Commit Z
+```bash 
+echo "Feature Z" >> revert-demo.txt
+git add revert-demo.txt
+git commit -m "Commit Z"
+```
+
+Check history:
+```bash 
+git log --oneline
+```
+
+Example:
+```
+c3c3c3c Commit Z
+b2b2b2b Commit Y
+a1a1a1a Commit X
+```
+
+### Revert Commit Y (the Middle Commit)
+Copy the hash of Commit Y.
+
+Example:
+```
+b2b2b2b
+```
+
+Run:
+```bash 
+git revert b2b2b2b
+```
+- Git may open an editor for the commit message.
+- Save and exit.
+
+Or use:
+```bash 
+git revert --no-edit b2b2b2b
+```
+
+### What Happens?
+- Git creates a new commit that reverses the changes introduced by Commit Y.
+
+Before:
+```bash 
+X --- Y --- Z
+```
+
+After:
+```bash 
+X --- Y --- Z --- R
+```
+Where:
+```bash 
+R = Revert "Commit Y"
+```
+- No commits are deleted.
+
+### Check Git Log
+
+Run:
+```bash 
+git log --oneline 
+```
+Example:
+```
+d4d4d4d Revert "Commit Y"
+c3c3c3c Commit Z
+b2b2b2b Commit Y
+a1a1a1a Commit X
+```
+### Is Commit Y Still in History?
+- YES -> commit Y still exists 
+- Git simply add another commit that undoes it . 
+
+### Verify the File
+view file contents: 
+```bash 
+cat revert-demo.txt
+```
+Expected: 
+```bash 
+Feature X
+Feature Z
+```
+- The changes from Y have been undone, But Y is still visible in History 
+
+### Answer in Your Notes
+
+# Git Revert Notes
+
+## How is git revert different from git reset?
+
+### git reset
+
+Moves the branch pointer backward and can remove commits from history.
+
+Example:
+
+```bash
+git reset --hard HEAD~1
+```
+
+Result:
+
+```text
+X --- Y --- Z
+```
+
+becomes
+
+```text
+X --- Y
+```
+
+Commit Z disappears from branch history.
+
+---
+
+### git revert
+
+Creates a new commit that undoes a previous commit.
+
+Example:
+
+```bash
+git revert <commit-hash>
+```
+
+Result:
+
+```text
+X --- Y --- Z --- R
+```
+
+R = Revert commit
+
+Original commits remain in history.
+
+---
+
+## Why is revert considered safer than reset for shared branches?
+
+Revert does not rewrite history.
+
+It simply adds a new commit.
+
+Benefits:
+
+- Safe for team collaboration
+- No force push required
+- Other developers' histories remain unchanged
+- Easy to track what was reverted
+
+Reset changes commit history and can break collaboration if commits were already pushed.
+
+---
+
+## When would you use revert vs reset?
+
+### Use Revert
+
+- On shared branches
+- On production branches
+- When commits are already pushed
+- When you want a complete audit trail
+
+Example:
+
+```bash
+git revert <commit-hash>
+```
+
+---
+
+### Use Reset
+
+- For local commits
+- Before pushing
+- When cleaning up commit history
+- When you want to remove commits completely
+
+Example:
+
+```bash
+git reset --soft HEAD~1
+```
+
+or
+
+```bash
+git reset --hard HEAD~1
+```
+
+---
+
+## Summary
+
+| Feature | git reset | git revert |
+|----------|------------|------------|
+| Removes commits from branch history | Yes | No |
+| Creates a new commit | No | Yes |
+| Rewrites history | Yes | No |
+| Safe for shared branches | No | Yes |
+| Requires force push after push | Often Yes | No |
+
+---
+
+### Golden Rule
+
+If the commit has already been pushed and shared:
+
+✅ Use `git revert`
+
+If the commit is local and not shared:
+
+✅ Use `git reset`
+
+Q -> Why is git revert safer than git reset?
