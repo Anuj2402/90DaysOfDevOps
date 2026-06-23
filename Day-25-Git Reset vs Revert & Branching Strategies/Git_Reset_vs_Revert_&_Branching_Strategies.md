@@ -716,3 +716,232 @@ Use `git reset` for local, unpublished commits when you need to modify or remove
 
 # Task 4: Branching Strategies
 
+
+## 1. GitFlow
+
+### How it Works
+
+GitFlow uses multiple long-lived branches:
+
+- `main` → Production-ready code
+- `develop` → Integration branch for ongoing development
+- `feature/*` → New features
+- `release/*` → Prepare releases
+- `hotfix/*` → Emergency production fixes
+
+It is designed around scheduled releases.
+
+### Diagram
+
+```text
+main ------------------------->
+
+         hotfix
+            |
+            v
+
+develop ---------------------->
+
+   |      |       |
+   v      v       v
+
+feature feature feature
+
+          |
+          v
+
+       release
+```
+
+### When/Where It's Used
+
+- Enterprise applications
+- Banking projects
+- Large teams
+- Products with scheduled releases
+- Software that ships monthly or quarterly
+
+### Pros
+
+- Clear structure
+- Easy release management
+- Separate release and development work
+- Good for large teams
+
+### Cons
+
+- Complex workflow
+- Many branches to manage
+- More merge overhead
+- Slower delivery for fast-moving teams
+
+---
+
+## 2. GitHub Flow
+
+### How it Works
+
+GitHub Flow is simple:
+
+1. Create a branch from `main`
+2. Make changes
+3. Open a Pull Request
+4. Review code
+5. Merge into `main`
+6. Deploy
+
+Only one permanent branch exists: `main`.
+
+### Diagram
+
+```text
+main ---------------------------->
+
+      \
+       feature-login
+              \
+               Pull Request
+                \
+                 Merge
+                  \
+main ---------------------------->
+```
+
+### When/Where It's Used
+
+- SaaS products
+- Startups
+- Continuous deployment environments
+- Open-source projects
+
+### Pros
+
+- Very simple
+- Easy to learn
+- Fast releases
+- Works well with CI/CD
+
+### Cons
+
+- Less structured
+- Harder to manage multiple release versions
+- Not ideal for complex release schedules
+
+---
+
+## 3. Trunk-Based Development (TBD)
+
+### How it Works
+
+Everyone integrates code frequently into a single branch called the **trunk** (usually `main`).
+
+Branches are short-lived and merged quickly.
+
+### Diagram
+
+```text
+main ---------------------------->
+
+   \  /
+    \/
+    /\
+
+   /  \
+
+main ---------------------------->
+```
+
+### When/Where It's Used
+
+- High-performing DevOps teams
+- Continuous Delivery
+- Cloud-native applications
+- Organizations deploying multiple times per day
+
+### Pros
+
+- Fastest delivery speed
+- Fewer merge conflicts
+- Encourages Continuous Integration
+- Cleaner workflow
+
+### Cons
+
+- Requires strong automated testing
+- Requires mature CI/CD pipelines
+- Can be risky without automation
+
+---
+
+# Comparison Table
+
+| Strategy | Complexity | Release Speed | Best For |
+|-----------|-----------|--------------|----------|
+| GitFlow | High | Slow-Medium | Large enterprises |
+| GitHub Flow | Low | Fast | Startups, Open Source |
+| Trunk-Based Development | Medium | Very Fast | DevOps & Continuous Delivery |
+
+---
+
+# Answers
+
+## Which strategy would you use for a startup shipping fast?
+
+### GitHub Flow
+
+Reason:
+
+- Fast releases
+- Minimal process overhead
+- Easy to manage with small teams
+- Supports Continuous Deployment
+
+---
+
+## Which strategy would you use for a large team with scheduled releases?
+
+### GitFlow
+
+Reason:
+
+- Separate development and release branches
+- Better release planning
+- Easier coordination among many developers
+- Supports hotfix and release management
+
+---
+
+## Which one does your favorite open-source project use?
+
+### Kubernetes
+
+Repository:
+https://github.com/kubernetes/kubernetes
+
+Kubernetes primarily follows a workflow closest to **GitHub Flow**:
+
+- Feature branches
+- Pull Requests
+- Code Reviews
+- Merge into main development branches
+
+It does not use a permanent `develop` branch like GitFlow.
+
+---
+
+# Interview Summary
+
+## Which branching strategy is most popular today?
+
+For modern DevOps and cloud-native teams:
+
+- GitHub Flow
+- Trunk-Based Development
+
+are the most common because they support:
+
+- Continuous Integration (CI)
+- Continuous Delivery (CD)
+- Faster releases
+
+GitFlow is still popular in organizations with structured release cycles and formal release management.
