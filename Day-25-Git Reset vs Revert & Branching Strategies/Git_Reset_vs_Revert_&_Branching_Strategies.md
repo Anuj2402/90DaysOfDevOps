@@ -397,6 +397,9 @@ c3c3c3c Commit Z
 b2b2b2b Commit Y
 a1a1a1a Commit X
 ```
+OUTPUT: 
+![alt text](image-8.png)
+
 
 ### Revert Commit Y (the Middle Commit)
 Copy the hash of Commit Y.
@@ -597,3 +600,119 @@ If the commit is local and not shared:
 ✅ Use `git reset`
 
 Q -> Why is git revert safer than git reset?
+- git revert preserves history by creating a new commit that undoes a previous commit, making it safe for shared branches. git reset rewrites history by moving branch pointers and potentially removing commits, which can cause problems for other developers who have already pulled those commits.
+
+
+
+# Task 3: Reset vs Revert — Summary
+
+Create a comparison in your notes:
+
+# Git Reset vs Git Revert
+
+| Feature | git reset | git revert |
+|----------|------------|------------|
+| What it does | Moves the branch pointer to a previous commit and can remove commits from the current branch history | Creates a new commit that undoes the changes made by a previous commit |
+| Removes commit from history? | Yes | No |
+| Safe for shared/pushed branches? | No | Yes |
+| Rewrites history? | Yes | No |
+| Creates a new commit? | No | Yes |
+| When to use | For local commits that have not been pushed, cleaning up history, fixing recent mistakes | For undoing changes on shared or pushed branches while preserving history |
+
+---
+
+## Example: git reset
+
+Before:
+
+```text
+A --- B --- C
+```
+
+Command:
+
+```bash
+git reset --hard HEAD~1
+```
+
+After:
+
+```text
+A --- B
+```
+
+Commit C is removed from the branch history.
+
+---
+
+## Example: git revert
+
+Before:
+
+```text
+A --- B --- C
+```
+
+Command:
+
+```bash
+git revert <hash-of-B>
+```
+
+After:
+
+```text
+A --- B --- C --- R
+```
+
+Where:
+
+```text
+R = Revert "B"
+```
+
+Commit B still exists in history, but its changes are undone.
+
+---
+
+## Rule of Thumb
+
+### Use git reset when:
+
+- The commit is local
+- The commit has not been pushed
+- You want to rewrite history
+- You made a mistake in recent commits
+
+Example:
+
+```bash
+git reset --soft HEAD~1
+```
+
+---
+
+### Use git revert when:
+
+- The commit has already been pushed
+- Other developers may have pulled it
+- You want a safe way to undo changes
+- You need a complete audit trail
+
+Example:
+
+```bash
+git revert <commit-hash>
+```
+
+---
+
+## Interview Answer
+
+**Q: When should you use reset vs revert?**
+
+**Answer:**  
+Use `git reset` for local, unpublished commits when you need to modify or remove commit history. Use `git revert` for pushed or shared commits because it safely undoes changes by creating a new commit without rewriting history.
+
+# Task 4: Branching Strategies
+
