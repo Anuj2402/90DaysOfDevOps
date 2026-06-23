@@ -945,3 +945,500 @@ are the most common because they support:
 - Faster releases
 
 GitFlow is still popular in organizations with structured release cycles and formal release management.
+
+# Task 5: Git Commands Reference Update
+
+# Git Commands Reference (Days 22–25)
+
+---
+
+# 1. Setup & Config
+
+## git --version
+
+**What it does:** Checks the installed Git version.
+
+**Example:**
+
+```bash
+git --version
+```
+
+---
+
+## git config --global user.name
+
+**What it does:** Sets your Git username.
+
+**Example:**
+
+```bash
+git config --global user.name "Anuj Rai"
+```
+
+---
+
+## git config --global user.email
+
+**What it does:** Sets your Git email address.
+
+**Example:**
+
+```bash
+git config --global user.email "anuj@example.com"
+```
+
+---
+
+## git config --list
+
+**What it does:** Displays current Git configuration.
+
+**Example:**
+
+```bash
+git config --list
+```
+
+---
+
+# 2. Basic Workflow
+
+## git init
+
+**What it does:** Initializes a new Git repository.
+
+**Example:**
+
+```bash
+git init
+```
+
+---
+
+## git status
+
+**What it does:** Shows the current state of the repository.
+
+**Example:**
+
+```bash
+git status
+```
+
+---
+
+## git add
+
+**What it does:** Stages files for commit.
+
+**Example:**
+
+```bash
+git add file.txt
+```
+
+Stage all files:
+
+```bash
+git add .
+```
+
+---
+
+## git commit
+
+**What it does:** Saves staged changes to repository history.
+
+**Example:**
+
+```bash
+git commit -m "Add login feature"
+```
+
+---
+
+## git log
+
+**What it does:** Displays commit history.
+
+**Example:**
+
+```bash
+git log
+```
+
+Compact format:
+
+```bash
+git log --oneline
+```
+
+---
+
+## git diff
+
+**What it does:** Shows unstaged changes.
+
+**Example:**
+
+```bash
+git diff
+```
+
+---
+
+# 3. Branching
+
+## git branch
+
+**What it does:** Lists branches.
+
+**Example:**
+
+```bash
+git branch
+```
+
+---
+
+## git branch <branch-name>
+
+**What it does:** Creates a branch.
+
+**Example:**
+
+```bash
+git branch feature-login
+```
+
+---
+
+## git checkout
+
+**What it does:** Switches branches.
+
+**Example:**
+
+```bash
+git checkout feature-login
+```
+
+---
+
+## git checkout -b
+
+**What it does:** Creates and switches to a branch.
+
+**Example:**
+
+```bash
+git checkout -b feature-login
+```
+
+---
+
+## git switch
+
+**What it does:** Switches branches (modern alternative).
+
+**Example:**
+
+```bash
+git switch main
+```
+
+---
+
+## git switch -c
+
+**What it does:** Creates and switches to a branch.
+
+**Example:**
+
+```bash
+git switch -c feature-dashboard
+```
+
+---
+
+## git branch -d
+
+**What it does:** Deletes a branch.
+
+**Example:**
+
+```bash
+git branch -d feature-login
+```
+
+---
+
+# 4. Remote Repositories
+
+## git remote -v
+
+**What it does:** Shows configured remotes.
+
+**Example:**
+
+```bash
+git remote -v
+```
+
+---
+
+## git push
+
+**What it does:** Uploads local commits to remote repository.
+
+**Example:**
+
+```bash
+git push origin main
+```
+
+---
+
+## git pull
+
+**What it does:** Fetches and merges remote changes.
+
+**Example:**
+
+```bash
+git pull origin main
+```
+
+---
+
+## git fetch
+
+**What it does:** Downloads remote changes without merging.
+
+**Example:**
+
+```bash
+git fetch origin
+```
+
+---
+
+## git clone
+
+**What it does:** Creates a local copy of a remote repository.
+
+**Example:**
+
+```bash
+git clone https://github.com/user/repo.git
+```
+
+---
+
+## Fork
+
+**What it does:** Creates a copy of another repository under your GitHub account.
+
+**Workflow:**
+
+```text
+Original Repo
+      |
+    Fork
+      |
+    Clone
+```
+
+---
+
+# 5. Merging & Rebasing
+
+## git merge
+
+**What it does:** Combines branches.
+
+**Example:**
+
+```bash
+git merge feature-login
+```
+
+---
+
+## git merge --squash
+
+**What it does:** Combines all branch commits into a single commit.
+
+**Example:**
+
+```bash
+git merge --squash feature-profile
+```
+
+---
+
+## git rebase
+
+**What it does:** Replays commits onto another branch.
+
+**Example:**
+
+```bash
+git rebase main
+```
+
+---
+
+# 6. Stash & Cherry Pick
+
+## git stash
+
+**What it does:** Temporarily saves uncommitted changes.
+
+**Example:**
+
+```bash
+git stash
+```
+
+---
+
+## git stash list
+
+**What it does:** Shows all stashed changes.
+
+**Example:**
+
+```bash
+git stash list
+```
+
+---
+
+## git stash pop
+
+**What it does:** Restores and removes the latest stash.
+
+**Example:**
+
+```bash
+git stash pop
+```
+
+---
+
+## git stash apply
+
+**What it does:** Restores a stash without deleting it.
+
+**Example:**
+
+```bash
+git stash apply stash@{0}
+```
+
+---
+
+## git cherry-pick
+
+**What it does:** Applies a specific commit from another branch.
+
+**Example:**
+
+```bash
+git cherry-pick a1b2c3d
+```
+
+---
+
+# 7. Reset & Revert
+
+## git reset --soft
+
+**What it does:** Removes commit but keeps changes staged.
+
+**Example:**
+
+```bash
+git reset --soft HEAD~1
+```
+
+---
+
+## git reset --mixed
+
+**What it does:** Removes commit and unstages changes.
+
+**Example:**
+
+```bash
+git reset --mixed HEAD~1
+```
+
+---
+
+## git reset --hard
+
+**What it does:** Removes commit and deletes changes.
+
+**Example:**
+
+```bash
+git reset --hard HEAD~1
+```
+
+---
+
+## git revert
+
+**What it does:** Creates a new commit that undoes a previous commit.
+
+**Example:**
+
+```bash
+git revert a1b2c3d
+```
+
+---
+
+# Quick Comparison
+
+## Reset vs Revert
+
+| Feature | git reset | git revert |
+|----------|------------|------------|
+| Removes commit from history | Yes | No |
+| Creates new commit | No | Yes |
+| Rewrites history | Yes | No |
+| Safe for pushed commits | No | Yes |
+
+---
+
+## Stash Pop vs Stash Apply
+
+| Command | Restore Changes | Remove Stash |
+|----------|----------------|--------------|
+| git stash pop | Yes | Yes |
+| git stash apply | Yes | No |
+
+---
+
+## Merge vs Rebase
+
+| Feature | Merge | Rebase |
+|----------|--------|--------|
+| Creates merge commit | Yes | No |
+| Preserves branch history | Yes | No |
+| Linear history | No | Yes |
+
+---
+
+## Soft vs Mixed vs Hard Reset
+
+| Reset Type | Commit Removed | Changes Kept | Staged |
+|------------|---------------|-------------|---------|
+| --soft | Yes | Yes | Yes |
+| --mixed | Yes | Yes | No |
+| --hard | Yes | No | No |
+
