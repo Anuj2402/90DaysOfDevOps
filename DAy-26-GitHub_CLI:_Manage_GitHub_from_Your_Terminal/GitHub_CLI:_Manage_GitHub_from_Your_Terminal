@@ -1,0 +1,226 @@
+#  Task 1: Install and Authenticate GitHub CLI (gh)
+
+### 1. Install GitHub CLI
+
+Verify if it's already installed
+```bash 
+gh --version 
+```
+If installed, you'll see something like:
+```bash 
+anujrai@anujrai-mn4561 90DaysOfDevOps % gh --version 
+gh version 2.93.0 (2026-05-27)
+https://github.com/cli/cli/releases/tag/v2.93.0
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+If not installed
+
+Using Homebrew:
+```bash 
+brew install gh
+```
+verify: 
+```bash 
+gh --version
+```
+
+### 2. Authenticate with GitHub
+
+Run:
+```bash 
+gh auth login 
+```
+you'll be asked: 
+
+GitHub.com or Enterprise?
+
+```bash 
+GitHub.com
+```
+
+Preferred Protocol?
+```bash 
+HTTPS
+```
+Authenticate Git?
+
+Choose:
+```
+YES 
+```
+Login Method?
+
+Choose:
+```
+Login with a web browser
+```
+
+You'll see:
+
+```
+First copy your one-time code: XXXX-XXXX
+Press Enter to open https://github.com/login/device
+```
+- Open the browser and authorize.
+
+### 3. Verify You're Logged In
+
+Verify You're Logged In
+
+```bash 
+gh auth status
+```
+
+Example: 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % gh auth status 
+github.com
+  ✓ Logged in to github.com account Anuj2402 (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+This confirms:
+- Authentication successful
+- Active GitHub account
+- Git protocol being used
+
+### Check Which Account Is Active
+```bash 
+anujrai@anujrai-mn4561 90DaysOfDevOps % gh auth status 
+github.com
+  ✓ Logged in to github.com account Anuj2402 (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+
+## Add This to Your Notes
+
+# GitHub CLI Authentication Notes
+
+## Installation
+
+Check if GitHub CLI is installed:
+
+```bash
+gh --version
+```
+
+Install on macOS:
+
+```bash
+brew install gh
+```
+
+---
+
+## Login
+
+Authenticate with GitHub:
+
+```bash
+gh auth login
+```
+
+Recommended options:
+
+- GitHub.com
+- HTTPS
+- Login with browser
+
+---
+
+## Verify Login
+
+Check authentication status:
+
+```bash
+gh auth status
+```
+
+Check active user:
+
+```bash
+gh api user --jq .login
+```
+
+---
+
+## What authentication methods does gh support?
+
+GitHub CLI supports:
+
+### 1. Browser Authentication (Recommended)
+
+```bash
+gh auth login
+```
+
+Opens a browser and completes authentication using a device code.
+
+---
+
+### 2. Personal Access Token (PAT)
+
+```bash
+gh auth login --with-token
+```
+
+Then provide a GitHub Personal Access Token.
+
+Useful for:
+
+- Servers
+- Automation
+- CI/CD pipelines
+
+---
+
+### 3. SSH Authentication
+
+Configure Git operations to use SSH keys.
+
+Example:
+
+```bash
+ssh-keygen -t ed25519
+```
+
+Add the public key to GitHub and authenticate using SSH.
+
+---
+
+### 4. GitHub Actions Authentication
+
+Uses:
+
+```text
+GITHUB_TOKEN
+```
+
+Automatically provided inside GitHub Actions workflows.
+
+Used for:
+
+- CI/CD
+- Automated repository operations
+
+---
+
+## Summary
+
+| Method | Use Case |
+|----------|----------|
+| Browser Login | Daily development |
+| Personal Access Token | Automation & servers |
+| SSH Keys | Secure Git operations |
+| GITHUB_TOKEN | GitHub Actions workflows |
+
