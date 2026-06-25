@@ -451,3 +451,182 @@ gh repo delete Anuj2402/gh-cli-test
 | gh repo view --web | Open in browser |
 | gh repo delete | Delete repository |
 
+
+
+
+# Task 3: Issues
+
+### Step 1: Create an Issue
+ - Create a test issue:
+
+ ```bash 
+gh issue create \
+  --title "Day 26 GitHub CLI Practice" \
+  --body "This issue was created using GitHub CLI as part of Day 26 practice."
+  ```
+
+- After creation, GitHub will return something like:
+OUTPUT: 
+
+```
+https://github.com/Anuj2402/90DaysOfDevOps/issues/1
+```
+![alt text](image-1.png)
+
+- Note the issue number.
+
+### Step 2: List All Open Issues
+
+Run:
+
+```bash 
+gh issue list
+```
+Expected output:
+![alt text](image-2.png)
+
+### Step 3: View a Specific Issue
+
+- Suppose the issue number is 1:
+
+```bash 
+git issue view 1
+```
+
+Example output:
+![alt text](image-3.png)
+
+Open it in browser:
+
+```bash 
+gh issue view 1 --web
+```
+OUTPUT: 
+![alt text](image-4.png)
+
+### Step 4: Close the Issue
+
+```bash 
+gh issue close 1
+```
+Or with a comment:
+```bash 
+gh issue close 1 \
+  --comment "Issue closed after completing GitHub CLI practice."
+
+```
+Expected:
+```bash 
+✓ Closed issue #1
+```
+![alt text](image-5.png)
+
+### Step 5: Verify It's Closed
+RUN:
+```bash 
+gh issue list
+```
+output:
+```
+no open issues in Anuj2402/90DaysOfDevOps
+```
+- This is exactly the message you're seeing now because there are currently no open issues.
+
+## Notes
+
+# GitHub CLI - Issues
+
+## Create an Issue
+
+```bash
+gh issue create \
+  --title "Day 26 GitHub CLI Practice" \
+  --body "This issue was created using GitHub CLI."
+```
+
+---
+
+## List Open Issues
+
+```bash
+gh issue list
+```
+
+Example:
+
+```text
+#1 Day 26 GitHub CLI Practice
+```
+
+---
+
+## View an Issue
+
+```bash
+gh issue view 1
+```
+
+Open in browser:
+
+```bash
+gh issue view 1 --web
+```
+
+---
+
+## Close an Issue
+
+```bash
+gh issue close 1
+```
+
+Close with a comment:
+
+```bash
+gh issue close 1 \
+  --comment "Issue resolved."
+```
+
+---
+
+# How could you use gh issue in a script or automation?
+
+GitHub CLI can be used in CI/CD pipelines and automation scripts.
+
+### Example 1: Create an issue when a deployment fails
+
+```bash
+gh issue create \
+  --title "Deployment Failed" \
+  --body "Production deployment failed. Investigation required."
+```
+
+---
+
+### Example 2: Create an issue when a server health check fails
+
+```bash
+gh issue create \
+  --title "Server Down" \
+  --body "Production server health check failed."
+```
+
+---
+
+### Example 3: Auto-close issues after a successful fix
+
+```bash
+gh issue close 12 \
+  --comment "Issue fixed and verified."
+```
+
+---
+
+## Benefits
+
+- Automatic incident tracking
+- Better DevOps visibility
+- CI/CD integration
+- Reduced manual effort
+- Faster bug reporting
+
