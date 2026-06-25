@@ -224,3 +224,230 @@ Used for:
 | SSH Keys | Secure Git operations |
 | GITHUB_TOKEN | GitHub Actions workflows |
 
+
+# Task 2: Working with Repositories Using GitHub CLI (gh)
+
+### 1. Create a New GitHub Repository from the Terminal
+
+Create a public repository with a README:
+```bash 
+gh repo create gh-cli-test \
+  --public \
+  --add-readme \
+  --clone
+```
+
+What happens?
+- Creates repository `gh-cli-test`
+- Make it public
+- Adds a README.md
+- Clones it locally automatically
+
+Expected output:
+```
+✓ Created repository Anuj2402/gh-cli-test on github.com
+  https://github.com/Anuj2402/gh-cli-test
+Cloning into 'gh-cli-test'...
+
+```
+OUTPUT From github: 
+![alt text](image.png)
+
+### 2. Clone a Repository Using `gh`
+
+Instead of:
+```bash 
+git clone https://github.com/user/repo.git
+```
+Use:
+```bash 
+gh repo clone cli/cli
+```
+Example with my own repo:
+```bash 
+gh repo clone Anuj2402/devops-git-practice
+```
+- This clones the repository locally.
+
+### 3. View Details of One of Your Repositories
+
+Run:
+```bash 
+gh repo view devops-git-practice
+```
+
+or
+```bash 
+gh repo view Anuj2402/devops-git-practice
+```
+
+Example output:
+```bash 
+name:    devops-git-practice
+owner:   Anuj2402
+visibility: Public
+description:
+```
+### 4. List All Your Repositories
+
+Run:
+```bash 
+gh repo list
+```
+
+Example:
+```bash 
+Anuj2402/devops-git-practice
+Anuj2402/90DaysOfDevOps
+Anuj2402/gh-cli-test
+```
+Limit results:
+```bash 
+gh repo list --limit 20
+```
+
+### 5. Open a Repository in Your Browser
+
+Open current repository:
+```bash 
+gh repo view --web
+```
+Open a specific repository:
+```bash 
+gh repo view Anuj2402/devops-git-practice --web
+```
+- default browser opens automatically.
+
+### 6. Delete the Test Repository
+- Be careful. This permanently deletes the repository.
+
+Delete:
+```bash 
+gh repo delete Anuj2402/gh-cli-test
+```
+GitHub CLI will ask:
+```
+Are you sure you want to delete this repository?
+```
+Type:
+```
+y
+```
+- You may also be asked to enter the repository name for confirmation.
+
+Force delete (not recommended):
+```bash 
+gh repo delete Anuj2402/gh-cli-test --yes
+```
+ERROR WE can encounter 
+```bash 
+anujrai@anujrai-mn4561 90DaysOfDevOps % gh repo delete Anuj2402/gh-cli-test --yes
+HTTP 403: Must have admin rights to Repository. (https://api.github.com/repos/Anuj2402/gh-cli-test)
+This API operation needs the "delete_repo" scope. To request it, run:  gh auth refresh -h github.com -s delete_repo
+```
+Run This command to solve this : 
+```bash 
+gh auth refresh -h github.com -s delete_repo
+```
+
+
+
+Output:
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % gh repo delete Anuj2402/gh-cli-test --yes   
+✓ Deleted repository Anuj2402/gh-cli-test
+anujrai@anujrai-mn4561 90DaysOfDevOps %
+```
+
+
+## Add This to Your Notes
+
+# GitHub CLI Repository Management
+
+## Create Repository
+
+Create a public repository with README:
+
+```bash
+gh repo create gh-cli-test --public --add-readme
+```
+
+---
+
+## Clone Repository
+
+Clone using GitHub CLI:
+
+```bash
+gh repo clone owner/repository
+```
+
+Example:
+
+```bash
+gh repo clone Anuj2402/devops-git-practice
+```
+
+---
+
+## View Repository Details
+
+```bash
+gh repo view
+```
+
+Specific repository:
+
+```bash
+gh repo view owner/repository
+```
+
+---
+
+## List Repositories
+
+```bash
+gh repo list
+```
+
+Limit output:
+
+```bash
+gh repo list --limit 20
+```
+
+---
+
+## Open Repository in Browser
+
+```bash
+gh repo view --web
+```
+
+---
+
+## Delete Repository
+
+```bash
+gh repo delete owner/repository
+```
+
+Example:
+
+```bash
+gh repo delete Anuj2402/gh-cli-test
+```
+
+---
+
+## Commonly Used Commands
+
+| Command | Purpose |
+|----------|----------|
+| gh repo create | Create repository |
+| gh repo clone | Clone repository |
+| gh repo view | View repository details |
+| gh repo list | List repositories |
+| gh repo view --web | Open in browser |
+| gh repo delete | Delete repository |
+
