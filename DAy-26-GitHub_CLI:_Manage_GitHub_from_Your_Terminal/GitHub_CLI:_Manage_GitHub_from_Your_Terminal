@@ -944,3 +944,284 @@ gh pr review 5 --comment --body "Looks good overall. Consider renaming this vari
 | `gh pr merge` | Merge a pull request |
 | `gh pr status` | Show your PR status |
 
+# Task 5: GitHub Actions & Workflows (Preview)
+
+
+# Task 5: GitHub Actions & Workflows (Preview)
+
+## Repository Used
+
+```text
+Anuj2402/GitHub-Action-101
+```
+
+---
+
+# 1. List All Workflow Runs
+
+List all workflow runs for the repository:
+
+```bash
+gh run list --repo Anuj2402/GitHub-Action-101
+```
+
+Example Output:
+
+```text
+completed    success    CI Pipeline           main    push    123456789
+completed    success    Docker Build          main    push    123456788
+completed    failure    CI Pipeline           main    push    123456787
+```
+
+---
+
+# 2. View the Status of a Specific Workflow Run
+
+Copy the **Run ID** from the previous command.
+
+Example:
+
+```text
+123456789
+```
+
+View the run details:
+
+```bash
+gh run view 123456789 --repo Anuj2402/GitHub-Action-101
+```
+
+Example Output:
+
+```text
+✓ CI Pipeline
+
+Status: completed
+Conclusion: success
+
+Workflow:
+CI Pipeline
+
+Triggered by:
+push
+
+Branch:
+main
+
+Commit:
+abc1234
+```
+
+---
+
+## Optional: Open Workflow Run in Browser
+
+```bash
+gh run view 123456789 --repo Anuj2402/GitHub-Action-101 --web
+```
+
+---
+
+# 3. List All Workflows
+
+List all GitHub Actions workflows in the repository:
+
+```bash
+gh workflow list --repo Anuj2402/GitHub-Action-101
+```
+
+Example Output:
+
+```text
+CI Pipeline         active
+Docker Build        active
+Node.js CI          active
+```
+
+---
+
+# 4. View a Workflow
+
+View details of a workflow:
+
+```bash
+gh workflow view "CI Pipeline" --repo Anuj2402/GitHub-Action-101
+```
+
+or
+
+```bash
+gh workflow view ci.yml --repo Anuj2402/GitHub-Action-101
+```
+
+---
+
+# Answer: How could gh run and gh workflow be useful in a CI/CD pipeline?
+
+## gh run
+
+The `gh run` command is used to interact with **workflow runs**.
+
+It allows developers and DevOps engineers to:
+
+- Monitor build status
+- Check deployment progress
+- View logs for failed jobs
+- Re-run failed workflows
+- Cancel running workflows
+- Open workflow runs in the browser
+
+### Examples
+
+List workflow runs:
+
+```bash
+gh run list
+```
+
+View a run:
+
+```bash
+gh run view <run-id>
+```
+
+Watch a running workflow:
+
+```bash
+gh run watch <run-id>
+```
+
+Download logs:
+
+```bash
+gh run view <run-id> --log
+```
+
+Re-run a failed workflow:
+
+```bash
+gh run rerun <run-id>
+```
+
+Cancel a running workflow:
+
+```bash
+gh run cancel <run-id>
+```
+
+---
+
+## gh workflow
+
+The `gh workflow` command is used to manage **GitHub Actions workflows**.
+
+It helps you:
+
+- View available workflows
+- Trigger workflows manually
+- Enable or disable workflows
+- Inspect workflow configurations
+
+### Examples
+
+List workflows:
+
+```bash
+gh workflow list
+```
+
+View workflow details:
+
+```bash
+gh workflow view
+```
+
+Run a workflow manually:
+
+```bash
+gh workflow run ci.yml
+```
+
+Disable a workflow:
+
+```bash
+gh workflow disable ci.yml
+```
+
+Enable a workflow:
+
+```bash
+gh workflow enable ci.yml
+```
+
+---
+
+# Real-World CI/CD Use Cases
+
+### Monitor Production Deployments
+
+```bash
+gh run watch
+```
+
+Watch deployment progress directly from the terminal.
+
+---
+
+### Debug Failed Builds
+
+```bash
+gh run view <run-id> --log
+```
+
+Inspect workflow logs without opening GitHub.
+
+---
+
+### Re-run Failed Pipelines
+
+```bash
+gh run rerun <run-id>
+```
+
+Useful after fixing temporary issues.
+
+---
+
+### Trigger Manual Deployments
+
+```bash
+gh workflow run deploy.yml
+```
+
+Start deployments directly from the command line.
+
+---
+
+### Automate CI/CD Operations
+
+Integrate `gh` commands into shell scripts or automation to:
+
+- Trigger workflows
+- Monitor pipeline status
+- Retrieve logs
+- Notify teams about failures
+- Retry deployments automatically
+
+---
+
+# Summary
+
+| Command | Purpose |
+|----------|---------|
+| `gh run list` | List workflow runs |
+| `gh run view` | View workflow details |
+| `gh run watch` | Watch a running workflow |
+| `gh run rerun` | Re-run a workflow |
+| `gh run cancel` | Cancel a workflow |
+| `gh workflow list` | List workflows |
+| `gh workflow view` | View workflow details |
+| `gh workflow run` | Trigger a workflow |
+| `gh workflow enable` | Enable a workflow |
+| `gh workflow disable` | Disable a workflow |
+
