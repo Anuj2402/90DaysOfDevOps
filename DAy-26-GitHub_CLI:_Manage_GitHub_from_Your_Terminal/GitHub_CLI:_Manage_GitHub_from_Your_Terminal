@@ -630,3 +630,317 @@ gh issue close 12 \
 - Reduced manual effort
 - Faster bug reporting
 
+# Task 4: Pull Requests
+
+### Step 1: Create a New Branch
+
+```bash 
+git switch -c feature-practice
+```
+
+verify: 
+```bash 
+git branch
+```
+
+### Step 2: Make a Change
+Append a line to your README:
+
+```bash 
+echo "## GitHub CLI Pull Request Practice" >> README.md
+```
+Check:
+```bash 
+git status
+```
+
+### Step 3: Commit the Change
+```bash 
+git add README.md
+git commit -m "Add GitHub CLI pull request practice"
+```
+### Step 4: Push the Branch
+
+```bash 
+git push -u origin feature-practice
+```
+Expected:
+```bash 
+Branch 'feature-practice' set up to track remote branch 'feature-practice'.
+```
+
+### Step 5: Create the Pull Request
+
+RUN: 
+```bash 
+gh pr create \
+  --base main \
+  --head feature-practice \
+  --title "Add GitHub CLI PR Practice" \
+  --body "This pull request was created using GitHub CLI."
+  ```
+Expected output:
+```bash 
+https://github.com/Anuj2402/90DaysOfDevOps/pull/1
+```
+
+Step 6: List Open Pull Requests
+
+```bash 
+gh pr list
+```
+Example:
+```
+Showing 1 of 1 open pull requests
+
+#1 Add GitHub CLI PR Practice
+```
+### Step 7: View Pull Request Details
+
+View PR #1:
+```bash 
+gh pr view 1
+```
+Example output:
+```
+Title: Add GitHub CLI PR Practice
+
+State: OPEN
+
+Author: Anuj2402
+
+Reviewers:
+None
+
+Checks:
+No checks reported
+```
+Open it in the browser:
+```bash 
+gh pr view 1 --web 
+```
+
+### Step 8: Merge the Pull Request
+- Merge using the default merge method:
+
+```bash 
+gh pr merge 1
+```
+- GitHub CLI will ask which merge strategy to use.
+- Or choose one explicitly.
+
+Merge Commit
+```bash 
+gh pr merge 1 --merge 
+```
+Squash Merge
+```bash 
+gh pr merge 1 --squash 
+```
+Rebase Merge
+```bash 
+gh pr merge 1 --rebase 
+```
+- After merging, delete the branch:
+```bash 
+gh pr merge 1 --merge --delete-branch
+```
+Step 9: Verify
+```bash 
+git switch main
+git pull origin main
+```
+- You should see your changes merged into `main`.
+
+## Add This to Your Notes
+
+# GitHub CLI - Pull Requests
+
+## Create a Branch
+
+```bash
+git switch -c feature-practice
+```
+
+---
+
+## Push Branch
+
+```bash
+git push -u origin feature-practice
+```
+
+---
+
+## Create Pull Request
+
+```bash
+gh pr create \
+  --base main \
+  --head feature-practice \
+  --title "Add GitHub CLI PR Practice" \
+  --body "Created using GitHub CLI."
+```
+
+---
+
+## List Pull Requests
+
+```bash
+gh pr list
+```
+
+---
+
+## View Pull Request
+
+```bash
+gh pr view 1
+```
+
+Open in browser:
+
+```bash
+gh pr view 1 --web
+```
+
+---
+
+## Merge Pull Request
+
+Merge Commit:
+
+```bash
+gh pr merge 1 --merge
+```
+
+Squash Merge:
+
+```bash
+gh pr merge 1 --squash
+```
+
+Rebase Merge:
+
+```bash
+gh pr merge 1 --rebase
+```
+
+Delete branch after merge:
+
+```bash
+gh pr merge 1 --merge --delete-branch
+```
+
+---
+
+# Answer: What merge methods does gh pr merge support?
+
+GitHub CLI supports three merge methods:
+
+### 1. Merge Commit
+
+```bash
+gh pr merge --merge
+```
+
+- Creates a merge commit.
+- Preserves all commits and branch history.
+
+---
+
+### 2. Squash Merge
+
+```bash
+gh pr merge --squash
+```
+
+- Combines all commits into one.
+- Keeps the main branch history clean.
+
+---
+
+### 3. Rebase Merge
+
+```bash
+gh pr merge --rebase
+```
+
+- Replays commits on top of the target branch.
+- Creates a linear history.
+- Does not create a merge commit.
+
+---
+
+# Answer: How would you review someone else's PR using gh?
+
+## List pull requests
+
+```bash
+gh pr list
+```
+
+---
+
+## View a PR
+
+```bash
+gh pr view <PR-number>
+```
+
+Example:
+
+```bash
+gh pr view 5
+```
+
+---
+
+## Checkout the PR locally
+
+```bash
+gh pr checkout 5
+```
+
+This downloads the PR branch so you can:
+
+- Run the code
+- Test the changes
+- Inspect files
+
+---
+
+## Review the PR
+
+Approve:
+
+```bash
+gh pr review 5 --approve
+```
+
+Request changes:
+
+```bash
+gh pr review 5 --request-changes --body "Please fix the failing tests."
+```
+
+Comment only:
+
+```bash
+gh pr review 5 --comment --body "Looks good overall. Consider renaming this variable."
+```
+
+---
+
+## Common GitHub CLI PR Commands
+
+| Command | Purpose |
+|----------|---------|
+| `gh pr create` | Create a pull request |
+| `gh pr list` | List pull requests |
+| `gh pr view` | View PR details |
+| `gh pr checkout` | Check out a PR locally |
+| `gh pr review` | Approve, comment, or request changes |
+| `gh pr merge` | Merge a pull request |
+| `gh pr status` | Show your PR status |
+
