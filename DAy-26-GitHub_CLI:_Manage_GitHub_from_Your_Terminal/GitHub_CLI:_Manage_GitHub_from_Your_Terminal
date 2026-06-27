@@ -946,9 +946,6 @@ gh pr review 5 --comment --body "Looks good overall. Consider renaming this vari
 
 # Task 5: GitHub Actions & Workflows (Preview)
 
-
-# Task 5: GitHub Actions & Workflows (Preview)
-
 ## Repository Used
 
 ```text
@@ -1225,3 +1222,315 @@ Integrate `gh` commands into shell scripts or automation to:
 | `gh workflow enable` | Enable a workflow |
 | `gh workflow disable` | Disable a workflow |
 
+
+
+# Task 6: Useful gh Tricks
+
+# GitHub CLI Useful Commands & Tricks
+
+---
+
+# 1. gh api
+
+## What it does
+
+Makes raw GitHub REST API calls directly from the terminal.
+
+### Example: Get your GitHub profile
+
+```bash
+gh api user
+```
+
+### Get only your username
+
+```bash
+gh api user --jq .login
+```
+
+### List your repositories
+
+```bash
+gh api user/repos
+```
+
+### Get repository information
+
+```bash
+gh api repos/Anuj2402/90DaysOfDevOps
+```
+
+### Why it's useful
+
+- Access any GitHub API endpoint
+- Automate GitHub tasks
+- Retrieve repository metadata
+- Use in shell scripts and CI/CD pipelines
+
+---
+
+# 2. gh gist
+
+## What it does
+
+Creates and manages GitHub Gists from the terminal.
+
+### Create a public gist
+
+```bash
+echo "Hello GitHub CLI!" > hello.txt
+gh gist create hello.txt --public
+```
+
+### Create a secret gist
+
+```bash
+gh gist create hello.txt
+```
+
+### List your gists
+
+```bash
+gh gist list
+```
+
+### View a gist
+
+```bash
+gh gist view <gist-id>
+```
+
+### Edit a gist
+
+```bash
+gh gist edit <gist-id>
+```
+
+### Delete a gist
+
+```bash
+gh gist delete <gist-id>
+```
+
+### Why it's useful
+
+- Share code snippets
+- Store notes
+- Share configuration files
+- Share scripts quickly
+
+---
+
+# 3. gh release
+
+## What it does
+
+Creates and manages GitHub Releases.
+
+### List releases
+
+```bash
+gh release list
+```
+
+### Create a release
+
+```bash
+gh release create v1.0.0 \
+--title "Version 1.0.0" \
+--notes "Initial Release"
+```
+
+### View a release
+
+```bash
+gh release view v1.0.0
+```
+
+### Delete a release
+
+```bash
+gh release delete v1.0.0
+```
+
+### Upload release assets
+
+```bash
+gh release upload v1.0.0 app.zip
+```
+
+### Why it's useful
+
+- Publish software versions
+- Upload binaries
+- Manage release notes
+- Automate software releases
+
+---
+
+# 4. gh alias
+
+## What it does
+
+Creates shortcuts for frequently used GitHub CLI commands.
+
+### Create an alias
+
+```bash
+gh alias set repos "repo list"
+```
+
+Now simply run:
+
+```bash
+gh repos
+```
+
+### Another example
+
+```bash
+gh alias set prs "pr list"
+```
+
+Use:
+
+```bash
+gh prs
+```
+
+### List aliases
+
+```bash
+gh alias list
+```
+
+### Delete an alias
+
+```bash
+gh alias delete repos
+```
+
+### Why it's useful
+
+- Saves typing
+- Faster daily workflow
+- Great for frequently used commands
+
+---
+
+# 5. gh search repos
+
+## What it does
+
+Searches GitHub repositories directly from the terminal.
+
+### Search for Docker repositories
+
+```bash
+gh search repos docker
+```
+
+### Search for Kubernetes repositories
+
+```bash
+gh search repos kubernetes
+```
+
+### Search for Terraform repositories
+
+```bash
+gh search repos terraform
+```
+
+### Limit results
+
+```bash
+gh search repos devops --limit 5
+```
+
+### Search by programming language
+
+```bash
+gh search repos python --language Python
+```
+
+### Search by stars
+
+```bash
+gh search repos kubernetes --stars ">5000"
+```
+
+### Why it's useful
+
+- Discover open-source projects
+- Find learning resources
+- Search repositories without opening GitHub
+
+---
+
+# Common Use Cases
+
+| Command | Purpose |
+|----------|---------|
+| `gh api` | Access GitHub REST API |
+| `gh gist` | Create and manage GitHub Gists |
+| `gh release` | Create and manage Releases |
+| `gh alias` | Create custom shortcuts |
+| `gh search repos` | Search GitHub repositories |
+
+---
+
+# Examples
+
+## Get current GitHub username
+
+```bash
+gh api user --jq .login
+```
+
+---
+
+## Create a public gist
+
+```bash
+echo "Hello World" > hello.txt
+gh gist create hello.txt --public
+```
+
+---
+
+## Create a software release
+
+```bash
+gh release create v1.0.0 \
+--title "First Release" \
+--notes "Initial release of the project."
+```
+
+---
+
+## Create an alias
+
+```bash
+gh alias set prs "pr list"
+```
+
+Now use:
+
+```bash
+gh prs
+```
+
+---
+
+## Search for DevOps repositories
+
+```bash
+gh search repos devops --limit 10
+```
+
+---
+
+# Interview Tip
+
+These commands are especially useful for DevOps engineers because they enable automation of GitHub tasks directly from scripts, CI/CD pipelines, and the terminal without needing to use the GitHub web interface.
