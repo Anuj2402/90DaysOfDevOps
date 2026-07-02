@@ -203,3 +203,255 @@ docker run ngnix
 4. If the image isn't available, the daemon downloads it from the Docker Registry (Docker Hub).
 5. The daemon creates a container from the image.
 6. The application starts running inside the container
+
+
+
+# Task 2: Install Docker
+
+### Step 1: Install Docker Desktop
+
+-  Go to the official Docker website.
+- Download Docker Desktop for Mac (choose the version for your Mac: Apple Silicon or Intel).
+- Install it by dragging Docker.app into the Applications folder.
+- Launch Docker Desktop.
+- Wait until Docker starts. You'll see the whale icon in the menu bar and a message like:
+
+```text 
+Docker Desktop is running
+```
+
+### Step 2: Verify the Installation
+Open Terminal and run:
+```bash 
+docker --version
+```
+
+Example output:
+```bash 
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker --version 
+Docker version 29.2.1, build a5c7197
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+Now check whether Docker is running:
+```bash 
+docker info 
+```
+Output: 
+```
+Client
+Server
+Containers
+Images
+Storage Driver
+CPUs
+Memory
+
+Client:
+ Version:    29.2.1
+ Context:    desktop-linux
+ Debug Mode: false
+ Plugins:
+  agent: create or run AI agents (Docker Inc.)
+    Version:  v1.27.1
+    Path:     /Users/anujrai/.docker/cli-plugins/docker-agent
+
+
+Server:
+ Containers: 8
+  Running: 5
+  Paused: 0
+  Stopped: 3
+ Images: 11
+ Server Version: 29.2.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Discovered Devices:
+  cdi: docker.com/gpu=webgpu
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: dea7da592f5d1d2b7755e3a161be07f43fad8f75
+ runc version: v1.3.4-0-gd6d73eb8
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.72-linuxkit
+ Operating System: Docker Desktop
+ OSType: linux
+ Architecture: aarch64
+ CPUs: 12
+ Total Memory: 7.652GiB
+ Name: docker-desktop
+ ID: 442fccd1-683e-4f3e-a921-c3453db7153b
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ HTTP Proxy: http.docker.internal:3128
+ HTTPS Proxy: http.docker.internal:3128
+ No Proxy: hubproxy.docker.internal
+ Labels:
+  com.docker.desktop.address=unix:///Users/anujrai/Library/Containers/com.docker.docker/Data/docker-cli.sock
+ Experimental: false
+ Insecure Registries:
+  hubproxy.docker.internal:5555
+  ::1/128
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+
+````
+
+
+
+### Step 3: Run Your First Container
+
+Run:
+
+```bash 
+docker run hello-world
+```
+- The first time, Docker downloads the image because it isn't available locally.
+
+Example output:
+```
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+Status: Downloaded newer image for hello-world:latest
+...
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+...
+```
+
+### Step 4: Understand What Happened
+
+When we executed:
+
+```bash 
+docker run hello-world 
+```
+Docker performed these steps:
+
+i. Docker Client Received the Command
+```bash 
+docker run hello-world 
+```
+- The Docker Client sent this request to the Docker Daemon.
+
+ii. Docker Daemon Looked for the Image
+
+- Docker checked whether the hello-world image already existed on your computer.
+
+- Since this was your first run, the image wasn't found.
+
+iii. Docker Pulled the Image
+- Docker automatically downloaded the hello-world image from Docker Hub, the default Docker registry.
+
+iv. Docker Created a Container
+- After downloading the image, Docker created a new container from it.
+
+Think of it like this:
+```
+Image
+   ↓
+docker run
+   ↓
+Container
+```
+
+v. The Container Executed
+
+The hello-world program inside the container printed the message:
+```
+Hello from Docker!
+```
+This confirms that Docker is working correctly.
+
+vi. The Container Stopped
+- The hello-world application completed its task and exited.
+
+- Since the container had nothing else to do, it stopped automatically.
+
+### Step 5: Verify the Container
+
+Run: 
+```bash 
+docker ps -a 
+```
+
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker ps -a
+CONTAINER ID   IMAGE                       COMMAND                  CREATED          STATUS                      PORTS                                 NAMES
+f6d4f939f30e   hello-world                 "/hello"                 17 seconds ago   Exited (0) 16 seconds ago                 
+```
+Exited (0) means:
+- The program completed successfully.
+- No errors occurred.
+
+
+### Step 6: Check Downloaded Images
+
+List local images:
+```bash 
+docker images 
+```
+
+Example output:
+```
+REPOSITORY    TAG       IMAGE ID
+hello-world   latest    abc12345
+```
+
+![alt text](<Screenshot 2026-07-03 at 12.06.21 AM.png>)
+
+- This confirms the image has been downloaded and stored locally.
+
+
+## Flow of What Happened
+
+```
+You type:
+docker run hello-world
+        │
+        ▼
+Docker Client
+        │
+        ▼
+Docker Daemon
+        │
+        ▼
+Checks for image locally
+        │
+        ├── Found? → Create container
+        │
+        └── Not found
+                │
+                ▼
+        Download image from Docker Hub
+                │
+                ▼
+        Create container
+                │
+                ▼
+        Run application
+                │
+                ▼
+        Print "Hello from Docker!"
+                │
+                ▼
+        Container exits
+    ```
+    
