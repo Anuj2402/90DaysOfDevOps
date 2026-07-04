@@ -453,5 +453,161 @@ Checks for image locally
                 │
                 ▼
         Container exits
-    ```
-    
+   
+```
+
+
+# Task 3: Run Real Containers
+
+### 1. Run an Nginx Container
+
+Start an Nginx container:
+```bash 
+docker run -d --name my-nginx -p 8080:80 nginx
+```
+What each option means
+
+| Option            | Meaning                                                       |
+| ----------------- | ------------------------------------------------------------- |
+| `docker run`      | Create and start a container                                  |
+| `-d`              | Run in detached (background) mode                             |
+| `--name my-nginx` | Give the container a custom name                              |
+| `-p 8080:80`      | Map port 8080 on your machine to port 80 inside the container |
+| `nginx`           | Docker image to use                                           |
+
+Verify It's Running
+```bash
+docker ps 
+```
+Example output:
+
+```
+CONTAINER ID   IMAGE    STATUS         PORTS
+abc12345       nginx    Up 2 minutes   0.0.0.0:8080->80/tcp
+```
+
+Access Nginx in Your Browser
+
+Open:
+```
+http://localhost:8080
+```
+- You should see the default Welcome to nginx! page.
+
+This confirms:
+- Docker container is running.
+- Port mapping works.
+- Nginx is serving web pages.
+
+
+### 2.Run an Ubuntu Container in Interactive Mode
+Start Ubuntu:
+
+```bash
+docke run -it --name my-ubuntu ubuntu 
+```
+Docker may first download the Ubuntu image if it isn't already available.
+
+The prompt changes to something like:
+```
+root@4d8c7e:/#
+```
+OUTPUT:
+![alt text](image-1.png)
+
+- You're now inside the Ubuntu container.
+
+Explore the Ubuntu Container
+Try these commands:
+```bash 
+pwd
+ls 
+whoami 
+hostname
+cat /etc/os-release
+uname -a
+ps
+
+```
+OUTPUT 
+![alt text](image-2.png)
+
+
+Exit the Container
+```
+exit
+```
+- The container stops after you exit because its main process has ended.
+
+### 3. List Running Containers
+
+### 4. List All Containers
+
+```bash 
+docker ps # This shows only containers that are currently running. 
+   OR
+docker ps -a # This includes both running and stopped containers.
+```
+Example:
+```
+CONTAINER ID   IMAGE   STATUS
+abc123         nginx   Up 5 minutes
+```
+OUTPUT: 
+![alt text](image-3.png)
+
+- This shows only containers that are currently running. 
+
+### 5. Stop a Container
+
+Stop the ubuntu container:
+```bash 
+docker stop ubuntu 
+```
+Verify:
+```bash 
+docker ps 
+```
+- The Ubuntu container should no longer appear because it's stopped.
+
+
+### 6. Remove a Container
+
+Remove the stopped/exited ubuntu container:
+
+```bash 
+docker rm my-ubuntu
+    OR 
+docker rm 553ae9471116
+```
+Verify:
+```bash 
+docker ps -a
+```
+OUTPUT: 
+![alt text](image-4.png)
+
+
+- The removed containers will no longer be listed
+
+
+How It Works
+```
+docker run
+      │
+      ▼
+Docker checks if the image exists locally
+      │
+      ├── Yes → Use local image
+      └── No  → Download image from Docker Hub
+                    │
+                    ▼
+             Create a new container
+                    │
+                    ▼
+              Start the container
+                    │
+                    ▼
+         Application runs inside it
+
+```
