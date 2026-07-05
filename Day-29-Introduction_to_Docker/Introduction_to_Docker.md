@@ -611,3 +611,365 @@ Docker checks if the image exists locally
          Application runs inside it
 
 ```
+
+# Task 4: Working with Running Containers
+
+### Step 1: Run an Nginx Container in Detached Mode
+
+Run the following command:
+```bash 
+docker run -d  --name my-nginx -p 8080:80 nginx
+```
+Explanation
+
+| Option            | Meaning                                                |
+| ----------------- | ------------------------------------------------------ |
+| `docker run`      | Create and start a container                           |
+| `-d`              | Detached mode (runs in the background)                 |
+| `--name my-nginx` | Assign a name to the container                         |
+| `-p 8080:80`      | Map port 8080 on your host to port 80 in the container |
+| `nginx`           | Docker image to run                                    |
+
+Verify it's running:
+```bash 
+docker ps
+```
+Example output:
+```
+CONTAINER ID   IMAGE   STATUS      PORTS
+8c9f4d5a2a1b   nginx   Up 2 mins   0.0.0.0:8080->80/tcp
+```
+OUTPUT : 
+```
+
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker run -d  --name my-nginx -p 8080:80 nginx
+5d4ed5c0f0a6a14a3642fd7bb292e8646e8556f606bb8788d6b9f941bb224516
+
+
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker ps 
+CONTAINER ID   IMAGE                  COMMAND                  CREATED          STATUS         PORTS                                     NAMES
+5d4ed5c0f0a6   nginx                  "/docker-entrypoint.…"   10 seconds ago   Up 9 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-nginx
+```
+
+
+### Step 2: View Container Logs
+Every container writes logs to standard output (`stdout`) and standard error (`stderr`).
+
+View the logs:
+```bash 
+docker logs my-nginx
+```
+Example output:
+```
+/docker-entrypoint.sh: Configuration complete; ready for start up
+```
+- You may also see HTTP access logs after opening http://localhost:8080 in your browser.
+
+### Step 3: View Logs in Real Time (Follow Mode)
+To continuously watch the logs:
+```bash 
+docker logs -f my-nginx
+```
+Now visit:
+```bash 
+http://localhost:8080
+```
+- You'll see new log entries appear immediately, for example:
+
+```
+192.168.65.1 - - [05/Jul/2026:09:06:21 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "-"
+^C%                                                                
+```
+
+Stop following the logs with:
+```
+ctl + c 
+```
+- Tip: `docker logs -f` works like the Linux `tail -f` command.
+
+### Step 4: Enter the Running Container
+
+Open an interactive shell inside the container:
+
+```bash 
+docker exec -it my-nginx  /bin/bash 
+```
+OUTPUT: 
+Your prompt changes to something like:
+![alt text](image-5.png)
+
+- You're now inside the container.
+
+
+### Step 5: Explore the Filesystem
+
+Try these commands:
+```bash 
+pwd 
+ls 
+ls /
+
+cd /usr/share/nginx/html
+pwd
+
+ls -l 
+
+#View the default web page:
+
+cat index.html
+
+#Check the operating system:
+cat etc/os-release
+
+# Find the Nginx binary:
+
+which nginx
+
+# List running processes:
+ps aux 
+
+# Exit the shell:
+exit 
+```
+OUTPUT: 
+
+```
+root@5d4ed5c0f0a6:/# pwd 
+/
+root@5d4ed5c0f0a6:/# ls 
+bin   dev                  docker-entrypoint.sh  home  media  opt   root  sbin  sys  usr
+boot  docker-entrypoint.d  etc                   lib   mnt    proc  run   srv   tmp  var
+root@5d4ed5c0f0a6:/# ls /
+bin   dev                  docker-entrypoint.sh  home  media  opt   root  sbin  sys  usr
+boot  docker-entrypoint.d  etc                   lib   mnt    proc  run   srv   tmp  var
+root@5d4ed5c0f0a6:/# 
+root@5d4ed5c0f0a6:/# cd /usr/share/nginx/html
+root@5d4ed5c0f0a6:/usr/share/nginx/html# pwd 
+/usr/share/nginx/html
+root@5d4ed5c0f0a6:/usr/share/nginx/html# ls 
+50x.html  index.html
+root@5d4ed5c0f0a6:/usr/share/nginx/html# ls -l
+total 8
+-rw-r--r-- 1 root root 497 Jun 17 14:40 50x.html
+-rw-r--r-- 1 root root 896 Jun 17 14:40 index.html
+root@5d4ed5c0f0a6:/usr/share/nginx/html# cat index.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, nginx is successfully installed and working.
+Further configuration is required for the web server, reverse proxy, 
+API gateway, load balancer, content cache, or other features.</p>
+
+<p>For online documentation and support please refer to
+<a href="https://nginx.org/">nginx.org</a>.<br/>
+To engage with the community please visit
+<a href="https://community.nginx.org/">community.nginx.org</a>.<br/>
+For enterprise grade support, professional services, additional 
+security features and capabilities please refer to
+<a href="https://f5.com/nginx">f5.com/nginx</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+root@5d4ed5c0f0a6:/usr/share/nginx/html# cat /etc/os-release
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+NAME="Debian GNU/Linux"
+VERSION_ID="13"
+VERSION="13 (trixie)"
+VERSION_CODENAME=trixie
+DEBIAN_VERSION_FULL=13.5
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+root@5d4ed5c0f0a6:/usr/share/nginx/html# which nginx
+/usr/sbin/nginx
+root@5d4ed5c0f0a6:/usr/share/nginx/html# ps aux 
+bash: ps: command not found
+root@5d4ed5c0f0a6:/usr/share/nginx/html# 
+
+```
+
+### Step 6: Run a Single Command Without Entering the Container
+
+- You don't always need an interactive shell.
+
+Run a command directly:
+
+```bash 
+docker exec my-nginx ls /
+```
+output: 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker exec my-nginx ls -l /
+total 64
+lrwxrwxrwx   1 root root    7 May  8 16:10 bin -> usr/bin
+drwxr-xr-x   2 root root 4096 May  8 16:10 boot
+drwxr-xr-x   5 root root  340 Jul  5 08:59 dev
+drwxr-xr-x   1 root root 4096 Jun 24 01:22 docker-entrypoint.d
+-rwxr-xr-x   1 root root 1620 Jun 24 01:22 docker-entrypoint.sh
+drwxr-xr-x   1 root root 4096 Jul  5 08:59 etc
+drwxr-xr-x   2 root root 4096 May  8 16:10 home
+lrwxrwxrwx   1 root root    7 May  8 16:10 lib -> usr/lib
+drwxr-xr-x   2 root root 4096 Jun 23 00:00 media
+drwxr-xr-x   2 root root 4096 Jun 23 00:00 mnt
+drwxr-xr-x   2 root root 4096 Jun 23 00:00 opt
+dr-xr-xr-x 320 root root    0 Jul  5 08:59 proc
+drwx------   1 root root 4096 Jul  5 09:41 root
+drwxr-xr-x   1 root root 4096 Jul  5 08:59 run
+lrwxrwxrwx   1 root root    8 May  8 16:10 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 Jun 23 00:00 srv
+dr-xr-xr-x  11 root root    0 Jul  5 08:59 sys
+drwxrwxrwt   2 root root 4096 Jun 23 00:00 tmp
+drwxr-xr-x   1 root root 4096 Jun 23 00:00 usr
+drwxr-xr-x   1 root root 4096 Jun 23 00:00 var
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+Check the hostname:
+```bash 
+dokcer exac my-nginx hostname
+```
+Output : 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker exec my-nginx hostname
+5d4ed5c0f0a6
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+Display the Nginx version:
+```bash 
+docker exec my-nginx nginx -v
+```
+OUTPUT:
+```bash 
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker exec my-nginx nginx -v
+nginx version: nginx/1.31.2
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+Display the current user:
+```bash 
+docker exec my-nginx whoami
+```
+OUTPUT: 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker exec my-nginx whoami
+root
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+- Each command runs inside the container and then exits.
+
+
+### Step 7: Inspect the Container
+
+Use:
+```bash 
+docker inspect my-nginx
+```
+- This returns a large JSON document containing detailed information about the container.
+
+
+
+Find the IP Address
+
+```bash 
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-nginx
+```
+Example:
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-nginx
+172.17.0.3
+
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+Find Port Mappings
+
+```bash 
+docker port my-nginx
+```
+Example:
+
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % docker port my-nginx
+80/tcp -> 0.0.0.0:8080
+80/tcp -> [::]:8080
+
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+Or view it in the inspection output:
+```
+docker inspect my-nginx
+```
+
+Look for:
+
+```
+ "NetworkMode": "bridge",
+            "PortBindings": {
+                "80/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "8080"
+                    }
+                ]
+            },
+```
+
+Find Mounted Volumes from that JSON Output: 
+
+```
+"Mounts": []
+```
+- Since no volume was mounted, the array is empty.
+
+
+Commonly Used Commands
+
+| Task                    | Command                                                                                |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| Run Nginx               | `docker run -d --name my-nginx -p 8080:80 nginx`                                       |
+| List running containers | `docker ps`                                                                            |
+| View logs               | `docker logs my-nginx`                                                                 |
+| Follow logs             | `docker logs -f my-nginx`                                                              |
+| Open shell              | `docker exec -it my-nginx /bin/bash`                                                   |
+| Run one command         | `docker exec my-nginx hostname`                                                        |
+| Inspect container       | `docker inspect my-nginx`                                                              |
+| Show IP                 | `docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' my-nginx` |
+| Show port mapping       | `docker port my-nginx`                                                                 |
+
+
+
+Visual Workflow: 
+
+```
+                docker run
+                     │
+                     ▼
+            Running Nginx Container
+                     │
+      ┌──────────────┼──────────────┐
+      │              │              │
+      ▼              ▼              ▼
+docker logs     docker exec    docker inspect
+      │              │              │
+      ▼              ▼              ▼
+ View logs      Enter container   View metadata
+                     │
+                     ▼
+             Explore filesystem
+                     │
+                     ▼
+            Run Linux commands
+```
+
+
+
