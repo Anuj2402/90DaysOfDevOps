@@ -1970,5 +1970,37 @@ docker system df -v
 ```
 
 
+### Bonus: Clean Everything Unused
+
+- Remove all unused containers, networks, dangling images, and build cache:
+
+```bash 
+docker system prune
+```
+Skip confirmation:
+```bash 
+docke system prune -f 
+```
+Remove Everything (Including Unused Images)
+```bash 
+docker system prune -a
+```
+Or: 
+```bash
+docker system prune -a -f 
+```
+
+Common Cleanup Commands
+
+| Task                               | Command                       |
+| ---------------------------------- | ----------------------------- |
+| Stop all running containers        | `docker stop $(docker ps -q)` |
+| Remove stopped containers          | `docker container prune -f`   |
+| Remove unused images               | `docker image prune -f`       |
+| Remove all unused images           | `docker image prune -a -f`    |
+| Check Docker disk usage            | `docker system df`            |
+| Detailed disk usage                | `docker system df -v`         |
+| Remove all unused Docker resources | `docker system prune -a -f`   |
+
 
 
