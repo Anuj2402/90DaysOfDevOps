@@ -2139,3 +2139,244 @@ Docker uses layers because they:
 ### IMP Q->  Why are Docker images built in layers?
 
 - Docker images use layers to improve efficiency. Each Dockerfile instruction creates a read-only layer that can be cached and reused. This speeds up image builds, reduces disk usage by sharing common layers across images, and minimizes network transfers because only changed layers need to be downloaded when an image is updated.
+
+
+# Task 3: Container Lifecycle
+
+This Taks helps us to understand the lifecycle of a Docker container. A container moves through different states such as Created , Running , Paused , Exited, and finally Removed. 
+
+### Step 1: Create a Container (Without Starting It)
+
+Create a container from the Ubuntu image:
+
+```bash 
+dokcer create --name my-ubuntu ubuntu
+```
+Example output:
+
+![alt text](image-5.png)
+
+Check its status:
+```bash 
+docker ps -a 
+```
+Output: 
+```
+root@docker-host ~ ➜  docker ps -a 
+CONTAINER ID   IMAGE     COMMAND       CREATED          STATUS    PORTS     NAMES
+55a64e55f084   ubuntu    "/bin/bash"   38 seconds ago   Created             my-ubuntu
+
+```
+- State: ✅ Created
+- `docker create` creates the container but does not start it.
+
+### Step 2: Start the Container
+
+Start the container:
+```bash 
+docker start my-ubuntu
+```
+Check the status:
+```bash 
+docker ps -a 
+```
+- If the container's default process exits immediately (which happens with a plain Ubuntu image), you'll likely see:
+```
+STATUS
+Exited (0)
+```
+#### To keep a container running for lifecycle practice
+
+Create it with a long-running command:
+```bash 
+docker create --name my-ubuntu ubuntu sleep infinity 
+```
+Then star it 
+```bash 
+docker start my-ubuntu
+```
+Now: 
+```bash 
+docker ps -a 
+```
+OUTPUT: 
+![alt text](image-6.png)
+
+- STATUS -> Up 10 seconds
+- State: ✅ Running
+
+### Step 3: Pause the Container
+Pause all processes inside the container:
+
+```bash 
+docker pause my-ubuntu
+```
+Check:
+```bash 
+docker ps -a 
+```
+OUTPUT: 
+![alt text](image-7.png)
+
+- STATUs -> Up 1 minute (Paused)
+- State: ✅ Paused
+
+### Step 4: Unpause the Container
+Resume the container:
+
+```bash
+docker unpause my-ubuntu
+```
+Verify:
+```bash 
+docker ps -a 
+```
+OUTPUT: 
+![alt text](image-8.png)
+
+- STATUS -> Up 2 minutes
+- State: ✅ Running
+
+### Step 5: Stop the Container
+
+Stop it gracefully:
+```bash 
+docker stop my-ubuntu 
+```
+Verify:
+
+```bash 
+docker ps -a 
+```
+OUTPUT: 
+![alt text](image-9.png)
+
+- STATUS -> Exited (0) 5 seconds ago
+- State: ✅ Exited
+
+### Step 6: Restart the Container
+
+Restart it:
+
+```bash 
+docekr restart my-ubuntu
+```
+verify: 
+```bash 
+docker ps -a 
+```
+OUTPUT: 
+![alt text](image-10.png)
+
+- STATUS -> Up 3 seconds
+- State: ✅ Running
+
+### Step 7: Kill the Container
+
+Forcefully stop the container:
+
+```bash 
+docker kill my-ubuntu
+```
+Verify:
+```bash 
+docker ps -a 
+```
+OUTPUT:
+![alt text](image-11.png)
+
+- STATUS -> Exited (137)
+- State: ✅ Exited
+
+`docker kill` immediately sends the `SIGKILL` signal, while `docker stop` first sends `SIGTERM` and allows the application to shut down gracefully.
+
+### Step 8: Remove the Container
+Delete the container:
+
+```bash 
+docker rm my-ubuntu
+```
+Verify:
+
+```bash 
+docker ps -a 
+```
+The container should no longer appear.
+State: ✅ Removed
+
+
+# Container State Transitions
+
+```
+           docker create
+                 │
+                 ▼
+             Created
+                 │
+          docker start
+                 │
+                 ▼
+             Running
+          ┌──────┴──────┐
+          │             │
+ docker pause      docker stop
+          │             │
+          ▼             ▼
+       Paused        Exited
+          │             ▲
+docker unpause     docker restart
+          │             │
+          └──────► Running
+                        │
+                  docker kill
+                        │
+                        ▼
+                     Exited
+                        │
+                   docker rm
+                        │
+                        ▼
+                     Removed
+```
+Complete Command Sequence: 
+
+```bash 
+# Create (without starting)
+docker create --name my-ubuntu ubuntu sleep infinity
+
+# Check status
+docker ps -a
+
+# Start
+docker start my-ubuntu
+docker ps -a
+
+# Pause
+docker pause my-ubuntu
+docker ps -a
+
+# Unpause
+docker unpause my-ubuntu
+docker ps -a
+
+# Stop
+docker stop my-ubuntu
+docker ps -a
+
+# Restart
+docker restart my-ubuntu
+docker ps -a
+
+# Kill
+docker kill my-ubuntu
+docker ps -a
+
+# Remove
+docker rm my-ubuntu
+docker ps -a
+```
+
+### Q-> What is the difference between docker stop and docker kill?
+
+- `docker stop` sends a `SIGTERM` signal, allowing the application to shut down gracefully. If it doesn't exit within the timeout period, Docker sends `SIGKILL`.
+- `docker kill` sends `SIGKILL` immediately, forcefully terminating the container without giving the application a chance to clean up.
