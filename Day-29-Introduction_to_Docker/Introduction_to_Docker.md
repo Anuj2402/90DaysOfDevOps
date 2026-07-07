@@ -612,3 +612,197 @@ Docker checks if the image exists locally
 
 ```
 
+# Task 4: Explore Docker Containers
+
+### 1. Run a Container in Detached Mode
+
+Run an Nginx container in the background:
+```bash 
+docker run -d nginx
+```
+Q-> What is different?
+
+Without `-d`:
+
+```bash 
+docker run nginx 
+```
+- Runs in the foreground.
+- Your terminal is attached to the container.
+- You see the logs directly.
+- Pressing `Ctrl + C` stops the container.
+
+With `-d`:
+
+```bash
+docker run -d nginx
+```
+- Runs in the background.
+- Returns the container ID immediately.
+- Your terminal is free to run other commands.
+- The container continues running until you stop it.
+
+Verify:
+```bash 
+dokcer ps 
+```
+OUTPUT: 
+![alt text](image-6.png)
+
+### 2. Give a Container a Custom Name
+
+Instead of using Docker's random names, assign your own.
+```bash 
+docker run -d --name my-nginx nginx 
+```
+Now you can manage it using the name:
+
+```bash 
+docker stop my-nginx
+    or
+docker start my-nginx 
+```
+
+Check:
+```bash 
+docker ps 
+```
+OUTPUT: 
+![alt text](image-7.png)
+
+
+### 3. Map a Port from the Container to Your Host
+
+Expose the Nginx web server to your local machine:
+
+```bash 
+docker run -d --name my-nginx -p 8080:80 nginx
+```
+Port Mapping
+
+```
+Host Machine        Container
+-------------       ----------
+Port 8080   ----->  Port 80
+
+```
+Open your browser:
+```
+http://localhost:8080
+```
+You should see:
+```
+Welcome to nginx!
+```
+Verify the mapping:
+```
+docker port my-nginx
+```
+Example:
+```
+80/tcp -> 0.0.0.0:8080
+```
+
+
+### 4. Check Logs of a Running Container
+
+View the logs:
+```bash 
+docker logs my-nginx
+```
+
+Example:
+
+```
+/docker-entrypoint.sh: Configuration complete; ready for start up
+```
+
+To watch logs in real time:
+
+```bash 
+docker logs -f my-nginx
+```
+- Now refresh http://localhost:8080.
+
+You'll see access logs like:
+```
+172.17.0.1 - - [08/Jul/2026:08:30:20 +0000] "GET / HTTP/1.1" 200 615
+```
+Stop following the logs:
+```
+Ctrl + C
+```
+
+### 5. Run a Command Inside a Running Container
+
+Execute a single command:
+
+```bash 
+docker exec my-nginx hostname
+```
+
+
+Check the current user:
+
+```bash 
+docker exec my-nginx whoami
+```
+
+List files in the root directory:
+
+```bash 
+docker exec my-nginx ls /
+```
+
+Check the Nginx version:
+
+```bash 
+docker exec my-nginx nginx -v
+```
+If you want an interactive shell:
+
+```bash 
+docker exec -it my-nginx /bin/bash
+```
+If Bash isn't installed:
+
+```bash 
+docker exec -it my-nginx /bin/sh
+```
+Exit the shell:
+```bash 
+exit 
+```
+Summary Table
+
+| Task                     | Command                                          |
+| ------------------------ | ------------------------------------------------ |
+| Run in detached mode     | `docker run -d nginx`                            |
+| Run with a custom name   | `docker run -d --name my-nginx nginx`            |
+| Map port 8080 to port 80 | `docker run -d --name my-nginx -p 8080:80 nginx` |
+| List running containers  | `docker ps`                                      |
+| View logs                | `docker logs my-nginx`                           |
+| Follow logs              | `docker logs -f my-nginx`                        |
+| Execute a command        | `docker exec my-nginx hostname`                  |
+| Open a shell             | `docker exec -it my-nginx /bin/bash`             |
+
+
+## Workflow Diagram
+
+```
+docker run -d --name my-nginx -p 8080:80 nginx
+                  │
+                  ▼
+         Running Container
+                  │
+      ┌───────────┼────────────┐
+      ▼           ▼            ▼
+ docker ps   docker logs   docker exec
+      │           │            │
+      ▼           ▼            ▼
+ View status  View logs   Run commands
+
+
+ ```
+ 
+
