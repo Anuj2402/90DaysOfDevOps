@@ -428,5 +428,247 @@ docker logs      docker exec
 
 
 
+# Task 3: CMD vs ENTRYPOINT
+- Understanding the difference between CMD and ENTRYPOINT is essential because they control what happens when a container starts.
 
+Part 1: Using `CMD`
+
+Step 1: Create a New Project
+```bash 
+mkdir cmd-demo 
+cd cmd-demo 
+```
+Create a file called **DockerFile**
+
+#### Dockerfile
+
+```dockerfile 
+vi Dockerfile
+
+FROM ubuntu:latest
+
+CMD ["echo", "hello Anuj!!"]
+```
+
+#### Build the Image
+
+```bash 
+docker build -t cmd-demo:v1 .
+```
+
+#### Run the Container
+
+```bash 
+docker run cmd-demo:v1
+```
+OUTPUT: 
+![alt text](image-8.png)
+
+The container prints "hello Anuj!!" and exits.
+
+#### Override the CMD
+
+Now run below command to override that CMD command 
+```bash 
+docker run cmd-demo:v1 date
+     OR 
+docker run cmd-demo:v1 ls 
+```
+OUTPUT: 
+![alt text](image-9.png)
+
+#### What happened?
+The original Dockerfile contains:
+```dockerfile 
+FROM ubuntu:latest
+CMD ["echo", "hello Anuj!!"]
+```
+But when we supplied:
+```bash
+docker run cmd-demo:v1 date 
+```
+- Docker replace the default `CMD` with `date` and Similar happen with `ls`.
+- Key Point: `CMD` is a default command. It is easily overridden at runtime.
+
+
+### Part 2: Using ENTRYPOINT
+
+Create another directory.
+```bash
+mkdir entrypoint-demo 
+cd entrypoint-demo 
+```
+Create this Dockerfile:
+```dockerfile 
+From ubuntu:latest
+
+ENTRYPOINT ["echo"]
+```
+
+#### Build the Image from the Dockerfile 
+```bash 
+docker build -t entry-demo:v1
+```
+#### Run Without Arguments
+```bash 
+docker run entry-demo:v1
+```
+Output: 
+```
+echo runs without any arguments, so it simply prints a blank line.
+```
+
+#### Run With Additional Arguments
+```bash 
+docker run entry-demo:v1 hello
+       OR 
+docker run entry-demo:v1 "Hello Docker"
+      OR 
+docker run entry-demo:v1 DevOps SRE Docker
+```
+OUTPUT: 
+![alt text](image-10.png)
+
+
+#### What happened?
+```dockerfile 
+FROM Ubuntu:latest 
+
+ENTRYPOINT ["echo"]
+```
+Runtime: 
+```bash 
+docker run entry-demo:v1 hello
+```
+- Docker combines them:
+```
+echo hello
+```
+- The runtime arguments are appended to the ENTRYPOINT; they do not replace it
+
+## CMD + ENTRYPOINT Together (Real World)
+
+This is the pattern we'll see most often.
+
+```Dockerfile 
+ FROM ubuntu:latest
+
+ENTRYPOINT ["ping"]
+
+CMD ["google.com"]
+```
+
+Build: 
+```bash 
+docker build -t ping-demo . 
+```
+
+RUN: 
+```bash 
+docker run ping-demo
+```
+Docker executes: 
+```bash 
+ping google.com 
+```
+- Override only the default argument:
+
+NOW RUN 
+```bash 
+docker run ping-demo openai.com
+```
+Docker ececutes: 
+```bash 
+ping openai.com
+```
+Here: 
+- `ENTRYPOINT` stays fixed as `ping`
+- `CMD` provides the default argument (google.com), which can be overridden.
+
+Visual Comparison: 
+`CMD`
+
+```
+Dockerfile
+
+CMD ["echo", "hello"]
+
+        │
+docker run image
+        │
+        ▼
+
+echo hello
+```
+Override:
+```
+docker run image date
+
+        │
+        ▼
+OUTPUT: 
+date
+```
+- The original CMD is completely replaced.
+
+ENTRYPOINT: 
+```
+Dockerfile
+
+ENTRYPOINT ["echo"]
+
+        │
+docker run image hello
+        │
+        ▼
+OUTPUT: 
+echo hello
+```
+- Arguments are added to the ENTRYPOINT.
+
+#### CMD vs ENTRYPOINT
+
+| Feature            | CMD                          | ENTRYPOINT                     |
+| ------------------ | ---------------------------- | ------------------------------ |
+| Purpose            | Default command or arguments | Main executable                |
+| Can be overridden? | Yes, completely              | Not by default                 |
+| Runtime arguments  | Replace the CMD              | Are appended to the ENTRYPOINT |
+| Typical use        | Default behavior             | Fixed executable               |
+| Real-world usage   | Default options              | Main application               |
+
+
+#### Real-World Examples
+
+Example 1: Python Application
+```dockerfile 
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY . .
+
+CMD ["python", "app.py"]
+```
+
+If someone runs:
+```
+docker run myapp python test.py
+```
+The default CMD is replaced with:
+```bash 
+python test.py
+```
+
+## IMP Q: What is the difference between CMD and ENTRYPOINT?
+
+- `CMD` specifies the default command or arguments for a container. If you provide a command with docker run, it replaces the `CMD`.
+
+- `ENTRYPOINT` specifies the main executable that always runs when the container starts. Any arguments passed to `docker run` are appended to the `ENTRYPOINT` rather than replacing it.
+
+- In production Dockerfiles, it's common to use both:
+
+- `ENTRYPOINT` defines the application to run.
+- `CMD` defines its default arguments.
+
+This combination provides sensible defaults while still allowing users to customize the application's behavior without changing the executable itself.
 
