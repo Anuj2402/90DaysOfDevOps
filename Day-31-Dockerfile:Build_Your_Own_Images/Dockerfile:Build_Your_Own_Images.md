@@ -672,3 +672,267 @@ python test.py
 
 This combination provides sensible defaults while still allowing users to customize the application's behavior without changing the executable itself.
 
+
+---
+
+# Task 4: Build a Simple Web App Image
+
+This is our first real-world Docker project. Instead of just printing text, we'll package a simple website into a Docker image using Nginx and serve it in a browser.
+
+This is very similar to how static websites are deployed in production.
+
+## Project Structure
+Create a new directory:
+
+```bash 
+mkdir my-website
+cd my-website 
+```
+our Project should looks like
+```
+my-website/
+│
+├── Dockerfile
+└── index.html
+
+```
+
+### Step 1: Create `index.html`
+
+Create the file and vi into it :
+
+```bash 
+touch index.html
+   AND 
+vi index.html 
+```
+
+ADD the Below content and save it  
+
+```HTML 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My First Docker Website</title>
+</head>
+<body>
+    <h1>Hello from Docker!</h1>
+
+    <h2>🚀 My First Custom Docker Website</h2>
+
+    <p>
+        This website is running inside an Nginx Docker container.
+    </p>
+
+    <p>
+        Built by <strong>Anuj</strong> while learning Docker.
+    </p>
+</body>
+</html>
+```
+
+### Step 2: Create the Dockerfile
+Create a file named **Dockerfile**:
+
+```bash 
+touch Dockerfile 
+   OR 
+vi Dockerfile 
+```
+Add the following:
+```Dockerfile 
+# Use the lightweight Nginx image
+FROM nginx:alpine
+
+# Copy the website into Nginx's default web directory
+COPY index.html /usr/share/nginx/html/index.html
+
+# Document the HTTP port
+EXPOSE 80
+
+# Start Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### Understanding the Dockerfile
+
+1. Base Image : 
+```Dockerfile 
+FROM nginx:alpine 
+```
+- uses the official **Nginx** image 
+
+- Based on **Alpine Linux** , making it small and efficient. 
+- Already includes a configured web server.
+
+2. Copy the Website
+
+```dockerfile 
+COPY index.html /usr/share/nginx/html/index.html 
+```
+- This copies HOST Machine `index.html ` to Container ` /usr/share/nginx/html/index.html`
+
+- This replaces Nginx's default welcome page with our own.
+
+3. EXPOSE
+
+```dockerfile
+EXPOSE 80
+```
+- Documents that the container listens on port 80.
+
+4. CMD
+```dockerfile 
+CMD ["nginx", "-g", "daemon off;"]
+```
+- Starts Nginx in the foreground so the container stays running.
+
+### Step 3: Build the Image
+
+From inside the project directory, run:
+
+```bash 
+docker build -t my-website:v1 . 
+```
+What does this command do?
+
+| Part            | Meaning                                         |
+| --------------- | ----------------------------------------------- |
+| `docker build`  | Builds an image                                 |
+| `-t`            | Assigns a name and tag                          |
+| `my-website:v1` | Image name and version                          |
+| `.`             | Uses the current directory as the build context |
+
+### Step 4: Verify the Image
+
+List local images:
+```bash 
+docker images 
+```
+Output:
+![alt text](image-11.png)
+
+
+### Step 5: Run the Container
+Start the container and map port 8080 on our machine to port 80 inside the container:
+```bash 
+docker run -d --name my-website-container -p 8080:80 my-website:v1
+
+# Verify 
+docker ps -a
+
+```
+
+OUTPUT: 
+![alt text](image-12.png)
+
+### Step 6: Access the Website
+
+Open your browser and visit:
+```
+http://localhost:8080
+```
+we can see 
+```
+Hello from Docker!
+
+🚀 My First Custom Docker Website
+
+This website is running inside an Nginx Docker container.
+
+Built by Anuj while learning Docker.
+```
+OUTOUT: 
+
+![alt text](image-13.png)
+
+
+### Step 7: Verify the File Inside the Container
+
+Open a shell and Run below command 
+```bash 
+docker exec -it my-website-container bash/sh
+
+# check the web directory 
+
+ls /usr/share/nginx/html
+
+# Display our HTML file 
+cat /usr/share/nginx/html/index.html
+
+# Exit 
+
+exit 
+
+```
+
+OUTPUT: 
+![alt text](image-14.png)
+
+
+### Step 8: View the Logs
+Check the Nginx logs:
+
+```bash 
+docker logs my-website-container 
+
+# or monitor them in real time 
+docker logs -f  my-website-container 
+```
+- Refresh the browser and we can see the HTTP access logs appear.
+
+### Step 9: Stop and Remove the Container
+
+Stop the container and Remove it  
+```bash 
+
+docker stop my-website-container
+      AND 
+
+docker rm my-website-container
+
+```
+OUTPUT: 
+![alt text](image-15.png)
+
+
+## Complete Workflow
+```
+index.html
+Dockerfile
+     │
+     ▼
+docker build -t my-website:v1 .
+     │
+     ▼
+Custom Docker Image
+     │
+     ▼
+docker run -d -p 8080:80
+     │
+     ▼
+Running Nginx Container
+     │
+     ▼
+http://localhost:8080
+     │
+     ▼
+Your Website
+```
+
+### Commands Summary
+
+| Task             | Command                                                              |
+| ---------------- | -------------------------------------------------------------------- |
+| Create project   | `mkdir my-website && cd my-website`                                  |
+| Build image      | `docker build -t my-website:v1 .`                                    |
+| List images      | `docker images`                                                      |
+| Run container    | `docker run -d --name my-website-container -p 8080:80 my-website:v1` |
+| List containers  | `docker ps`                                                          |
+| View logs        | `docker logs my-website-container`                                   |
+| Open shell       | `docker exec -it my-website-container sh`                            |
+| Stop container   | `docker stop my-website-container`                                   |
+| Remove container | `docker rm my-website-container`                                     |
+
+
+
