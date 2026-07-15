@@ -936,3 +936,195 @@ Your Website
 
 
 
+# Task 5: Understanding `.dockerignore`
+
+In real world project we should always create a `.dockerfile` file . It works similarly to `.gitignore` , but instead of telling Git which files to ignore , it tells Docker which files and directories should not be sent to the Docker build context.
+
+This makes builds:
+- Faster 
+- smaller 
+- more secure 
+- Less storage-intensive 
+
+
+### Step-01 -> Create A project 
+I am using my website projet for reference : 
+```bash 
+cd my-website 
+```
+our project might look like this 
+```
+my-website/
+│
+├── Dockerfile
+├── index.html
+├── README.md
+├── .env
+├── .dockerignore
+├── .git/
+└── node_modules/
+```
+
+### Step 2: Create `.dockerignore`
+
+Cretate a file: 
+```bash 
+touch .dockerignore
+     OR 
+code .dockerignore 
+```
+
+### Step 3: Add the Required Entries
+Add the required entries 
+```
+node_modules
+.git
+*.md
+.env
+```
+- save the file 
+
+### Understanding Each Entry
+```
+node_modules
+```
+- Ignores the entire `node_modules` directory 
+Example:
+```
+node_modules/
+├── express
+├── react
+├── lodash
+```
+- These files won't be sent during the build.
+
+```
+.git 
+```
+- Ignores our git repository i.e it will exclude the `.git/` which contains metadata that the image doesn't need 
+
+```
+ *.md
+```
+
+- Ignores all markdown files 
+Example: 
+
+```
+README.md
+Docker.md
+Notes.md
+```
+
+
+```
+.env 
+```
+- Ignores our environment files 
+Example:
+```
+DB_PASSWORD=supersecret
+API_KEY=abc123
+```
+- This is important because `.env` files often contain secrets and should not be copied into Docker images.
+
+### Step 4: Build the Image
+
+RUN: 
+```bash 
+docker build -t my-website:v2 .
+```
+Docker will read `.dockerignore` automatically. No additional flag are needed 
+
+### Step 5: Verify Ignored Files Are Not Included
+Run a container:
+```bash 
+docker run -d --name website-test my-website:v2
+```
+- Open a shell inside a container: 
+
+```bash 
+docker exec -it website-test sh
+```
+Check the application directory (adjust the path if our Dockerfile uses a different `WORKDIR`):
+
+```bash 
+ls -la /usr/share/nginx/html
+  OR 
+ls -la /app
+```
+- Depending on our project 
+
+we sholud not see : 
+```
+README.md
+.env
+.git
+node_modules
+```
+only the file explicitly copied by your Dockerfile (such as `index.html`) should be present.
+
+Exit the container 
+```
+exit
+```
+---
+
+# Q-> Why Is .dockerignore Important?
+
+Without `.dockerignore:`
+
+- Large folders like `node_modules` are uploaded during every build.
+- Build times increase.
+- Image size may grow unnecessarily.
+- Sensitive files (like .env) can accidentally end up in your image.
+
+With   `.dockerignore:`
+
+- Smaller build context.
+- Faster builds.
+- Smaller images.
+- Better security.
+
+### Example
+
+Suppose our project contains:
+
+```
+project/
+│
+├── Dockerfile
+├── app.py
+├── requirements.txt
+├── README.md
+├── .env
+├── node_modules/
+└── .git/
+```
+`.dockerignore`
+
+```
+node_modules
+.git
+*.md
+.env
+```
+
+When Docker builds the image, only:
+```
+Dockerfile
+app.py
+requirements.txt
+```
+are sent to the Docker daemon (unless additional files are referenced by your Dockerfile)
+
+Commands Summary: 
+
+| Task                   | Command                                           |
+| ---------------------- | ------------------------------------------------- |
+| Create `.dockerignore` | `touch .dockerignore`                             |
+| Build image            | `docker build -t my-website:v2 .`                 |
+| Run container          | `docker run -d --name website-test my-website:v2` |
+| Open shell             | `docker exec -it website-test sh`                 |
+| List files             | `ls -la /usr/share/nginx/html` or `ls -la /app`   |
+
