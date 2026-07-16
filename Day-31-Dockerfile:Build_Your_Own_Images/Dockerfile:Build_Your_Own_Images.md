@@ -1128,3 +1128,130 @@ Commands Summary:
 | Open shell             | `docker exec -it website-test sh`                 |
 | List files             | `ls -la /usr/share/nginx/html` or `ls -la /app`   |
 
+
+# Task 6: Build Optimization
+
+In this Task we will learn how Docker's Build cache works and why the order of instructions in a Dockerfile has significant impact on build performance 
+
+### Step 1: Build an Image
+Using the Below Dockerfile 
+
+```dockerfile 
+# Base Image 
+FROM python:3.12-slim
+
+# Working directory i.e like pwd 
+WORKDIR /app
+
+# This is to copy requirements from host to containers 
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+
+CMD ["python", "app.py"]
+
+````
+
+#### Build the image:
+```bash 
+docker build -t python-app:v1 .
+```
+- Observed that Docker executes every steps because this is the first build. 
+
+
+### Step 2: Modify One Line
+
+Make a small change to `app.py`, for example:
+
+```python
+print("Hello Docker!")
+```
+
+Change it to:
+
+```python
+print("Hello Docker - Version 2")
+```
+
+Save the file and rebuild the image:
+
+```bash
+docker build -t python-app:v1 .
+```
+
+Notice the build output. Docker reuses the cached layers for the unchanged instructions and rebuilds only the layers affected by the modified file.
+
+---
+
+### Step 3: Observe Docker Cache
+
+During the rebuild, you'll see output similar to:
+
+```text
+=> CACHED [2/6] WORKDIR /app
+=> CACHED [3/6] COPY requirements.txt .
+=> CACHED [4/6] RUN pip install --no-cache-dir -r requirements.txt
+=> [5/6] COPY app.py .
+=> [6/6] CMD ["python", "app.py"]
+```
+
+This shows that Docker reused the cached layers and rebuilt only the layers after the changed file.
+
+---
+
+### Step 4: Optimize the Dockerfile
+
+#### Less Optimized
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["python", "app.py"]
+```
+
+In this version, any change to the source code invalidates the `COPY . .` layer, forcing Docker to reinstall dependencies during every build.
+
+#### Optimized
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "app.py"]
+```
+
+Here, dependencies are installed before the application code is copied. Since `requirements.txt` changes less frequently than the source code, Docker can reuse the dependency installation layer and only rebuild the application layer when the code changes.
+
+---
+
+## Why Does Layer Order Matter?
+
+Docker builds images one instruction at a time, creating a separate layer for each instruction. When rebuilding an image, Docker checks whether each layer has changed.
+
+If a layer changes, Docker must rebuild that layer and every layer that follows it.
+
+By placing frequently changing instructions (such as `COPY . .`) near the end of the Dockerfile, Docker can reuse cached layers for expensive operations like installing dependencies. This significantly reduces build time, especially in large projects.
+
+---
+### Interview Tip
+
+A common Docker interview question is:
+
+**Q:** Why should `COPY requirements.txt` come before `COPY . .`?
+
+**Answer:** Because dependency files change less frequently than application code. Copying and installing dependencies first allows Docker to cache those layers. When only the source code changes, Docker reuses the cached dependency layers and rebuilds only the final application layers, making builds much faster.
