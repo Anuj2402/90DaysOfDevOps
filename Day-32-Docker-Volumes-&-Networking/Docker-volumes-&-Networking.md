@@ -311,3 +311,155 @@ They ensure that application data persists even when containers are stopped, rem
 #### Q: -> What is a Docker Named Volume, and why would you use one?
 
 A Docker Named Volume is a Docker-managed storage location that exists independently of containers. It is used to persist application data across container restarts and recreations. Named volumes are commonly used with databases and other stateful applications because removing a container does not delete the data stored in the volume.
+
+
+# Task 3: Bind Mounts
+
+In this Task we will learn how **BIND MOUNTS** a Docker container to directly use files from our HOST machine. Ulike named Volumes , bind mounts points to a specific directory on our computer, Making them ideal for devlopment because changes on the host are immediately reflected inside the container.
+
+### Step 1: Create a Folder on our Host
+
+Create a new directory:
+
+```bash 
+mkdir my-website-on-host
+cd my-website-on-host
+```
+Create an `index.html` file:
+```HTML
+vi index.html 
+
+# Add the following content:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Bind Mount Demo</title>
+</head>
+<body>
+    <h1>Hello from Bind Mount!</h1>
+    <p>This page is served from my host machine.</p>
+</body>
+</html>
+```
+
+Verify the file:
+```bash 
+cat index.html 
+```
+OUTOUT:
+
+![alt text](image-7.png)
+
+### Step 2: Run an Nginx Container with a Bind Mount
+Run the container:
+```bash  
+docker run -d --name nginx-bind -p 8080:80 -v $(pwd):/usr/share/nginx/html nginx:alpine
+```
+
+Understanding the `-v` Option
+
+`$(pwd):/usr/share/nginx/html`
+
+| Part                    | Meaning                                  |
+| ----------------------- | ---------------------------------------- |
+| `$(pwd)`                | Current directory on your host machine   |
+| `/usr/share/nginx/html` | Nginx web directory inside the container |
+
+- This means Nginx serves files directly from our local folder.
+
+### Step 3: Access the Website
+
+Open your browser and visit:
+```bash 
+http://localhost:8080
+```
+
+we should see:
+
+OUTPUT: 
+![alt text](image-8.png)
+
+### Step 4: Edit the File on Your Host
+
+Modify `index.html`:
+
+```HTML 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Bind Mount Demo</title>
+</head>
+<body>
+    <h1>Hello Docker!</h1>
+    <p>I edited this file without rebuilding the image.</p>
+</body>
+</html>
+```
+Save the file.Refesh the browser we should immediately see:
+
+OUTPUT : 
+![alt text](image-9.png)
+
+### Step 5: Verify the Mount
+
+Inspect the container:
+```bash 
+docker inspect nginx-bind
+```
+Look for the Mounts section:
+```
+OUTOUT: 
+![alt text](image-10.png)
+
+- This confirms that Docker is using Bind Mounts
+
+Stop and Remove the Container
+```bash 
+docker stop nginx-bind && docker rm nginx-bind
+```
+- Our `index.html` file remains on our host machine Because Docker never owned it 
+
+### Architecture
+
+```
+Host Machine
+-------------------------
+my-website/
+└── index.html
+        │
+        │ Bind Mount
+        ▼
+Docker Container
+-------------------------
+/usr/share/nginx/html
+        │
+        ▼
+Nginx Web Server
+        │
+        ▼
+http://localhost:8080
+```
+## Named Volume vs Bind Mount
+
+| Feature                 | Named Volume                           | Bind Mount                                    |
+| ----------------------- | -------------------------------------- | --------------------------------------------- |
+| Storage Location        | Managed by Docker                      | Specific directory on the host                |
+| Managed By              | Docker                                 | User                                          |
+| Easy to Share with Host | No                                     | Yes                                           |
+| Best For                | Databases, persistent application data | Development, source code, configuration files |
+| Data Visible on Host    | Stored in Docker's internal directory  | Stored directly in your chosen host directory |
+| Platform Independence   | High                                   | Depends on host filesystem paths              |
+
+#### Q -> What is the difference between a Named Volume and a Bind Mount?
+
+A **Named Volume** is managed entirely by Docker and is primarily used for persistent application data such as databases. Docker decides where the data is stored, and the data remains available even after containers are removed.
+
+A **Bind Mount** directly maps a directory or file from the host machine into a container. Any changes made on the host are immediately reflected inside the container, making bind mounts ideal for development workflows where code changes need to be visible without rebuilding the Docker image.
+
+#### Q: When would you use a Bind Mount instead of a Named Volume?
+
+Use a **Bind Mount** during development when you need to edit source code or configuration files on our host machine and see the changes instantly inside the container. 
+
+Use a **Named Volume** for persistent application data, especially databases, where Docker-managed storage provides better portability and isolation.
+
