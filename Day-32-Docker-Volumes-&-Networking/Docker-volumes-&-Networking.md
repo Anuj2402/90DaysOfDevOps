@@ -463,3 +463,159 @@ Use a **Bind Mount** during development when you need to edit source code or con
 
 Use a **Named Volume** for persistent application data, especially databases, where Docker-managed storage provides better portability and isolation.
 
+
+# Task 4: Docker Networking Basics
+
+Docker automatically creates networks that allow containers to communicate with each other. In this task, we'll explore the default bridge network and understand how container communication works.
+
+### Step 1: List All Docker Networks
+
+Run the following command:
+```bash 
+docker network ls
+```
+Example output:
+
+```
+NETWORK ID     NAME      DRIVER    SCOPE
+4f2a7d1c3a9b   bridge     bridge    local
+8e3c9b2f1d6a   host       host      local
+1b7d8c4e5f9a   none       null      local
+```
+Understanding the Default Networks
+
+| Network  | Purpose                                   |
+| -------- | ----------------------------------------- |
+| `bridge` | Default network for standalone containers |
+| `host`   | Container shares the host's network stack |
+| `none`   | Container has no network connectivity     |
+
+
+### Step 2: Inspect the Default Bridge Network
+
+Inspect the bridge network:
+```bash
+docker network inspect bridge
+```
+Example output (truncated):
+
+```JSON 
+[
+  {
+    "Name": "bridge",
+    "Driver": "bridge",
+    "Subnet": "172.17.0.0/16",
+    "Gateway": "172.17.0.1"
+  }
+]
+```
+Notice:
+- Network Name
+- Driver
+- Subnet
+- Gateway
+- Connected Containers (if any)
+
+### Step 3: Run Two Containers
+
+Start two Ubuntu containers:
+
+```bash
+docker run -dit --name ubuntu1 ubuntu
+```
+```bash
+docker run -dit --name ubuntu02 ubuntu 
+```
+Verify: 
+```bash 
+docker ps 
+```
+### Step 4: Can They Ping Each Other by Name?
+Open a shell inside the first container:
+```bash 
+docker exec -it ubuntu1 bash
+```
+Install the ping utility (if required):
+```bash 
+apt update
+apt install -y iputils-ping
+```
+Try:
+```bash 
+ping ubuntu2
+```
+
+Expected output:
+![alt text](image-11.png)
+
+-  No, containers on the **default bridge network** cannot communicate using container names because Docker does not provide automatic **DNS resolution** on the default bridge network.
+
+- Now just exit the container `exit`
+
+### Step 5: Find the IP Address of the Second Container
+Inspect the second container:
+```bash 
+docker inspect ubuntu2
+```
+Locate the IP address:
+
+```bash 
+  "IPAddress": "172.12.0.3",
+```
+
+### Step 6: Ping by IP Address
+Enter the first container again:
+```bash 
+docker exec -it ubuntu1 bash
+```
+Ping the second container using its IP:
+```bash 
+ping 172.12.0.3
+```
+OUTPUT: 
+![alt text](image-12.png)
+
+Yes, containers on the default bridge network can communicate using their **IP addresses**
+
+Stop the ping:
+```bash 
+ctl + c 
+```
+- exit the container 
+
+
+### Verify Network Information
+View the bridge network again:
+```bash
+docker network inspect bridge 
+```
+we should now see both containers listed under the Containers section with their respective IP addresses.
+
+Architecture
+
+```
+                 Docker Bridge Network
+              (172.17.0.0/16)
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+        ▼                         ▼
+   ubuntu1                  ubuntu2
+172.17.0.2              172.17.0.3
+        │                         │
+        └────── Ping by IP ───────┘
+
+Ping by Name ❌
+Ping by IP   ✅
+```
+
+### Q -> Can containers on the default bridge network ping each other by name?
+
+No. The default bridge network does not provide automatic DNS-based name resolution. Containers cannot resolve each other's names unless they are connected to a user-defined bridge network.
+
+### Q-> Can containers on the default bridge network ping each other by IP?
+Yes. Containers connected to the default bridge network can communicate directly using their assigned IP addresses.
+
+### IMP Q: Why can't containers on the default bridge network communicate using container names?
+
+The default **bridge** network does not include Docker's embedded DNS service for automatic container name resolution. Containers can communicate using IP addresses, but not by name. To enable name-based communication, create and use a **user-defined bridge** network, which provides automatic DNS resolution between containers.
