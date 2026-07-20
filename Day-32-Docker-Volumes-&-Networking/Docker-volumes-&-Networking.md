@@ -490,6 +490,8 @@ Understanding the Default Networks
 | `host`   | Container shares the host's network stack |
 | `none`   | Container has no network connectivity     |
 
+- **Overlay Networking** -> Overlay networking in Docker is a networking driver that allows containers running on different Docker hosts to communicate as if they were on the same local network. It is commonly used with Docker Swarm for multi-host container deployments.
+
 
 ### Step 2: Inspect the Default Bridge Network
 
