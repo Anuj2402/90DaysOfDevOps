@@ -749,3 +749,214 @@ OUTPUT:
 #### IMP-> Q: Why do most Docker Compose applications use custom bridge networks instead of the default bridge network?
 
 Docker Compose creates a **user-defined bridge network** by default because it provides automatic DNS-based service discovery. Containers can communicate using service or container names (for example,` web`, `db`, or `redis`) instead of hardcoding IP addresses, making applications easier to manage, scale, and maintain.
+
+### Task 6: Put It Together
+
+In this task we will combine everything we have learned so far : 
+- Create a CUSTOME Docker network 
+- Create a Named Volume 
+- RUN a postgreSQL Database using the volume 
+- RUN another container on the same network 
+- Varify that the application container can communicate with the database using the Container name 
+
+This setup closely resembles a real-world application deployments, where a web application communicates with a database over a private Docker network.
+
+Architecture
+```
+                   Docker Host
+--------------------------------------------------------
+
+          Custom Network: my-app-net
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+        ▼                         ▼
+   postgres-db              app-container
+(PostgreSQL)                  (Ubuntu)
+        │
+        │
+        ▼
+ Named Volume
+postgres-data
+
+Communication:
+app-container ─────────► postgres-db
+       (Uses container name)
+
+```
+
+### Step 1: Create a Custom Network
+
+```bash 
+docker network create my-app-net 
+```
+Verify: 
+```bash 
+docker network ls 
+```
+OUTPUT: 
+![alt text](image-18.png)
+
+### Step 2: Create a Named Volume
+
+```bash 
+docker volume create postgres-data 
+```
+verify 
+```bash 
+docekr volume ls 
+```
+OUTPUT: 
+![alt text](image-19.png)
+
+
+### Step 3: Run PostgreSQL
+
+```bash 
+docker run -d --name postgres-db --network my-app-net -v postgres-data:/var/lib/postgresql -e POSTGRES_PASSWORD=admin123 postgres:18
+```
+
+Verify:
+```bash 
+docker ps 
+```
+
+OUTPUT: 
+![alt text](image-20.png)
+
+
+### Step 4: Run an App Container
+
+we will take ubuntu as a simple app container 
+```bash 
+docker run -dit --name app-container --network my-app-net ubuntu 
+```
+Verify:
+```bash 
+docker ps 
+```
+
+OUTPUT: 
+![alt text](image-21.png)
+
+### Step 5: Enter the App Container
+
+```bash 
+docker exec -it app-container bash 
+```
+
+### Step 6: Install Networking Tools
+Update packages && Install DNS utilities and ping:
+```bash 
+apt update
+apt install -y iputils-ping dnsutils
+```
+
+### Step 7: Verify Name Resolution
+
+Ping the PostgreSQL container:
+
+```bash 
+ping postgres-db
+```
+
+OUTPUT: 
+![alt text](image-22.png)
+
+
+### Step 8: Verify DNS
+```bash 
+getent hosts postgres-db
+```
+OUTPUT: 
+
+![alt text](image-23.png)
+
+- Docker automatically resolved the container name.
+
+
+### Step 9: Verify the PostgreSQL Port
+Install Netcat:
+```bash 
+apt install -y netcat-openbsd
+```
+Test connectivity:
+```bash 
+nc -zv postgres-db 5432
+```
+Example:
+```
+Connection to postgres-db 5432 port [tcp/postgresql] succeeded!
+```
+![alt text](image-24.png)
+
+
+This confirms that : 
+- DNS resolution works 
+- Network conectivity works 
+- PostgreSQL is accepting connections 
+
+
+Now exit the container 
+
+
+### Step 10: Inspect the Network
+
+```bash
+docker network inspect my-app-net
+```
+OUTPUT:
+![alt text](image-25.png)
+
+Verify the Volume:
+
+```bash 
+docker volume inspect postgres-data
+```
+
+OUTPUT: 
+![alt text](image-26.png)
+
+Complete Workflow
+
+```
+Create Network
+       │
+       ▼
+docker network create my-app-net
+       │
+       ▼
+Create Volume
+       │
+       ▼
+docker volume create postgres-data
+       │
+       ▼
+Run PostgreSQL
+(Network + Volume)
+       │
+       ▼
+Run App Container
+(Same Network)
+       │
+       ▼
+docker exec
+       │
+       ▼
+ping postgres-db
+       │
+       ▼
+DNS Resolution Success
+       │
+       ▼
+nc -zv postgres-db 5432
+       │
+       ▼
+Database Reachable
+
+```
+
+#### Q: How would you deploy a web application and a PostgreSQL database using Docker?
+
+I would create a **user-defined bridge network** so the containers can communicate using service names, attach a named volume to the PostgreSQL container to persist database data, and run both the application and database containers on the same network. The application can then connect to the database using the container name (for example, `postgres-db`) instead of a hardcoded IP address. This approach improves portability, persistence, and service discovery.
+
