@@ -621,3 +621,131 @@ Yes. Containers connected to the default bridge network can communicate directly
 ### IMP Q: Why can't containers on the default bridge network communicate using container names?
 
 The default **bridge** network does not include Docker's embedded DNS service for automatic container name resolution. Containers can communicate using IP addresses, but not by name. To enable name-based communication, create and use a **user-defined bridge** network, which provides automatic DNS resolution between containers.
+
+
+# Task 5: Custom Networks
+
+In this task we will create a user-defined **bridge network** and observe how DOCKER provide provides **Automatic DNS-based name resolution between containers connected to the same network 
+
+
+unlike the default `bridge` network , user-defined `bridge` networks allow containers to communicate using container  names instead of IP addresses.
+
+
+### Step 1: Create a Custom Bridge Network
+Create a new Docker network:
+
+```bash 
+docker network create my-app-net
+```
+verify: 
+```bash 
+docker network ls 
+```
+OUTPUT: 
+![alt text](image-13.png)
+
+
+
+### Step 2: Inspect the Network
+
+```bash 
+docker network inspect my-app-net 
+```
+- Initally we will see that there is no containers are connected. 
+
+
+### Step 3: Run Two Containers on the Custom Network
+Start the first container:
+```bash 
+docker run --dit --name app1 --network my-app-net ubuntu
+```
+Start the second container:
+```bash 
+docker run -dit --name app2 --network my-app-net ubuntu
+```
+Verify:
+```bash 
+docker ps 
+```
+OUTPUT: 
+![alt text](image-14.png)
+
+### Step 4: Open a Shell in the First Container
+
+```bash 
+docker exec -it app1 bash 
+```
+Install the ping utility if needed:
+```bash 
+apt update 
+apt install -y iputils-ping
+```
+
+### Step 5: Ping by Container Name
+```bash 
+ping app2
+```
+OUTPUT: 
+![alt text](image-15.png)
+
+- The containers can successfully communicate using container names.
+
+
+### Step 6: Verify DNS Resolution
+```bash 
+getent hosts app2 
+```
+
+OUTPUT: 
+![alt text](image-16.png)
+
+n
+- Docker's embedded DNS server automatically resolves the container name to its IP address. 
+
+- Exit the container 
+
+### Step 7: Inspect the Custom Network
+
+```bash 
+docker network inspect my-app-net 
+```
+
+we could see both the container connected 
+
+OUTPUT: 
+![alt text](image-17.png)
+
+
+#### Architecture
+
+```
+                my-app-net
+          (User-defined Bridge)
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+        ▼                   ▼
+      app1               app2
+172.18.0.2          172.18.0.3
+        │
+        │ ping app2
+        ▼
+ Docker DNS resolves
+ "app2" → 172.18.0.3
+ ```
+
+
+### Q: -> Can containers on a custom bridge network ping each other by name?
+
+- Yes. Docker automatically provides an embedded DNS server for user-defined bridge networks. Each container name is registered as a DNS record, allowing containers to communicate using names instead of IP addresses.
+
+### Q: -> Why does custom networking allow name-based communication but the default bridge doesn't?
+
+- The default bridge network is a legacy network that does not provide automatic DNS-based service discovery between containers. Containers can communicate using IP addresses but cannot resolve each other's names.
+
+- A user-defined bridge network includes Docker's embedded DNS service. When containers join the same custom network, Docker automatically registers their names and resolves them to the correct IP addresses. This makes communication easier and more reliable because container IP addresses can change, while container names remain consistent.
+
+
+#### IMP-> Q: Why do most Docker Compose applications use custom bridge networks instead of the default bridge network?
+
+Docker Compose creates a **user-defined bridge network** by default because it provides automatic DNS-based service discovery. Containers can communicate using service or container names (for example,` web`, `db`, or `redis`) instead of hardcoding IP addresses, making applications easier to manage, scale, and maintain.
