@@ -286,5 +286,304 @@ Network Removed
 
 Docker Compose allows you to define your application's infrastructure as code using a YAML file. Instead of remembering long docker run commands, you can describe containers, networks, volumes, environment variables, and dependencies in a single file. This makes applications easier to deploy, share, version-control, and reproduce across development, testing, and production environments.
 
+### Task 3: Two-Container Setup (WordPress + MySQL)
+
+This task demonstrates one of the biggest advantages of Docker Compose—running multiple related services together. we will deploy a WordPress application with a MySQL database, where:
+- Docker Compose automatically creates a shared network
+- WordPress connects to MySQL using the service name (`db`).
+- MySQL stores its data in a **named volume** for persistence
+
+#### Project Structure
+
+Create a new directory:
+```
+mkdir wordpress-compose
+cd wordpress-compose
+```
+
+our project will contain:
+
+```
+wordpress-compose/
+└── docker-compose.yml
+```
+### Step 1: Create `docker-compose.yml`
+
+Create the file:
+```bash 
+vi docker-compose.yml 
+```
+
+Add the following content:
+```YAML
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress-app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wppassword
+      WORDPRESS_DB_NAME: wordpress
+
+volumes:
+  mysql-data:
+
+```
+
+#### Understanding the Compose File
+
+Service: `db`
+
+```YAML 
+db:
+```
+This is MYSQL service 
+Docker compose Automatically register the HOSTName
+```
+db
+```  
+- Every container on the Compose network an reach mysql using this name 
+
+#### MySQL Environment Variables
+
+```YAML 
+environment:
+  MYSQL_ROOT_PASSWORD: rootpassword
+  MYSQL_DATABASE: wordpress
+  MYSQL_USER: wpuser
+  MYSQL_PASSWORD: wppassword
+```
+These variables initialize the MySQL database during the first startup.
+
+#### Named Volume: 
+
+```YAML 
+volumes:
+  - mysql-data:/var/lib/mysql
+```
+This stores all MySQL database files in a Docker-managed named volume.
+
+Even if the container is recreated, the database remains.
 
 
+#### `WordPress` Service
+```YAML
+wordpress:
+```
+Runs the official WordPress image.
+
+`depends_on`
+
+```YAML
+depends_on:
+  - db
+```
+Ensures Docker starts the MySQL container before the WordPress container.
+
+Note: `depends_on` controls startup order but does not wait until MySQL is fully ready to accept connections.
+
+Database Connection
+```YAML 
+WORDPRESS_DB_HOST: db:3306
+```
+This is the most important line.
+Notice: 
+```
+db 
+```
+- This is the service name, not an IP address.
+- Docker Compose's internal DNS automatically resolves:
+
+```
+db
+```
+↓
+
+```
+172.xx.xx.xx
+```
+Port Mapping
+
+```YAML
+ports:
+  - "8080:80"
+```
+Access WordPress at:
+```
+http://localhost:8080
+```
+
+### Step 2: Start the Application
+
+Run:
+```bash 
+docker compose up -d 
+```
+Example:
+```bash 
+Creating network "wordpress-compose_default"
+Creating volume "wordpress-compose_mysql-data"
+Creating mysql-db
+Creating wordpress-app
+```
+### Step 3: Verify the Containers
+
+```bash 
+docker compose ps
+```
+
+Example:
+```
+NAME             IMAGE              STATE
+mysql-db         mysql:8.0          running
+wordpress-app    wordpress:latest   running
+
+```
+### Step 4: Verify the Network
+
+```bash 
+docker network ls
+```
+we'll see something similar to:
+```
+wordpress-compose_default
+```
+- Docker Compose created this automatically.
+
+Inspect it:
+```bash 
+docker network inspect wordpress-compose_default
+```
+- we should see both containers connected.
+
+### Step 5: Access WordPress
+
+Open your browser:
+```
+http://localhost:8080
+```
+we'll see the WordPress installation page.
+
+Complete the setup:
+- Language
+- Site Title
+- Username
+- Password
+- Email
+
+Click Install WordPress.
+Then log in to the dashboard.
+
+List volumes:
+```bash 
+docker volume ls 
+```
+Example:
+```
+DRIVER    VOLUME NAME
+local     wordpress-compose_mysql-data
+```
+Inspect the volume:
+```bash 
+docker volume inspect wordpress-compose_mysql-data
+```
+
+### Step 7: Verify MySQL Connectivity
+
+Enter the WordPress container:
+```bash 
+docker exec -it wordpress-app bash
+```
+Check DNS resolution:
+```bash 
+getent hosts db
+```
+OUTPUT: 
+
+
+- This confirms that WordPress resolves the MySQL service name correctly. Exit the container 
+
+### Step 8: Stop Everything
+
+```bash 
+docker compose down
+```
+Output:
+
+
+
+- Notice that the named volume is not removed.
+
+### Step 9: Start Again
+```bash 
+docker compose up -d
+```
+
+Visit:
+```
+http://localhost:8080
+```
+
+we'll notice:
+
+- WordPress opens directly.
+- our site title remains
+- our admin account still exists.
+- Posts and settings are preserved.
+
+This confirms that the MySQL data persisted because it was stored in the named volume.
+
+#### Complete Architecture
+```
+                   Docker Compose
+
+                wordpress-compose
+                        │
+        ┌───────────────┴────────────────┐
+        │                                │
+        ▼                                ▼
+   wordpress-app                  mysql-db
+        │                                │
+        │       Connects using           │
+        ├──────────── db ───────────────►│
+        │                                │
+        ▼                                ▼
+ Browser (8080)                 Named Volume
+                             mysql-data
+```
+
+### Verification
+
+After running:
+```
+docker compose down
+docker compose up -d
+```
+our WordPress data should still be available.
+
+**Reason**: Although the containers and network were removed, the named volume (    `mysql-data`) was preserved. When the new MySQL container started, it reused the same volume, allowing WordPress to access the existing database and retain all site content, users, and settings.
+
+
+Note: If you run `docker compose down -v`, Docker also removes the named volumes. In that case, the MySQL database is deleted, and WordPress starts as a fresh installation.
+
+### Q: How does WordPress communicate with MySQL in Docker Compose without using an IP address?
+
+Docker Compose automatically creates a user-defined bridge network and provides built-in DNS-based service discovery. Each service name becomes a hostname on that network. In this example, WordPress connects to MySQL using `db:3306`, where `db` is the MySQL service name. Docker resolves `db` to the correct container IP automatically, eliminating the need to hardcode IP addresses.
