@@ -286,7 +286,7 @@ Network Removed
 
 Docker Compose allows you to define your application's infrastructure as code using a YAML file. Instead of remembering long docker run commands, you can describe containers, networks, volumes, environment variables, and dependencies in a single file. This makes applications easier to deploy, share, version-control, and reproduce across development, testing, and production environments.
 
-### Task 3: Two-Container Setup (WordPress + MySQL)
+# Task 3: Two-Container Setup (WordPress + MySQL)
 
 This task demonstrates one of the biggest advantages of Docker Compose—running multiple related services together. we will deploy a WordPress application with a MySQL database, where:
 - Docker Compose automatically creates a shared network
@@ -472,6 +472,8 @@ Inspect it:
 ```bash 
 docker network inspect wordpress-compose_default
 ```
+![alt text](image-1.png)
+![alt text](image-2.png)
 - we should see both containers connected.
 
 ### Step 5: Access WordPress
@@ -483,14 +485,18 @@ http://localhost:8080
 we'll see the WordPress installation page.
 
 Complete the setup:
-- Language
-- Site Title
-- Username
-- Password
-- Email
+- Language - English 
+- Site Title - wordpresssite 
+- Username - Anujkumar
+- Password - wordpress@docker
+- Email - dockercompose@gmail.com
 
 Click Install WordPress.
 Then log in to the dashboard.
+
+OUTPUT : 
+
+![alt text](image-3.png)
 
 List volumes:
 ```bash 
@@ -505,6 +511,9 @@ Inspect the volume:
 ```bash 
 docker volume inspect wordpress-compose_mysql-data
 ```
+OUTPUT: 
+
+![alt text](image-4.png)
 
 ### Step 7: Verify MySQL Connectivity
 
@@ -517,6 +526,11 @@ Check DNS resolution:
 getent hosts db
 ```
 OUTPUT: 
+```
+root@eaf197e5fe11:/var/www/html# getent hosts db
+172.18.0.2      db
+root@eaf197e5fe11:/var/www/html# 
+```
 
 
 - This confirms that WordPress resolves the MySQL service name correctly. Exit the container 
@@ -527,7 +541,7 @@ OUTPUT:
 docker compose down
 ```
 Output:
-
+![alt text](image-5.png)
 
 
 - Notice that the named volume is not removed.
@@ -548,6 +562,19 @@ we'll notice:
 - our site title remains
 - our admin account still exists.
 - Posts and settings are preserved.
+
+After exec to the database 
+```bash 
+docker exec -it mysql-db bash
+```
+Inside it press 
+```bash 
+mysql -u root -p
+```
+OUTPUT: 
+
+![alt text](image-6.png)
+
 
 This confirms that the MySQL data persisted because it was stored in the named volume.
 
