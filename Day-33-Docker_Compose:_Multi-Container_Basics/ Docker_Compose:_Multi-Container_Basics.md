@@ -793,3 +793,221 @@ Commands Summary
 - `docker compose stop` stops the running containers but keeps the containers, networks, and volumes intact. we can restart them later using docker compose start.
 
 - `docker compose down` stops and removes the containers and the Compose-created network. Named volumes are preserved unless you use the -v option, which also deletes the volumes and their data.
+
+# Task 5: Environment Variables in Docker Compose
+
+Environment variables allow you to configure applications without hardcoding values into your `docker-compose.yml` file. This makes your Compose projects easier to manage across development, testing, and production environments.
+
+In this task we will 
+- Add a environment variabls directly in `docker-compose.yml`
+- move them to `.env` file 
+- verify that docker compose is using the values
+
+### Project Structure
+```bash 
+compose-env/
+├── docker-compose.yml
+└── .env
+```
+Create the project:
+```bash 
+mkdir compose-env
+cd compose-env
+```
+### Step 1: Add Environment Variables Directly
+
+Create `docker-compose.yml`:
+
+```bash 
+vi docker-compose.yml
+```
+Add the following content:
+```YAML 
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+
+    ports:
+      - "3306:3306"
+```
+
+Here, all environment variables are defined directly in the Compose file.
+
+### Step 2: Start the Service
+
+```bash 
+docker compose up -d 
+```
+Verify:
+```bash 
+docker compose ps 
+```
+### Step 3: Verify Environment Variables
+Inspect the container:
+```bash
+docker inspect mysql-db
+```
+Look for the Env section:
+
+```bash 
+"Env": [
+    "MYSQL_ROOT_PASSWORD=rootpassword",
+    "MYSQL_DATABASE=myapp",
+    "MYSQL_USER=appuser",
+    "MYSQL_PASSWORD=apppassword"
+]
+```
+
+OUTPUT: 
+
+
+we can also verify from inside the container 
+```bash 
+docker exec -it mysql-db env 
+```
+Example Output : 
+```
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=myapp
+MYSQL_USER=appuser
+MYSQL_PASSWORD=apppassword
+```
+
+OUTPUT: 
+
+
+### Step 4: Stop the Container
+
+```bash 
+docker compose down 
+```
+OUTPUT: 
+
+
+### Step 5: Create a `.env` File
+
+Create the file:
+```bash 
+vi .env 
+```
+Add:
+```vi
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=myapp
+MYSQL_USER=appuser
+MYSQL_PASSWORD=apppassword
+MYSQL_PORT=3306
+```
+### Step 6: Update docker-compose.yml
+
+Replace the hardcoded values with variable references:
+```YAML 
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+    ports:
+      - "${MYSQL_PORT}:3306"
+```
+- Docker Compose automatically loads the `.env` file from the project directory.
+
+
+
+### Step 7: Start the Project Again
+
+```bash 
+docker compose up -d
+```
+- Docker Compose reads the values from `.env` and substitutes them into the Compose file.
+
+
+### Step 8: Verify the Variables
+
+Check the resolved configuration:
+
+```bash 
+
+docker compose config 
+```
+
+Example output:
+```YAML 
+services:
+  mysql:
+    environment:
+      MYSQL_DATABASE: myapp
+      MYSQL_PASSWORD: apppassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: appuser
+```
+
+OUTPUT: 
+
+
+- This confirms that Docker Compose successfully substituted the variables.
+
+
+### Step 9: Verify Inside the Container
+Run:
+```bash 
+docker exec -it mysql-db env
+```
+OUTPUT: 
+```
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=myapp
+MYSQL_USER=appuser
+MYSQL_PASSWORD=apppassword
+```
+The values from `.env` are now available inside the container.
+
+
+Complete Workflow
+```
+Create .env
+      │
+      ▼
+Store Variables
+      │
+      ▼
+docker-compose.yml
+(${VARIABLE_NAME})
+      │
+      ▼
+docker compose up
+      │
+      ▼
+Docker Compose
+Reads .env
+      │
+      ▼
+Container Starts
+      │
+      ▼
+Environment Variables Available
+```
+### Best Practices
+
+-  Never hardcode passwords, API keys, or secrets in `docker-compose.yml`.
+- Store configuration values in a `.env` file.
+- Add `.env` to `.gitignore` if it contains sensitive information.
+- Use descriptive variable names such as `DB_HOST`, `DB_PORT`, and `MYSQL_ROOT_PASSWORD`.
+- For production, consider using Docker Secrets or an external secrets manager instead of plain-text environment files.
+
+### Q: Why use a `.env` file with Docker Compose instead of hardcoding values in docker-compose.yml?
+
+A `.env` file separates configuration from application definitions, making Compose files reusable across different environments. It allows you to change settings such as database credentials, ports, or application configuration without editing the Compose file. This improves maintainability, reduces duplication, and helps avoid exposing sensitive values in version-controlled configuration files.
