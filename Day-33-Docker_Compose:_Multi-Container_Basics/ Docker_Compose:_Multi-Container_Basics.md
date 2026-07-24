@@ -614,3 +614,182 @@ Note: If you run `docker compose down -v`, Docker also removes the named volumes
 ### Q: How does WordPress communicate with MySQL in Docker Compose without using an IP address?
 
 Docker Compose automatically creates a user-defined bridge network and provides built-in DNS-based service discovery. Each service name becomes a hostname on that network. In this example, WordPress connects to MySQL using `db:3306`, where `db` is the MySQL service name. Docker resolves `db` to the correct container IP automatically, eliminating the need to hardcode IP addresses.
+
+
+# Task 4: Docker Compose Commands
+In this Taks we will practice the most commonly used **Docker compose commands**
+These are the command we will use daily when devloping and managing multi-container applications 
+
+1. Start Services in Detached Mode
+Start all services in the background:
+
+```bash 
+docker compose up -d 
+```
+verify 
+```bash 
+docker ps 
+```
+Example output:
+```
+NAME             IMAGE              STATUS
+mysql-db         mysql:8.0          Up
+wordpress-app    wordpress:latest   Up
+```
+
+### 2. View Running Services
+
+List all services managed by the Compose project:
+```bash 
+docker compose ps 
+```
+Example:
+```
+NAME             IMAGE              STATUS
+mysql-db         mysql:8.0          Up
+wordpress-app    wordpress:latest   Up
+```
+
+### 3. View Logs of All Services
+
+Display logs from every service:
+```bash 
+docker compose logs
+```
+Follow logs in real time:
+```bash 
+docker compose logs -f 
+```
+
+Example output:
+```bash 
+mysql-db      | MySQL init process done.
+wordpress-app | Apache started.
+```
+
+### 4. View Logs of a Specific Service
+View logs for the WordPress service:
+```bash 
+docker compose logs wordpress
+```
+Or for the MySQL service:
+```bash 
+docker compose logs db
+```
+Follow logs continuously:
+```bash 
+docker compose logs -f wordpress 
+```
+
+- Always use service name defined in `docker-compose.yml` (for example, `db` or `wordpress` ) not the container name 
+
+### 5. Stop Services Without Removing Them
+
+Stop all running services:
+```bash 
+docker compose stop 
+```
+verify 
+```bash 
+docker compose ps 
+```
+Example output : 
+
+```
+NAME             IMAGE              STATUS
+mysql-db         mysql:8.0          Exited
+wordpress-app    wordpress:latest   Exited
+```
+Restart the stopped services:
+```bash 
+docker compose start 
+```
+
+### 6. Remove Everything (Containers and Networks)
+Stop and remove all containers and the project network:
+```bash 
+docker compose down 
+```
+Example output:
+```
+Stopping wordpress-app
+Stopping mysql-db
+
+Removing wordpress-app
+Removing mysql-db
+
+Removing network wordpress-compose_default
+```
+
+Note: **Named volumes** are not removed by default.
+
+To also remove **named volumes**:
+```bash 
+docker compose down -v 
+```
+This deletes persistent data such as our MySQL database.
+
+### 7. Rebuild Images After Making Changes
+
+If we have modified our Dockerfile application code and need to rebuild images:
+
+```bash 
+docker compose up --build 
+```
+or run in detached mode: 
+```bash 
+docker compose up -d --build 
+```
+To rebuild images without starting containers:
+```bash 
+ docker compose build 
+ ```
+
+Complete Workflow
+```
+docker compose up -d
+        │
+        ▼
+docker compose ps
+        │
+        ▼
+docker compose logs
+        │
+        ▼
+docker compose logs db
+        │
+        ▼
+docker compose stop
+        │
+        ▼
+docker compose start
+        │
+        ▼
+docker compose down
+        │
+        ▼
+docker compose up -d --build
+
+```
+Commands Summary
+
+| Task                                     | Command                              |
+| ---------------------------------------- | ------------------------------------ |
+| Start services (detached)                | `docker compose up -d`               |
+| View running services                    | `docker compose ps`                  |
+| View logs (all services)                 | `docker compose logs`                |
+| Follow logs                              | `docker compose logs -f`             |
+| View logs for one service                | `docker compose logs <service-name>` |
+| Stop services                            | `docker compose stop`                |
+| Start stopped services                   | `docker compose start`               |
+| Remove containers and networks           | `docker compose down`                |
+| Remove containers, networks, and volumes | `docker compose down -v`             |
+| Rebuild images                           | `docker compose build`               |
+| Rebuild and start services               | `docker compose up -d --build`       |
+
+
+### IMP Q: What is the difference between docker compose stop and docker compose down?
+
+- `docker compose stop` stops the running containers but keeps the containers, networks, and volumes intact. we can restart them later using docker compose start.
+
+- `docker compose down` stops and removes the containers and the Compose-created network. Named volumes are preserved unless you use the -v option, which also deletes the volumes and their data.
