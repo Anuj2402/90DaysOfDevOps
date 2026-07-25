@@ -865,9 +865,6 @@ Look for the Env section:
 ]
 ```
 
-OUTPUT: 
-
-
 we can also verify from inside the container 
 ```bash 
 docker exec -it mysql-db env 
@@ -881,7 +878,7 @@ MYSQL_PASSWORD=apppassword
 ```
 
 OUTPUT: 
-
+![alt text](image-7.png)
 
 ### Step 4: Stop the Container
 
@@ -889,7 +886,7 @@ OUTPUT:
 docker compose down 
 ```
 OUTPUT: 
-
+![alt text](image-8.png)
 
 ### Step 5: Create a `.env` File
 
@@ -956,6 +953,7 @@ services:
 ```
 
 OUTPUT: 
+![alt text](image-9.png)
 
 
 - This confirms that Docker Compose successfully substituted the variables.
