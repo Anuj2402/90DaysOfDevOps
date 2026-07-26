@@ -190,9 +190,6 @@ volumes:
 ```bash 
 docker compose build 
 ```
-OUTPUT: 
-
-
 ### Step 6: Start Everything
 
 ```bash 
@@ -204,6 +201,8 @@ docker compose ps
 ```
 
 OUTPUT: 
+![alt text](image.png)
+
 
 ### Step 7: View Logs
 
@@ -222,6 +221,7 @@ Open:
 http://localhost:5000
 ```
 OUTPUT: 
+![alt text](image-1.png)
 
 ### Step 9: Verify MySQL
 
@@ -236,6 +236,8 @@ Verify:
 ```sql
 SHOW DATABASES;
 ```
+OUTPUT: 
+![alt text](image-2.png)
 
 ### Step 10: Verify Redis
 
@@ -248,6 +250,7 @@ Check the stored key:
 GET status
 ```
 Output:
+![alt text](image-3.png)
 
 
 Architecture
