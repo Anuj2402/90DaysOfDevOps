@@ -279,6 +279,290 @@ http://localhost:5000
 Docker Compose automatically creates a user-defined bridge network for the project. Each service is registered in Docker's internal DNS using its service name. Instead of using IP addresses, containers communicate by referring to service names such as db for MySQL or redis for Redis. This makes the application more portable and resilient because service names remain constant even if container IP addresses change.
 
 
+# Task 2: depends_on & Healthchecks
+In the previous Task we used : 
+
+```YAML 
+depends_on:
+  - db
+  - redis
+```
+This only ensures that Docker Starts the `db` container before the `web` container. It does not gurantee that MySQL is ready to accept connections
+
+For exmaple:
+```
+MySQL Container Started ✅
+
+↓
+
+MySQL Initializing...
+
+↓
+
+Creating database...
+
+↓
+
+Loading users...
+
+↓
+
+Ready for connections
+
+```
+- During initialization, if Flask tries to connect, it may fail because MySQL isn't fully ready yet.
+
+- To solve this, Docker Compose supports **healthchecks**. A healthcheck repeatedly tests whether a container is actually healthy. Combined with `depends_on: condition: service_healthy`, the `web` service waits until the database passes its healthcheck.
+
+- Note: This behavior is supported by modern Docker Compose (Compose V2).
+
+### Step 1: Update the Database Service
+
+Modify the `db` service in our `docker-compose.yml`: 
+```YAML
+db:
+  image: mysql:8.0
+  container_name: mysql-db
+
+  restart: always
+
+  environment:
+    MYSQL_ROOT_PASSWORD: rootpassword
+    MYSQL_DATABASE: myapp
+    MYSQL_USER: appuser
+    MYSQL_PASSWORD: apppassword
+
+  volumes:
+    - mysql-data:/var/lib/mysql
+
+  healthcheck:
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 20s
+```
+#### Understanding the Healthcheck
+
+`Test`
+
+```bash 
+test:
+  ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+  ```
+Docker Runs this command inside the MySQL container
+
+Equivalent command:
+```bash 
+mysqladmin ping -h localhost -uroot -prootpassword
+```
+If MySQL is accepting connections, we'll see:
+```
+mysqld is alive
+```
+- Docekr marks the contaner as **healthy**
+
+`intervel`
+```
+interval: 10s
+```
+- Docker performs the health check every 10 seconds.
+
+`Timeout`
+```
+timeout: 5s
+```
+- If the command takes longer than 5 seconds, the check is considered failed.
+
+`Retries`
+
+```
+retries: 5
+```
+- Docker allows up to 5 consecutive failures before marking the container as **unhealthy**
+
+`Start Period`
+
+```
+start_period: 20s
+```
+- MySQL needs time to initialize.
+- During these first 20 seconds, failed health checks are ignored.
+
+### Step 2: Update the Web Service
+Replace the previous `depends_on` section:
+
+```YAML 
+depends_on:
+  - db
+  - redis
+```
+
+with:
+```bash 
+depends_on:
+  db:
+    condition: service_healthy
+  redis:
+    condition: service_started
+```
+This tell the Docker compose: 
+
+- Wait until MySQL is healthy.
+- Wait until Redis has started.
+- Only then start the Flask application.
+
+### Complete `web` Service
+
+```YAML 
+web:
+  build: ./web
+  container_name: flask-app
+
+  ports:
+    - "5000:5000"
+
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
+  environment:
+    DB_HOST: db
+    DB_NAME: myapp
+    DB_USER: appuser
+    DB_PASSWORD: apppassword
+    REDIS_HOST: redis
+```
+### Step 3: Bring Everything Down
+```bash 
+docker compose down
+```
+
+### Step 4: Start the Stack
+```bash 
+docker compose up 
+```
+Watch the logs carefully 
+
+Example:
+```bash 
+Creating mysql-db...
+
+Creating redis-cache...
+
+mysql-db      | Initializing database...
+
+mysql-db      | Starting MySQL...
+
+mysql-db      | mysqld is alive
+
+mysql-db      | Healthy
+
+Starting flask-app...
+```
+OUTPUT: 
+
+
+- Notice that the Flask container starts only after the database becomes healthy.
+
+### Step 5: Verify the Health Status
+Run:
+```bash 
+docker compose ps
+```
+OUTPUT: 
 
 
 
+- The `(healthy)` status confirms that the healthcheck is passing.
+
+we can also inspect the health details:
+```bash 
+docker inspect mysql-db
+```
+
+Look for:
+```JSON 
+"Health": {
+    "Status": "healthy"
+}
+```
+
+### Startup Flow
+```
+docker compose up
+        │
+        ▼
+Start MySQL Container
+        │
+        ▼
+Initialize Database
+        │
+        ▼
+Run Healthcheck
+(mysqladmin ping)
+        │
+        ▼
+Healthy?
+        │
+   ┌────┴────┐
+   │         │
+  No        Yes
+   │         │
+Wait      Start Flask
+             │
+             ▼
+      Connect to MySQL
+```
+
+
+### Why Is This Better?
+
+Without a healthcheck:
+```
+MySQL Container Started
+
+↓
+
+Flask Starts Immediately
+
+↓
+
+MySQL Still Initializing
+
+↓
+
+Connection Failed
+```
+With a healthcheck:
+```
+MySQL Container Started
+
+↓
+
+Healthcheck Runs
+
+↓
+
+MySQL Ready
+
+↓
+
+Container Marked Healthy
+
+↓
+
+Flask Starts
+
+↓
+
+Connection Successful
+```
+This makes your application startup more reliable, especially for services like MySQL, PostgreSQL, MongoDB, and other databases that take time to initialize.
+
+
+## IMP Q: Why isn't `depends_on` alone enough for database-dependent applications?
+
+By itself, `depends_on` only controls the order in which containers are started. It does not verify that the dependent service is ready to accept connections. A database container may be running while it is still initializing. By adding a **healthcheck** and using `depends_on` with `condition: service_healthy`, Docker Compose waits until the database passes its health check before starting the application, reducing startup failures caused by premature connection attempts.
