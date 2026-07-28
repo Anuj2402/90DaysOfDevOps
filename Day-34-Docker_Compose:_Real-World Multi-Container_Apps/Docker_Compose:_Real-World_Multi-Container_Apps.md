@@ -435,6 +435,63 @@ web:
     DB_PASSWORD: apppassword
     REDIS_HOST: redis
 ```
+Full Docker compose YAML 
+
+```YAML 
+version: "3.8"
+
+services:
+  web:
+    build: ./web
+    container_name: flask-app
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    environment:
+      DB_HOST: db
+      DB_NAME: myapp
+      DB_USER: appuser
+      DB_PASSWORD: apppassword
+      REDIS_HOST: redis
+
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: always
+
+volumes:
+  mysql-data:
+
+```
+
 ### Step 3: Bring Everything Down
 ```bash 
 docker compose down
@@ -473,7 +530,7 @@ Run:
 docker compose ps
 ```
 OUTPUT: 
-
+![alt text](image-4.png)
 
 
 - The `(healthy)` status confirms that the healthcheck is passing.
