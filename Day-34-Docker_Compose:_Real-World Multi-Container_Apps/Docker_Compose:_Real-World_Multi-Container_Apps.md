@@ -623,3 +623,229 @@ This makes your application startup more reliable, especially for services like 
 ## IMP Q: Why isn't `depends_on` alone enough for database-dependent applications?
 
 By itself, `depends_on` only controls the order in which containers are started. It does not verify that the dependent service is ready to accept connections. A database container may be running while it is still initializing. By adding a **healthcheck** and using `depends_on` with `condition: service_healthy`, Docker Compose waits until the database passes its health check before starting the application, reducing startup failures caused by premature connection attempts.
+
+
+
+
+# Task 3: Restart Policies
+
+Docker restart policies determine what Docker should do when a container exits or when the Docker daemon restarts. They improve application availability by automatically restarting containers under specific conditions.
+
+In this we will compare `restart: always` and `restart: on-failure.`
+
+### Step 1: Add `restart: always`
+
+Update our database service in `docker-compose.yml`:
+```YAML 
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+```
+
+### Understanding `restart: always`
+```
+If the container stops
+        │
+        ▼
+Docker automatically starts it again
+```
+This applies if:
+- The container crashes.
+- The container is killed
+- The Docker daemon restarts.
+- The host machine reboots.
+
+### Step 2: Start the Stack
+```bash 
+docker compose up -d 
+```
+verify: 
+```bash 
+docker ps 
+   OR 
+docker compose ps 
+```
+Example Output: 
+
+```
+NAME          STATUS
+mysql-db      Up
+flask-app     Up
+redis-cache   Up
+```
+### Step 3: Manually Kill the Database Container
+Kill the MySQL container:
+```bash 
+docker kill mysql-db
+```
+Example:
+```
+mysql-db
+```
+
+### Step 4: Watch What Happens
+Immediately run:
+```bash 
+docker ps 
+```
+or watch continuously:
+```bash
+watch docker ps
+```
+
+Within a few seconds, we'll see
+```
+mysql-db
+STATUS: Up
+```
+- Docker automatically recreated the running state because of:
+```
+restart: always 
+```
+we can also view the logs 
+```bash 
+docker logs mysql-db
+```
+
+### Step 5: Change to `restart: on-failure`
+Modify the Compose file:
+```YAML 
+restart: on-failure
+```
+Or specify a retry limit:
+```bash 
+restart: on-failure:5
+```
+This means Docker will restart the container only if it exits with a **non-zero exit code (an error)**.
+
+### Step 6: Recreate the Container
+Apply the change:
+```bash 
+docker compose down
+```
+
+```bash 
+docker compose up -d
+```
+
+### Step 7: Test `on-failure`
+Kill the container:
+```bash 
+docker kill mysql-db
+```
+The container is terminated with a signal (`SIGKILL`), not because the application exited with an error code. Depending on how the container stops, `on-failure` may not restart it because it is intended for processes that exit due to failures rather than being intentionally stopped.
+
+
+A better way to observe `on-failure` is with a container that exits with a non-zero status, for example:
+
+```bash 
+docker run --rm --restart on-failure alpine sh -c "exit 1"
+```
+
+Docker will attempt to restart the container because it exited with status code `1`.
+
+
+### Restart Policy Comparison
+
+`restart: always`
+
+```
+Container Stops
+       │
+       ▼
+Docker Restarts It
+```
+Used for long-running services that should always be available.
+
+Examples:
+- MySQL
+- PostgreSQL
+- Redis
+- Nginx
+- RabbitMQ
+- Elasticsearch
+
+
+`restart: on-failure`
+
+```
+Container Exits
+
+Exit Code = 0
+       │
+       ▼
+No Restart
+
+Exit Code ≠ 0
+       │
+       ▼
+Restart
+```
+Used for applications that should only restart after unexpected failures.
+
+Examples:
+- Batch jobs
+- Data import tasks
+- Worker processes
+- Scheduled scripts
+
+### Architecture
+
+```
+           Restart Policy
+
+          Container Stops
+                 │
+        ┌────────┴────────┐
+        │                 │
+ restart: always    restart: on-failure
+        │                 │
+Restart Every Time   Restart Only
+   
+                    On Failure
+```
+
+#### Notes
+
+`restart: always`
+
+- Restarts the container whenever it stops
+- Also restarts the container after the Docker daemon or host system restarts.
+- Best suited for production services that should remain available.
+
+`restart: on-failure`
+- Restarts the container only when the main process exits with a non-zero exit code.
+- Does not restart containers that exit successfully.
+- Can be configured with a retry limit (for example, `on-failure:5`).
+
+
+### Common Restart Policies
+| Policy           | Description                                                                    |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `no`             | Never restart the container (default).                                         |
+| `always`         | Always restart the container if it stops.                                      |
+| `unless-stopped` | Restart automatically unless the container was explicitly stopped by the user. |
+| `on-failure`     | Restart only if the container exits with a non-zero exit code.                 |
+
+
+### Q: When would you use each restart policy?
+
+Answer:
+
+- `restart: always` is ideal for long-running services such as databases, web servers, caches, and message brokers that should automatically recover after crashes or host reboots.
+
+- `restart: on-failure` is better for applications that should restart only after unexpected errors, such as worker processes, migration jobs, or data-processing tasks. It avoids restarting containers that completed successfully.
+
+
