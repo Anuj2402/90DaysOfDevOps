@@ -849,3 +849,332 @@ Answer:
 - `restart: on-failure` is better for applications that should restart only after unexpected errors, such as worker processes, migration jobs, or data-processing tasks. It avoids restarting containers that completed successfully.
 
 
+# Task 4: Custom Dockerfiles in Compose
+
+Project Structure
+```
+custom-compose-app/
+│
+├── docker-compose.yml
+│
+└── web/
+    ├── Dockerfile
+    ├── requirements.txt
+    └── app.py
+```
+Create it:
+
+```bash 
+mkdir custom-compose-app
+cd custom-compose-app
+
+mkdir web
+cd web 
+
+
+touch Dockerfile
+touch requirements.txt
+touch app.py
+
+cd ..
+touch docker-compose.yml
+```
+### File 1: `web/app.py`
+
+```Python 
+from flask import Flask
+import mysql.connector
+import redis
+import time
+
+app = Flask(__name__)
+
+# Wait until MySQL is available
+db = None
+while db is None:
+    try:
+        db = mysql.connector.connect(
+            host="db",
+            user="appuser",
+            password="apppassword",
+            database="myapp"
+        )
+    except Exception:
+        print("Waiting for MySQL...")
+        time.sleep(3)
+
+# Connect to Redis
+cache = redis.Redis(host="redis", port=6379)
+
+@app.route("/")
+def home():
+
+    cursor = db.cursor()
+
+    cursor.execute("SELECT NOW();")
+    db_time = cursor.fetchone()[0]
+
+    cache.set("visits", "Docker Compose Working")
+
+    cache_value = cache.get("visits").decode()
+
+    return f"""
+    <h1>Custom Dockerfile Demo</h1>
+
+    <h2>Flask Application Running Successfully</h2>
+
+    <p><b>Database Status:</b> Connected</p>
+
+    <p><b>Database Time:</b> {db_time}</p>
+
+    <p><b>Redis:</b> {cache_value}</p>
+    """
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+
+```
+
+### File 2: `web/requirements.txt`
+
+```
+Flask==3.1.0
+mysql-connector-python==9.2.0
+redis==5.2.1
+```
+### File 3: `web/Dockerfile`
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+```
+
+### File 4: `docker-compose.yml`
+
+```YAML 
+services:
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+
+    container_name: flask-app
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    environment:
+      DB_HOST: db
+      DB_NAME: myapp
+      DB_USER: appuser
+      DB_PASSWORD: apppassword
+      REDIS_HOST: redis
+
+  db:
+    image: mysql:8.0
+
+    container_name: mysql-db
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: redis-cache
+
+    restart: always
+
+volumes:
+  mysql-data:
+```
+
+### Step 1: Build the Custom Image
+
+Since we're using:
+```bash 
+build:
+  context: ./web
+  dockerfile: Dockerfile
+```
+Docker compose builds the image from our local Dockerfile Instead of pulling pre build application image.
+
+Run:
+```bash 
+docker compose build
+```
+
+OUTPUT: 
+![alt text](image-5.png)
+
+
+### Step 2: Start Everything
+```bash 
+docker compose up -d 
+```
+verify: 
+```bash 
+docker compose ps 
+```
+we should see 
+OUTPUT: 
+![alt text](image-6.png)
+
+
+Open:
+```
+http://localhost:5000
+```
+we should see:
+```
+Custom Dockerfile Demo
+
+Flask Application Running Successfully
+
+Database Status: Connected
+
+Database Time: 2026-07-29 ...
+
+Redis: Docker Compose Working
+```
+
+OUTPUT: 
+![alt text](image-7.png)
+
+### Step 3: Make a Code Change
+
+Open:
+```
+web/app.py
+```
+Change this line:
+```Python 
+<h1>Custom Dockerfile Demo</h1>
+```
+
+to
+```pyhton 
+<h1>Version 2 - Application Updated</h1>
+```
+or change:
+
+```bash 
+cache.set("visits", "Docker Compose Working")
+```
+to
+```bash 
+cache.set("visits", "Application Updated Successfully")
+```
+Save the file.
+
+### Step 4: Rebuild and Restart with One Command
+Instead of running:
+```bash 
+docker compose build
+docker compose down
+docker compose up -d
+```
+run a single command 
+```bash 
+docker compose up -d --build 
+```
+This command:
+1. Rebuilds the `web` image.
+2. Recreates the `web` container if the image changed.
+3. Starts the services in detached mode.
+
+Visit:
+```
+http://localhost:5000
+```
+we'll see your updated content, confirming the new image was built and deployed.
+OUTPUT:
+![alt text](image-8.png)
+
+### Verify the New Image
+
+List images:
+```bash 
+docker images 
+```
+Example:Output 
+
+![alt text](image-9.png)
+
+
+Notice that Compose created an image for our application using the project name and service name.
+
+### Complete Flow
+```
+                docker compose up -d --build
+                           │
+                           ▼
+                Read docker-compose.yml
+                           │
+                           ▼
+              build:
+                context: ./web
+                           │
+                           ▼
+                Read Dockerfile
+                           │
+                           ▼
+                Build Flask Image
+                           │
+                           ▼
+              Create/Update web Container
+                           │
+                           ▼
+            Start MySQL and Redis Services
+                           │
+                           ▼
+                Open http://localhost:5000
+                           │
+                           ▼
+              Updated Application Visible
+```
+
+Commands Summary
+
+| Task                | Command                        |
+| ------------------- | ------------------------------ |
+| Build image         | `docker compose build`         |
+| Start services      | `docker compose up -d`         |
+| Rebuild and restart | `docker compose up -d --build` |
+| View logs           | `docker compose logs -f web`   |
+| List containers     | `docker compose ps`            |
+| Stop everything     | `docker compose down`          |
+
