@@ -1178,3 +1178,309 @@ Commands Summary
 | List containers     | `docker compose ps`            |
 | Stop everything     | `docker compose down`          |
 
+# Task 5: Named Networks & Volumes
+
+In this Task we will improve our existing Docker compose projec by : 
+- Creating an **Explicit custom Network** instead of using the default compose network 
+- Creating **Named Volumes** For persistance Database Storage.
+- Adding **Lables** to services for better organization and metadata 
+
+This is common practice in production environment because it gives us more control over networking and storage 
+
+
+Project Structure
+
+```
+custom-compose-app/
+│
+├── docker-compose.yml
+│
+└── web/
+    ├── Dockerfile
+    ├── app.py
+    └── requirements.txt
+```
+No changes are required to `app.py`, `Dockerfile`, or `requirements.txt`.
+
+Only update **docker-compose.yml**
+
+#### docker-compose.yml
+```YAML 
+services:
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+
+    container_name: flask-app
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    environment:
+      DB_HOST: db
+      DB_NAME: myapp
+      DB_USER: appuser
+      DB_PASSWORD: apppassword
+      REDIS_HOST: redis
+
+    networks:
+      - backend-network
+
+    labels:
+      com.project.name: "Flask App Stack"
+      com.project.environment: "Development"
+      com.project.owner: "Anuj"
+      com.service: "Web"
+
+  db:
+    image: mysql:8.0
+
+    container_name: mysql-db
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - backend-network
+
+    labels:
+      com.project.name: "Flask App Stack"
+      com.project.environment: "Development"
+      com.project.owner: "Anuj"
+      com.service: "Database"
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: redis-cache
+
+    restart: always
+
+    networks:
+      - backend-network
+
+    labels:
+      com.project.name: "Flask App Stack"
+      com.project.environment: "Development"
+      com.project.owner: "Anuj"
+      com.service: "Cache"
+
+volumes:
+  mysql-data:
+    name: mysql-data
+
+networks:
+  backend-network:
+    name: backend-network
+    driver: bridge
+```
+### Step 1: Remove Existing Stack
+
+```bash 
+docker compose down
+```
+### Step 2: Start the New Stack
+```bash 
+docker compose up -d
+```
+Verify:
+```bash 
+docker compose ps 
+```
+OUTPUT: 
+
+
+
+### Step 3: Verify the Network
+List all the Docker Networks 
+```bash 
+docker network ls 
+```
+OutPut: 
+
+
+Notice that Compose created **backend-network** instead of the default project network.
+
+Inspect it:
+```bash 
+docker network inspect backend-network
+```
+we should see all three containers connected
+
+```
+backend-network
+
+├── flask-app
+├── mysql-db
+└── redis-cache
+```
+
+### Step 4: Verify the Volume
+List volumes: 
+```bash 
+docker volume ls 
+```
+
+Output: 
+
+
+Inspect the volume:
+```bash
+docker volume inspect mysql-data 
+```
+OUTPUT: 
+
+
+### Step 5: Verify Labels
+Inspect the Flask container:
+```bash 
+docker inspect flask-app
+```
+
+Search for Labels.
+
+Output: 
+
+```JSON 
+"Labels": {
+    "com.project.name": "Flask App Stack",
+    "com.project.environment": "Development",
+    "com.project.owner": "Anuj",
+    "com.service": "Web"
+}
+```
+Check MySQL:
+```bash 
+docker inspect mysql-db
+```
+Check Redis:
+```bash 
+docker inspect redis-cache
+```
+Each service has its own labels.
+
+
+### Project Architecture
+
+```
+                    Docker Compose
+                           │
+                           ▼
+                  backend-network
+                           │
+      ┌────────────────────┼────────────────────┐
+      │                    │                    │
+      ▼                    ▼                    ▼
+ Flask App            MySQL Database         Redis Cache
+      │                    │                    │
+      │                    │                    │
+      └──────────────Communicate───────────────┘
+
+                Named Volume
+                  mysql-data
+                       │
+                       ▼
+             Persistent Database Files
+```
+
+### Understanding Named Networks
+instead of 
+```YAML 
+services: 
+```
+Docker compose Automatically creates: 
+```
+project_default
+```
+When you define:
+```YAML 
+networks:
+  backend-network:
+    driver: bridge
+```
+Docker creates:
+```
+backend-network
+```
+Now every service explicitly joins:
+```YAML 
+networks:
+  - backend-network
+```
+
+Benefits:
+- Better organization
+- Easier troubleshooting
+- Easy to share with other Compose projects (if needed)
+- Production-friendly naming
+
+
+### Understanding Named Volumes
+Instead of:
+```YAML 
+volumes: 
+  - /var/lib/mysql 
+```
+we define 
+```YAML 
+volumes:
+  mysql-data:
+```
+Docker creates:
+```
+mysql-data
+```
+Benefits:
+- Persistent database storage
+- Data survives container recreation
+- Easy backup and restore
+- Easy inspection
+
+### Understanding Labels
+Labels are metadata attached to Docker objects.
+
+Example:
+```YAML 
+labels:
+  com.project.name: "Flask App Stack"
+  com.project.environment: "Development"
+  com.project.owner: "Anuj"
+```
+Docker stores them inside  the containe metadata 
+
+They are commonly used for:
+- Monitoring (Prometheus)
+- Logging
+- Service discovery
+- Kubernetes migration 
+- Documentation
+- Automation scripts
+
+### Q: Why define explicit networks and named volumes instead of relying on Docker Compose defaults?
+
+Explicit networks and named volumes make a Compose project more predictable and maintainable. A named network provides a stable, descriptive network that can be reused or shared if needed, while named volumes ensure persistent data storage across container recreations. Adding labels helps identify services and is useful for monitoring, automation, and operational tooling in larger environments.
+
+
