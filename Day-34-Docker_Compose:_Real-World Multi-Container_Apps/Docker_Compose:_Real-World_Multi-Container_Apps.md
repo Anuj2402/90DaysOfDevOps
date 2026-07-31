@@ -1484,3 +1484,4 @@ They are commonly used for:
 Explicit networks and named volumes make a Compose project more predictable and maintainable. A named network provides a stable, descriptive network that can be reused or shared if needed, while named volumes ensure persistent data storage across container recreations. Adding labels helps identify services and is useful for monitoring, automation, and operational tooling in larger environments.
 
 
+# Task 6: Scaling (Bonus)
