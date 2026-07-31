@@ -1485,3 +1485,224 @@ Explicit networks and named volumes make a Compose project more predictable and 
 
 
 # Task 6: Scaling (Bonus)
+One of the Docker Compose's useful features is the ability to run multiple instances (replicas) of a service. In this task , we will scale the **Flask web application** to 3 replicas and observe what  happens . 
+
+Step 1: Update `docker-compose.yml`
+Before scaling, remove the `container_name` from the web service.
+```YAML
+services:
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+
+    container_name: flask-app
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    environment:
+      DB_HOST: db
+      DB_NAME: myapp
+      DB_USER: appuser
+      DB_PASSWORD: apppassword
+      REDIS_HOST: redis
+
+    networks:
+      - backend-network
+
+    labels:
+      com.project.name: "Flask App Stack"
+      com.project.environment: "Development"
+      com.project.owner: "Anuj"
+      com.service: "Web"
+
+  db:
+    image: mysql:8.0
+
+    container_name: mysql-db
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - backend-network
+
+    labels:
+      com.project.name: "Flask App Stack"
+      com.project.environment: "Development"
+      com.project.owner: "Anuj"
+      com.service: "Database"
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: redis-cache
+
+    restart: always
+
+    networks:
+      - backend-network
+
+    labels:
+      com.project.name: "Flask App Stack"
+      com.project.environment: "Development"
+      com.project.owner: "Anuj"
+      com.service: "Cache"
+
+volumes:
+  mysql-data:
+    name: mysql-data
+
+networks:
+  backend-network:
+    name: backend-network
+    driver: bridge
+    
+```
+❌ Remove this line
+```
+container_name: flask-app
+```
+Why?
+When scaling, Docker needs to create multiple containers:
+```
+web-1
+web-2
+web-3
+```
+If we specify:
+```YAML 
+container_name: flask-app
+```
+every replica would try to use the same container name,  which is impossible 
+
+we will get an error like 
+```bash 
+container name "flask-app" is already in use
+```
+- Leave the `container_name` on `db` and `redis` because they each have only one instance. 
+
+# Step 2: Scale the Web Service
+RUN: 
+```bash 
+docker compose up -d --scale  web=3 
+```
+OUTOUT: 
+```
+Creating custom-compose-app-web-1
+Creating custom-compose-app-web-2
+Creating custom-compose-app-web-3
+```
+### Step 3: Verify
+```bash 
+docker compose ps 
+```
+OUTPUT: 
+
+
+### Step 4: List Containers
+```bash 
+docker ps 
+```
+OUTPUT: 
+
+
+
+- NOTICE Docker automatically numbered the web containers. 
+
+#### WHAT HAPPENS? 
+All the flask container connects to: 
+- The same MYSQL database 
+- The same Redis cache 
+- The same docker network 
+
+Architecture becomes:
+```
+                     Browser
+                        │
+                        │
+                  (Port 5000)
+                        │
+      ┌─────────────────┼─────────────────┐
+      │                 │                 │
+      ▼                 ▼                 ▼
+   Web-1             Web-2             Web-3
+      │                 │                 │
+      └────────────┬────┴────┬────────────┘
+                   │         │
+                   ▼         ▼
+                 MySQL     Redis
+```
+
+#### What Breaks?
+we'll likely see an error similar to:
+```
+Bind for 0.0.0.0:5000 failed:
+port is already allocated
+```
+or
+```
+Error starting userland proxy:
+listen tcp4 0.0.0.0:5000:
+bind: address already in use
+```
+#### Why?
+Our compose file contains 
+```YAML 
+ports:
+  - "5000:5000"
+```
+This means:
+```
+Host Port 5000
+        │
+        ▼
+Container Port 5000
+```
+Now imagine three containers:
+```
+Host Port 5000
+        │
+
+Web-1 wants it ✔
+
+Web-2 wants it ❌
+
+Web-3 wants it ❌
+```
+Only one process can listen on the same host port 
+
+Docker cannot map: 
+```
+5000 -> Web-1
+
+5000 -> Web-2
+
+5000 -> Web-3
+```
+at the same time 
+
+
