@@ -1312,7 +1312,7 @@ docker compose ps
 ```
 OUTPUT: 
 
-
+![alt text](image-10.png)
 
 ### Step 3: Verify the Network
 List all the Docker Networks 
@@ -1320,12 +1320,11 @@ List all the Docker Networks
 docker network ls 
 ```
 OutPut: 
-
-
+![alt text](image-11.png)
 Notice that Compose created **backend-network** instead of the default project network.
 
 Inspect it:
-```bash 
+```bash ba
 docker network inspect backend-network
 ```
 we should see all three containers connected
@@ -1345,14 +1344,14 @@ docker volume ls
 ```
 
 Output: 
-
+![alt text](image-12.png)
 
 Inspect the volume:
 ```bash
 docker volume inspect mysql-data 
 ```
 OUTPUT: 
-
+![alt text](image-13.png)
 
 ### Step 5: Verify Labels
 Inspect the Flask container:
@@ -1371,6 +1370,9 @@ Output:
     "com.project.owner": "Anuj",
     "com.service": "Web"
 }
+OUTPUT: 
+![alt text](image-14.png)
+
 ```
 Check MySQL:
 ```bash 
@@ -1621,15 +1623,14 @@ Creating custom-compose-app-web-3
 docker compose ps 
 ```
 OUTPUT: 
-
+![alt text](image-15.png)
 
 ### Step 4: List Containers
 ```bash 
 docker ps 
 ```
 OUTPUT: 
-
-
+![alt text](image-16.png)
 
 - NOTICE Docker automatically numbered the web containers. 
 
@@ -1763,6 +1764,9 @@ Then run:
 ```bash 
 docker compose up -d --scale web=3
 ```
+OUTPUT: 
+![alt text](image-17.png)
+
 Now all three containers start successfully because they communicate only over Docker's internal network. However, they won't be directly accessible from our host.
 
 #### Commands Summary
