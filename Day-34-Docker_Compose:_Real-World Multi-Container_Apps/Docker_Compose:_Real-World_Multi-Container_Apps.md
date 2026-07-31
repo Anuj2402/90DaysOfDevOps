@@ -1706,3 +1706,89 @@ Docker cannot map:
 at the same time 
 
 
+### Why Doesn't Simple Scaling Work with Port Mapping?
+Because the host port must be unique.
+
+One host port can only forward traffic to one container.
+
+For example:
+```
+localhost:5000
+
+↓
+
+Which container?
+
+Web-1 ?
+
+Web-2 ?
+
+Web-3 ?
+```
+
+Docker has no built-in load balancer in standard Docker Compose mode to decide where to send requests.
+
+
+### How Is This Solved in Real Production?
+Instead of exposing every web container directly, we place a **reverse proxy or load balancer** in front of them.
+
+Example:
+
+```bash 
+                  Browser
+                     │
+                     ▼
+               Nginx / Traefik
+             (Load Balancer)
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+      Web-1       Web-2       Web-3
+        │            │            │
+        └────────────┼────────────┘
+                     │
+             MySQL + Redis
+```
+The load balancer listens on port 5000 (or 80/443) and distributes incoming requests across all web containers.
+
+
+### If You Just Want Multiple Containers (Without Publishing Ports)
+
+we can temporarily remove:
+```YAML
+ports:
+  - "5000:5000"
+```
+Then run:
+```bash 
+docker compose up -d --scale web=3
+```
+Now all three containers start successfully because they communicate only over Docker's internal network. However, they won't be directly accessible from our host.
+
+#### Commands Summary
+
+| Task                      | Command                              |
+| ------------------------- | ------------------------------------ |
+| Scale web service         | `docker compose up -d --scale web=3` |
+| View running services     | `docker compose ps`                  |
+| List containers           | `docker ps`                          |
+| Scale back to one replica | `docker compose up -d --scale web=1` |
+
+
+#### Notes
+#### What happened?
+
+- Docker created three Flask containers.
+- All three connected to the same custom network.
+- All three shared the same MySQL database.
+- All three shared the same Redis cache.
+- Port publishing became the limiting factor.
+
+### Why doesn't simple scaling work with port mapping?
+
+Docker can create multiple container replicas, but only one container can bind to a specific host port. Since every replica tries to publish 5000:5000, the second and third replicas cannot claim the already-used host port. In production, this is solved by exposing a single reverse proxy or load balancer, which listens on the host port and distributes traffic to multiple backend containers.
+
+
+### IMP Q: Why doesn't `docker compose up --scale web=3` work well when the service publishes a fixed host port?
+
+Each replica attempts to publish the same host port (for example,` 5000:5000 `). A host port can only be bound by one container at a time, so additional replicas fail to publish that port. In production, a reverse proxy or load balancer (such as Nginx, Traefik, or a cloud load balancer) listens on the host port and forwards requests to multiple application replicas running on the internal Docker network.
