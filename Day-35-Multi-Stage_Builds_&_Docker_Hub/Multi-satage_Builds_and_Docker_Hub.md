@@ -157,6 +157,7 @@ go-app       v1    a1b2c3d4e5f6   980MB
 ```
 
 OUTPUT: 
+![alt text](image.png)
 
 Note: The exact size depends on our Docker version and the Go base image, but it will typically be hundreds of MB to around 1 GB because the image includes the Go compiler and build toolchain.
 
@@ -169,6 +170,7 @@ verify
 docker ps 
 ```
 OUTPUT: 
+![alt text](image-1.png)
 
 
 ### Step 4: Test the Application
@@ -188,15 +190,12 @@ Or test with curl:
 ```bash
 curl http://localhost:8080
 ```
-OUTPUT: 
-
-
 ### Step 5: View Logs
 ```bash 
 docker logs go-server
 ```
 OutPut: 
-
+![alt text](image-2.png)
 
 ### Step 6: Stop and Remove
 ```bash 
@@ -251,7 +250,7 @@ Record the image size from
 docker image 
 ```
 OUTPUT: 
-
+![alt text](image.png)
 
 - we'll compare this with a multi-stage Docker build in the next task. The multi-stage image will be dramatically smaller because it contains only the compiled binary and runtime essentials, not the Go compiler and build tools.
 
