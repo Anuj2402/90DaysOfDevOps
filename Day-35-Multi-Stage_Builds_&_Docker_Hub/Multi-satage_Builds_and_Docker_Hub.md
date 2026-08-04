@@ -460,7 +460,7 @@ docker images
 ```
 
 Output:
-
+![alt text](image-3.png)
 
 - our exact numbers will vary depending on the Go and Alpine versions, but the multi-stage image should be dramatically smaller than the single-stage image.
 
@@ -475,7 +475,7 @@ docker ps
 ```
 
 Output: 
-
+![alt text](image-4.png)
 
 
 ### Step 4: Test the Application
@@ -490,7 +490,7 @@ curl http://localhost:8080
 
 ```
 Output: 
-
+![alt text](image-5.png)
 
 ### Step 5: View Logs
 ```bash 
@@ -498,6 +498,7 @@ docker logs go-server-v2
 ```
 
 Output:
+![alt text](image-6.png)
 
 ```
 Server started on port 8080
