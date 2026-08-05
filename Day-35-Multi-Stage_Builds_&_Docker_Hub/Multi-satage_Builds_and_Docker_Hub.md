@@ -556,3 +556,286 @@ The second stage starts from a minimal runtime image (`alpine`) and copies only 
 
 ### Imp : Q: What are the advantages of a multi-stage Docker build?
 Multi-stage builds separate the build environment from the runtime environment. The application is compiled in a builder image that contains the required SDK and tools, and only the final executable is copied into a minimal runtime image. This results in significantly smaller images, faster deployments, improved security through a reduced attack surface, and cleaner production containers without build-time dependencies.
+
+# Task 3: Push to Docker Hub
+In this task we will publish the GO application we build in the previous task to **Docker Hub**, making it available to Download from any machine 
+
+we will learn how to: 
+- Create a Docker HUB Account 
+- Log in using Docker CLI 
+- Tag your image correctly 
+- push it to Docker HUB 
+- Remove the Local Image 
+- pull it back to verify 
+
+#### PreRequisites 
+we should already have an image from previous task 
+
+Verify: 
+```bash 
+docker images 
+```
+OUTPUT: 
+
+
+### Step 1: Create a Docker Hub Account
+
+Go TO: 
+```LINK
+https://hub.docker.com/
+```
+Create a Free account if we don't already have one 
+
+suppose your username is: 
+```
+Anuj2402
+```
+Replace it with your own Docker Hub username in following Commands.
+
+### Step 2: Login from the Terminal
+RUN: 
+```bash 
+docker login 
+```
+Example: 
+```
+username: Anuj2402 
+password: 
+```
+if successful:
+```
+Login Succeeded
+```
+Verify:
+```bash 
+docker info 
+```
+Near the bottom you should see 
+```
+Username: anuj2402
+```
+
+### Step 3: Tag the Image
+current image: 
+```
+go-app:v2
+```
+Docker Hub expects:
+```
+dockerhub-username/repository:tag
+```
+Tag it:
+```
+docker tag go-app:v2 anuj2402/go-app:v1
+```
+Verify:
+```bash 
+docker images 
+```
+
+EXAMPLE:
+```
+REPOSITORY           TAG
+
+go-app               v2
+
+anuj2402/go-app      v1
+```
+Notice both tags points to the same image ID 
+
+### Step 4: Push to Docker Hub
+Run:
+```bash 
+docker push anuj2402/go-app:v1
+```
+Example: 
+```
+The push refers to repository [docker.io/anuj2402/go-app]
+
+Layer already exists
+
+Layer already exists
+
+v1: digest:
+sha256:xxxxxxxxxxxxxxxx
+
+Pushed
+```
+
+### Step 5: Verify on Docker Hub
+
+Open your browser.
+
+Navigate to:
+```
+https://hub.docker.com/r/anuj2402/go-app
+```
+we should see 
+
+- Repository name
+- Tag (v1)
+- Image size
+- Push time
+
+### Step 6: Remove the Local Image
+
+To prove that the image can be downloaded again, remove it locally 
+
+First stop any running container:
+```bash
+docker stop go-server-v2
+```
+Remove the container:
+```bash 
+docker rm go-server-v2
+```
+
+Now remove the images:
+
+```bash 
+docker rmi anuj2402/go-app:v1
+```
+```bash 
+docker rmi go-app:v2
+```
+verify: 
+```bash 
+docker images 
+```
+The image should no longer appear. 
+
+### Step 7: Pull the Image Again
+
+Download it from the Docker HUB 
+```bash 
+docker pull anuj2402/go-app:v1
+```
+Example: 
+```
+Pulling from anuj2402/go-app
+
+Downloaded newer image
+
+Status: Downloaded newer image
+```
+Verify:
+```bash 
+doker images
+```
+Example:
+```bash 
+REPOSITORY          TAG
+
+anuj2402/go-app     v1
+```
+
+### Step 8: Run the Downloaded Image
+
+Run:
+```bash 
+docker run -d -p 8080:8080 --name go-server anuj2402/go-app:v1
+```
+Verify:
+```bash 
+docker ps 
+```
+Expected:
+
+```
+CONTAINER ID   IMAGE
+
+xxxxxx         anuj2402/go-app:v1
+```
+
+### Step 9: Test the Application
+
+Browser:
+```
+http://localhost:8080
+   
+   OR 
+
+curl http://localhost:8080
+
+```
+Output:
+```
+Hello from Go running inside Docker!
+```
+This confirms that the image works exactly the same after being pulled from Docker Hub.
+
+### Complete Workflow
+```
+Go Source Code
+        │
+        ▼
+Dockerfile
+        │
+        ▼
+docker build
+        │
+        ▼
+Local Image
+(go-app:v2)
+        │
+        ▼
+docker tag
+        │
+        ▼
+anuj2402/go-app:v1
+        │
+        ▼
+docker push
+        │
+        ▼
+Docker Hub Repository
+        │
+        ▼
+docker pull
+        │
+        ▼
+Any Machine
+        │
+        ▼
+docker run
+```
+#### Commands Summary
+
+| Task              | Command                                                          |
+| ----------------- | ---------------------------------------------------------------- |
+| Login             | `docker login`                                                   |
+| View local images | `docker images`                                                  |
+| Tag image         | `docker tag go-app:v2 anuj2402/go-app:v1`                        |
+| Push image        | `docker push anuj2402/go-app:v1`                                 |
+| Remove image      | `docker rmi anuj2402/go-app:v1`                                  |
+| Pull image        | `docker pull anuj2402/go-app:v1`                                 |
+| Run image         | `docker run -d -p 8080:8080 --name go-server anuj2402/go-app:v1` |
+
+
+#### Understanding Image Tags
+Suppose your Docker Hub username is anuj2402.
+```
+anuj2402/go-app:v1
+│         │      │
+│         │      └── Tag (Version)
+│         │
+│         └──────── Repository Name
+│
+└────────────────── Docker Hub Username
+```
+we can create multiple versions:
+```
+anuj2402/go-app:v1
+
+anuj2402/go-app:v2
+
+anuj2402/go-app:latest
+```
+
+# imp Q : Why do we tag an image before pushing it to Docker Hub?
+
+Docker Hub organizes images using the format `username/repository:tag`. A local image such as `go-app:v2` has no registry or namespace information. By tagging it as `yourusername/go-app:v1`, Docker knows which repository to push to and which version (tag) to assign. Tags are commonly used for versioning releases such as `v1.0`, `v2.1`, or `latest`.
+
+
+
+
