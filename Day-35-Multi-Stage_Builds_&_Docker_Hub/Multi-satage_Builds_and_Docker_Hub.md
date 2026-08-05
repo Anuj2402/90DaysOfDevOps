@@ -837,5 +837,304 @@ anuj2402/go-app:latest
 Docker Hub organizes images using the format `username/repository:tag`. A local image such as `go-app:v2` has no registry or namespace information. By tagging it as `yourusername/go-app:v1`, Docker knows which repository to push to and which version (tag) to assign. Tags are commonly used for versioning releases such as `v1.0`, `v2.1`, or `latest`.
 
 
+# Task 4: Docker Hub Repository
 
+In this task we will explore our Docker Hub repository after pushing our image. we will learn how repository descriptions, tags, and image versioning work.
+
+### Step 1: Open Docker Hub
+
+Open your browser and sign in to Docker Hub.
+
+Go to your repository:
+```
+https://hub.docker.com/r/<your-dockerhub-username>/go-app
+```
+For example, if your username is `anuj2402`:
+```
+https://hub.docker.com/r/anuj2402/go-app
+```
+we should see: 
+- Repository name
+- Image tags
+- Last pushed time
+- Pull count
+- Repository description (currently empty)
+
+### Step 2: Add a Repository Description
+Click **Settings** (or **General**, depending on the Docker Hub UI), then edit the repository description.
+
+Example :
+Short Description
+```
+A simple Go web application containerized using Docker and Multi-Stage Builds.
+```
+Full Description (Optional)
+```
+This project demonstrates Docker best practices for Go applications.
+
+Features:
+- Go HTTP server
+- Multi-stage Docker build
+- Lightweight Alpine runtime image
+- Exposes port 8080
+- Ready to run with Docker
+
+Build:
+docker build -t go-app .
+
+Run:
+docker run -d -p 8080:8080 go-app
+```
+Save the changes 
+
+
+### Step 3: Explore the Tags Tab
+Open the Tags tab.
+
+we might see something like:
+
+| Tag      | Description                      |
+| -------- | -------------------------------- |
+| `v1`     | First version of the application |
+| `latest` | Default version (if pushed)      |
+
+If you only pushed:
+```bash 
+docker push <your-username>/go-app:v1
+```
+then we will see 
+```
+v1
+```
+### Step 4: Create Another Version
+Let's Create a second version 
+Modify your application 
+
+Open: 
+```
+main.go
+```
+change
+
+```GO
+fmt.Fprintf(w, "Hello from Go running inside Docker!")
+```
+TO: 
+```GO 
+fmt.Fprintf(w, "Hello from Version 2!")
+```
+### Step 5: Build Again
+```bash 
+docker build -t go-app:v2 .
+```
+### Step 6: Tag Version 2
+```bash 
+docker tag go-app:v2 <your-username>/go-app:v2
+```
+Example:
+```bash 
+docker tag go-app:v2 anuj2402/go-app:v2
+```
+### Step 7: Push Version 2
+
+```bash 
+docker push <your-username>/go-app:v2
+```
+Example:
+```bash 
+docker push anuj2402/go-app:v2
+```
+Now Docker Hub will show:
+```
+v1
+v2
+```
+
+### Step 8: Add the `latest` Tag
+The `latest` tag is just another tag—it isn't created automatically for every image.
+
+Tag your newest version:
+```bash 
+docker tag go-app:v2 <your-username>/go-app:latest
+```
+Example:
+```bash
+docker tag go-app:v2 anuj2402/go-app:latest
+```
+Push it:
+```bash 
+docker push <your-username>/go-app:latest
+```
+
+Now Docker Hub will display:
+```
+latest
+
+v2
+
+v1
+```
+
+### Step 9: Pull a Specific Tag
+
+Remove the local image if needed:
+```bash 
+docker rmi <your-username>/go-app:v1
+```
+Pull version 1:
+```bash 
+docker pull <your-username>/go-app:v1
+```
+Run it:
+```bash 
+docker run -d -p 8080:8080 --name go-v1 <your-username>/go-app:v1
+```
+Visit: 
+```
+http://localhost:8080
+```
+Output:
+```bash 
+Hello from Go running inside Docker!
+```
+
+### Step 10: Pull Version 2
+
+```bash 
+docker pull <your-username>/go-app:v2
+```
+Run it on another port:
+```bash 
+docker run -d -p 8081:8080 --name go-v2 <your-username>/go-app:v2
+```
+Visit:
+```
+http://localhost:8081
+```
+
+Output:
+```
+Hello from Version 2!
+```
+
+### Step 11: Pull `latest`
+
+```bash 
+docker pull <your-username>/go-app:latest
+```
+Run it:
+```bash 
+docker run -d -p 8082:8080 --name go-latest <your-username>/go-app:latest
+```
+
+Visit:
+```bash 
+http://localhost:8082
+```
+If `latest` points to `v2`, we'll see:
+```
+Hello from Version 2!
+```
+
+### What Happens?
+
+Pulling a Specific Tag
+```bash 
+docker pull anuj2402/go-app:v1
+```
+Docker **downloads exactly** version `v1`.
+
+Pulling Another Specific Tag
+```bash 
+docker pull anuj2402/go-app:v2
+```
+Docker **downloads exactly** version `v2`.
+
+Pulling `latest`
+```bash 
+docker pull anuj2402/go-app:latest
+```
+Docker downloads **whatever image the** `latest` tag currently references.
+
+`latest` is not necessarily the newest image—it is simply a tag that someone assigned.
+
+##### Image Versioning
+```
+Repository
+
+go-app
+│
+├── v1
+│      └── First Release
+│
+├── v2
+│      └── Updated Release
+│
+└── latest
+       │
+       ▼
+      v2
+```
+
+### Docker Hub Workflow
+
+```
+Source Code
+      │
+      ▼
+docker build
+      │
+      ▼
+Local Image
+      │
+      ▼
+docker tag
+      │
+      ▼
+v1
+v2
+latest
+      │
+      ▼
+docker push
+      │
+      ▼
+Docker Hub
+      │
+      ▼
+Users Pull
+Specific Versions
+```
+
+
+### Commands Summary
+
+| Task        | Command                                              |
+| ----------- | ---------------------------------------------------- |
+| Build image | `docker build -t go-app:v2 .`                        |
+| Tag image   | `docker tag go-app:v2 <your-username>/go-app:v2`     |
+| Push image  | `docker push <your-username>/go-app:v2`              |
+| Tag latest  | `docker tag go-app:v2 <your-username>/go-app:latest` |
+| Push latest | `docker push <your-username>/go-app:latest`          |
+| Pull v1     | `docker pull <your-username>/go-app:v1`              |
+| Pull v2     | `docker pull <your-username>/go-app:v2`              |
+| Pull latest | `docker pull <your-username>/go-app:latest`          |
+
+### Notes
+
+### What is a Docker image tag?
+
+A tag identifies a specific version of an image. Multiple tags (such as `v1`, `v2`, or `latest`) can point to different image versions, allowing you to manage releases and roll back if needed.
+
+Pulling a specific tag vs `latest`
+
+- `docker pull <your-username>/go-app:v1` always retrieves the image tagged as`v1`.
+
+- `docker pull <your-username>/go-app:v2` always retrieves the image tagged as `v2`.
+
+- `docker pull <your-username>/go-app:latest` retrieves whichever image currently has the latest tag. The latest tag is simply a label and does not automatically represent the newest build.
+
+### Q: Why should production deployments use versioned tags instead of latest?
+
+Production deployments should use immutable version tags (such as `v1.0.3` or `v2.1.0`) because they provide predictable, repeatable deployments and make rollbacks straightforward. The latest tag can change over time, so pulling it on different days may result in different application versions, leading to inconsistent environments and harder troubleshooting.
 
