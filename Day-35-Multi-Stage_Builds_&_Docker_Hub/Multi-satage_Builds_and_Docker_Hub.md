@@ -1138,3 +1138,308 @@ Pulling a specific tag vs `latest`
 
 Production deployments should use immutable version tags (such as `v1.0.3` or `v2.1.0`) because they provide predictable, repeatable deployments and make rollbacks straightforward. The latest tag can change over time, so pulling it on different days may result in different application versions, leading to inconsistent environments and harder troubleshooting.
 
+# Task 5: Image Best Practices
+
+In this task we will improve our Docker image by applying common production best practices. We will compare a basic Dockerfile with an optimized one and observe the improvements.
+
+we will learn to: 
+- use a minimal base image.
+- Avoid running the application as root user.
+- Reduce image layers by combining `RUN` commands .
+- Use specific image tags instead of `latest`
+- Compare image size before and after optimization 
+
+### Project Structure
+we will use a simple python flask application 
+```
+image-best-practices/
+├── Dockerfile.bad
+├── Dockerfile.good
+├── app.py
+└── requirements.txt
+```
+Create the project:
+```bash 
+mkdir image-best-practices
+cd image-best-practices
+
+touch Dockerfile.bad
+touch Dockerfile.good
+touch app.py
+touch requirements.txt
+```
+
+### File 1: `app.py`
+```Python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "<h1>Docker Image Best Practices Demo</h1>"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+```
+
+### File 2: `requirements.txt`
+
+```
+Flask==3.1.0
+```
+### Part 1: Bad Dockerfile
+
+Create DockerFile.bad
+```Dockerfile 
+FROM ubuntu:latest
+
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip3 install -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python3", "app.py"]
+```
+
+#### Problems with this Dockerfile
+
+- Uses `ubuntu:latest` (not version-pinned).
+- Large base image.
+- Multiple `RUN` instructions create extra layers.
+- Runs as the `root` user.
+- Doesn't clean package manager cache.
+
+#### Build the Bad Image
+```bash 
+docker build -f Dokcerfile.bad -t flask-bad:v1 .
+```
+Check the image:
+```bash 
+docker images 
+```
+OUTPUT: 
+```
+REPOSITORY      TAG      SIZE
+
+flask-bad       v1       300MB
+```
+
+#### Part 2: Optimized Dockerfile
+Create **Dockerfile.good**.
+
+```dockerfile 
+# Use a minimal and version-pinned base image
+FROM python:3.12-alpine
+
+# Create a non-root user
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+# Install dependencies without caching
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Change ownership of the application files
+RUN chown -R appuser:appgroup /app
+
+# Switch to the non-root user
+USER appuser
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+```
+#### Why is this Better?
+
+1. Minimal Base Image
+Instead of : 
+```dockerfile 
+FROM ubuntu:latest
+```
+we use:
+```dockerfile
+FROM python:3.12-alpine
+```
+Advantages:
+- Much smaller image.
+- Faster downloads.
+- Faster deployments.
+- Smaller attack surface.
+
+
+2. Version-Pinned Base Image
+Avoid:
+```dockerfile 
+FROM python:latest
+```
+Use:
+```dockerfile 
+FROM python:3.12-alpine
+```
+This ensures consistent builds over time.
+
+3. Non-Root User
+
+Create a user:
+```dockerfile 
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup
+```
+Switch to it:
+
+```dockerfile 
+USER appuser
+```
+This follows the principle of least privilege and reduces the impact of a potential compromise.
+
+4. Combine Commands
+
+Instead of multiple `RUN` instructions:
+```dockerfile 
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+```
+we combine related work into fewer layers. In this Alpine example, only one package-install `RUN` is needed because Python is already part of the base image.
+
+5. Don't Cache Pip Packages
+
+```dockerfile 
+RUN pip install --no-cache-dir -r requirements.txt
+```
+This prevents pip from storing downloaded package archives in the image, reducing its size.
+
+Build the Optimized Image
+```bash 
+docker build -f Dockerfile.good -t flask-good:v1 .
+```
+Verify:
+```bash 
+docker images
+```
+
+Example:
+```
+REPOSITORY      TAG      SIZE
+
+flask-bad       v1       300MB
+
+flask-good      v1       65MB
+```
+The exact size depends on package versions and our environment, but the optimized image should be significantly smaller.
+
+#### Run the Optimized Container
+```bash 
+docker run -d -p 5000:5000 --name flask-demo flask-good:v1
+```
+Verify:
+```bash 
+docker ps 
+```
+Open: 
+```
+http://localhost:5000
+```
+Expected:
+```
+Docker Image Best Practices Demo
+```
+
+### Verify the User
+
+Check the current user inside the container:
+```bash 
+docker exec flask-demo whoami
+```
+Expected:
+```bash 
+appuser
+```
+This confirms the application is not running as `root`.
+
+### Compare Image Sizes
+```bash 
+docker images 
+```
+Example:
+
+| Image           | Approximate Size |
+| --------------- | ---------------: |
+| `flask-bad:v1`  |          ~300 MB |
+| `flask-good:v1` |           ~65 MB |
+
+
+### Dockerfile Comparison
+Before
+```dockerfile 
+FROM ubuntu:latest
+
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+```
+
+After
+```dockerfile 
+FROM python:3.12-alpine
+
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup
+
+USER appuser
+```
+
+### Commands Summary
+
+| Task                    | Command                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| Build unoptimized image | `docker build -f Dockerfile.bad -t flask-bad:v1 .`           |
+| Build optimized image   | `docker build -f Dockerfile.good -t flask-good:v1 .`         |
+| Compare sizes           | `docker images`                                              |
+| Run container           | `docker run -d -p 5000:5000 --name flask-demo flask-good:v1` |
+| Check running user      | `docker exec flask-demo whoami`                              |
+| View logs               | `docker logs flask-demo`                                     |
+| Stop container          | `docker stop flask-demo`                                     |
+| Remove container        | `docker rm flask-demo`                                       |
+
+#### Notes
+
+#### Why use a minimal base image?
+
+A minimal base image, such as `python:3.12-alpine`, contains only the essential runtime components. This results in a smaller image, faster downloads, reduced storage usage, and a smaller security attack surface compared to larger images like Ubuntu.
+
+#### Why avoid running as root?
+
+Containers run as the root user by default. If an application is compromised, an attacker would have root privileges inside the container. Creating and switching to a non-root user limits the permissions available to the application and follows security best practices.
+
+#### Why combine RUN commands?
+Each `RUN` instruction creates a new image layer. Combining related commands into fewer `RUN` instructions reduces the total number of layers and can help keep the image smaller and more efficient.
+
+#### Why use specific tags instead of latest?
+Using version-pinned tags (for example, `python:3.12-alpine`) ensures reproducible builds. The `latest` tag can change over time, potentially introducing unexpected behavior or compatibility issues.
+
+### Size Comparison
+| Dockerfile  | Base Image           | Typical Size |
+| ----------- | -------------------- | -----------: |
+| Unoptimized | `ubuntu:latest`      |  ~250–350 MB |
+| Optimized   | `python:3.12-alpine` |    ~50–80 MB |
+
+
+### IMP: Q: What are some Docker image best practices you follow?
+
+I use minimal, version-pinned base images to reduce image size and ensure reproducible builds. I run applications as a non-root user for improved security, combine related `RUN` commands to reduce layers where appropriate, avoid unnecessary package caches (for example, using `pip --no-cache-dir`), and use versioned base image tags instead of `latest`. These practices lead to smaller, more secure, and easier-to-maintain Docker images.
