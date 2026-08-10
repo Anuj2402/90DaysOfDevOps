@@ -1492,3 +1492,681 @@ This is the most important thing to understand from this Dockerfile:
 
 The key takeaway: Stage 1 is your factory—it contains everything needed to build the application. Stage 2 is your production box—it contains only the things required to run the already-built application.
 
+
+
+
+# Task 3: Add Docker Compose
+
+Create `docker-compose.yml`
+
+```bash 
+cat > ~/chat-app/docker-compose.yml << 'EOF'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: chat-app:latest
+    container_name: chat-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      APP_PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - chat-net
+
+  db:
+    image: mysql:8.4
+    container_name: chat-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - chat-net
+    # Not exposed to the host on purpose — only the app service needs to reach it,
+    # over the internal chat-net network. Uncomment for local DB debugging only:
+    # ports:
+    #   - "3306:3306"
+
+networks:
+  chat-net:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
+EOF
+```
+
+Also  Create the `.env` files
+
+```bash 
+cat > ~/chat-app/.env.example << 'EOF'
+# Copy this file to .env and fill in real values.
+# .env is gitignored / dockerignored — never commit real secrets.
+
+# --- App ---
+APP_PORT=8080
+
+# --- MySQL ---
+MYSQL_ROOT_PASSWORD=change_me_root_password
+MYSQL_DATABASE=chatdb
+MYSQL_USER=chatapp
+MYSQL_PASSWORD=change_me_app_password
+EOF
+
+cp ~/chat-app/.env.example ~/chat-app/.env
+
+```
+- Then edit `~/chat-app/.env` and replace the two `change_me_* ` placeholder passwords with real values of your choosing (any strings work for local testing):
+
+- Yes. This docker-compose.yml is a two-service application stack:
+
+```
+                    Docker Compose
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+          ▼                             ▼
+     app service                   db service
+     chat-app                      MySQL 8.4
+          │                             │
+          │        chat-net             │
+          └───────────┬─────────────────┘
+                      │
+                Internal network
+                      │
+                 MySQL :3306
+```
+The app talks to MySQL using the service name `db`, and MySQL's data is persisted in the named volume `db-data`.
+
+1. The cat command
+
+```bash 
+cat > ~/chat-app/docker-compose.yml << 'EOF'
+```
+This is the shell command , not Docker Compose syntax
+It means -> Create/overwrite `~/chat-app/docker-compose.yml` and put everything I type until EOF into that file.
+
+So after running it, we get:
+```
+~/chat-app/
+├── Dockerfile
+├── docker-compose.yml
+├── main.go
+├── go.mod
+├── go.sum
+├── index.html
+└── history.html
+```
+The final:
+```
+EOF 
+```
+means: -> Stop Writing to the file 
+
+2. `services`
+
+```YAML
+services: 
+```
+This is the most important section.
+It defines the container that make up our application 
+
+we have tw services 
+```
+services:
+├── app
+└── db
+```
+So Compose will create:
+```
+chat-app
+chat-db
+```
+
+3. App service
+```YAML
+app:
+```
+- This is our GO Chat application 
+
+Build the application
+```YAML 
+build:
+  context: .
+  dockerfile: Dockerfile
+```
+This tells Docker Compose: 
+
+- Build the app image using the Dockerfile in the current directory.
+
+`context: .`  -> The `.` Means-> current directory if we are inside `~/chat-app` -> then Docker uses: -> `~/chat-app` as a build context 
+
+That's why our Dockerfile can do:
+```dockerfile 
+COPY main.go ./
+COPY index.html history.html ./
+```
+- Because those files are inside build context 
+
+`dockerfile: Dockerfile`
+
+- Tells Compose which Dockerfile to use:
+```bash 
+~/chat-app/Dockerfile
+```
+So:
+```
+docker-compose.yml
+       │
+       ▼
+Dockerfile
+       │
+       ▼
+Build chat application image
+```
+4. Image name
+```YAML 
+image: chat-app:latest
+```
+- The image created by the build will be called: `chat-app:latest`
+
+we can see it with:
+```bash 
+docker images 
+```
+we will see something like : 
+```
+REPOSITORY    TAG
+chat-app      latest
+```
+- Important -> `latest` does not automatically mean "newest".
+- It's simply a tag named `latest`.
+
+OUTPUT: 
+
+
+5. Container name
+
+```YAML 
+container_name: chat-app
+```
+Normally compose generates names such as: 
+```
+chat-app-app-1
+```
+But this explicitly tells Docker:
+- Name my container `chat-app`. 
+
+So:
+```bash 
+docker ps 
+```
+will show 
+```
+chat-app
+```
+
+6. Restart policy
+
+```YAML 
+restart: unless-stopped
+```
+This tells Docker:
+- Automatically restart this container if it crashes or Docker restarts, unless I explicitly stopped it.
+
+For example:
+```
+Application crashes
+       │
+       ▼
+Docker restarts it
+```
+But if we manually do:
+```bash 
+docker compose stop app
+```
+- Docker won't continuously bring it back.
+
+7. Port mapping
+
+```YAML 
+ports:
+  - "${APP_PORT:-8080}:8080"
+```
+
+This maps : 
+```
+HOST {PORT } : CONTAINER {PORT}
+```
+so normally 
+```
+8080:8080
+```
+means:
+```
+Your computer
+localhost:8080
+      │
+      ▼
+Container
+port 8080
+```
+we can access: 
+```
+http://localhost:8080
+```
+
+What does `${APP_PORT:-8080}` mean?
+
+- This is Compose variable substitution : 
+- It means Use `APP_PORT` if it exists; otherwise use `8080`. 
+
+for example , if   `.env` conatains:
+```
+APP_PORT=9090
+```
+then compose creates: 
+```
+9090:8080
+```
+so: 
+```
+localhost:9090
+       │
+       ▼
+container:8080
+```
+If `APP_PORT` isn't defined:
+```
+localhost:8080
+       │
+       ▼
+container:8080
+```
+8. Environment variables for the app
+```YAML
+environment:
+  APP_PORT: "8080"
+  DB_HOST: db
+  DB_PORT: "3306"
+  DB_USER: ${MYSQL_USER}
+  DB_PASSWORD: ${MYSQL_PASSWORD}
+  DB_NAME: ${MYSQL_DATABASE}
+```
+These values are passed **inside the app container**
+our GO application can read them using environment variables 
+
+`APP_PORT`
+```YAML 
+APP_PORT: "8080"
+```
+our application knows it should use port:`8080`
+
+`DB_HOST`
+```YAML 
+DB_HOST: db
+```
+This is extremely important 
+we are not using -> `localhost` we are using   `db`
+Why? -> Because `db` is the Compose service name.
+
+Docker's internal DNS allows:
+```
+app → db
+```
+So our Go application can connect to: `db:3306`
+
+Think of it like:
+```
+app container
+     │
+     │ DB_HOST=db
+     ▼
+Docker DNS
+     │
+     ▼
+MySQL container
+```
+
+`DB_PORT`
+```YAML 
+DB_PORT: "3306"
+```
+MySQL's standard port is:`3306` so our application connects to `db:3306`
+
+
+Database credentials
+```YAML 
+DB_USER: ${MYSQL_USER}
+DB_PASSWORD: ${MYSQL_PASSWORD}
+DB_NAME: ${MYSQL_DATABASE}
+```
+The values come form our  `.env` might contain:
+```
+MYSQL_USER=chatuser
+MYSQL_PASSWORD=secret123
+MYSQL_DATABASE=chatdb
+```
+Compose substitutes them.
+
+The app effectively receives:
+```
+DB_USER=chatuser
+DB_PASSWORD=secret123
+DB_NAME=chatdb
+```
+9. `depends_on`
+```YAML 
+depends_on:
+  db:
+    condition: service_healthy
+```
+This establishes a startup dependency:
+```bash 
+db
+ │
+ │ must become healthy
+ ▼
+app
+```
+The important part is:
+```
+condition: service_healthy
+```
+- It doesn't merely wait for the MySQL container to start.
+
+- It waits for the MySQL **healthcheck to succeed**.
+
+10. Network
+```YAML 
+networks:
+  - chat-net
+ ```
+
+The app is connected to:
+```
+chat-net 
+```
+The database is also connected to:
+```
+chat-net 
+```
+Therefore:
+```
+       chat-net
+     /          \
+    /            \
+  app             db
+  ```
+They can communicate using their service names.
+
+The app can connect to:
+```
+db:3306
+```
+
+11. Database service
+
+Now:
+```YAML 
+db:
+```
+This defines our MySQL container.
+
+12. MySQL image
+```
+image: mysql:8.4
+```
+- Instead of building your own MySQL image, Compose downloads the official MySQL image.
+
+- we are specifically using `mysql:8.4` rather than `mysql:latest`
+- That's better for predictable deployments.
+
+13. Database container name
+
+```YAML 
+container_name: chat-db
+```
+The container will be called `chat-db` so : 
+```bash 
+docker ps 
+```
+might show
+```
+chat-app
+chat-db
+```
+
+14. Database restart policy
+```
+restart: unless-stopped
+```
+Same idea as the app: If mysql crashes :
+```
+MySQL crashes
+     │
+     ▼
+Docker restarts MySQL
+```
+unless you've explicitly stopped it.
+
+15. MySQL environment variables
+```YAML 
+environment:
+  MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  MYSQL_DATABASE: ${MYSQL_DATABASE}
+  MYSQL_USER: ${MYSQL_USER}
+  MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+```
+- These configure MySQL when the container is initialized.
+For example:
+```
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=chatdb
+MYSQL_USER=chatuser
+MYSQL_PASSWORD=secret123
+```
+MySQL will initialize:
+```
+Database:
+chatdb
+
+User:
+chatuser
+
+Password:
+secret123
+
+Root password:
+rootpassword
+```
+
+16. Named volume
+```YAML 
+volumes:
+  - db-data:/var/lib/mysql
+```
+This is extremely important for database persistence.
+MySQL stores its data inside :
+```
+/var/lib/mysql #inside the container
+```
+we are mounting that dorectory to 
+```
+db-data
+```
+which is a Docker named volume.
+
+So:
+```
+MySQL container
+      │
+      │ /var/lib/mysql
+      ▼
+┌─────────────────┐
+│ db-data volume  │
+└─────────────────┘
+```
+if we remove the mysql container: 
+```bash
+docker compose down 
+```
+the named volume normally remains 
+Therefore our database data survives container recreation
+
+17. MySQL healthcheck
+```YAML 
+healthcheck:
+  test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+```
+- This checks whether MySQL is actually responding.
+- It's essentially asking: MySQL, are you alive and accepting connections?
+
+- The command being executed is approximately:
+```
+mysqladmin ping -h localhost -u root -pPASSWORD
+```
+If MySQL responds successfully:
+```
+healthy 
+```
+If it doesn't:
+```
+unhealthy 
+```
+
+18. Healthcheck interval
+```YAML 
+interval: 10s
+```
+Docker checks MySQL every 10 sec:
+
+19. Healthcheck timeout
+
+```YAML 
+timeout: 5s
+```
+Each check has up to: 5 seconds to respond 
+
+20. Healthcheck retries
+
+```YAML 
+retries: 5
+```
+- MySql can fail ive checks before Docker consider it unhealthy 
+
+21. Start period
+```YAML 
+start_period: 30s
+```
+- MYSQL can take some time to initialize.Docker gives it: 30s as a startup grace period 
+- This is particularly useful for databases because they aren't always ready immediately after the container starts.
+
+22. Database network
+```YAML 
+networks:
+  - chat-net
+```
+- The MySQL container joins the same network as the app.
+
+Therefore:
+```
+app
+ │
+ │ db:3306
+ ▼
+chat-net
+ │
+ ▼
+db
+```
+23. Why isn't MySQL exposed?
+we have
+```YAML 
+# ports:
+#   - "3306:3306"
+```
+commented out.
+
+That's intentional.The database doesn't need to be accessible directly from your laptop.The app is the only thing that needs MySQL.
+
+
+So the architecture is:
+```
+Browser
+   │
+   │ localhost:8080
+   ▼
+┌─────────────┐
+│     app     │
+│   :8080     │
+└──────┬──────┘
+       │
+       │ db:3306
+       ▼
+┌─────────────┐
+│     db      │
+│   MySQL     │
+│    :3306    │
+└─────────────┘
+```
+- The MySQL port is only available through the Docker network.
+- That's a good security practice.
+If you uncomment:
+```YAML 
+ports:
+  - "3306:3306"
+```
+then our host could connect directly to MySQL:
+```
+localhost:3306
+```
+which is useful for debugging but isn't necessary for the application itself.
+
+24. Explicit network definition
+
+At the bottom:
+```YAML
+networks:
+  chat-net:
+    driver: bridge
+```
+we're creating a custom Docker bridge network called:
+```
+chat-net
+```
+Docker creates it when you run:
+```
+docker compose up
+```
+we can check it with:
+```bash 
+docker network ls
+```
+we will see something similar to:
+```
+NETWORK ID     NAME
+xxxxxxx        chat-net
+```
