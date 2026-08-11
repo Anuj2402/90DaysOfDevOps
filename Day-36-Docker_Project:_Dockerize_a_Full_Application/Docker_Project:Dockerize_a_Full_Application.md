@@ -2295,4 +2295,138 @@ Healthcheck runs
 
 This is a very good example of the Docker concepts you've been learning: **custom networks + named volumes + healthchecks + `depends_on` + environment variables + multi-stage application image**.
 
+ # Task 4: Ship It
+
+ After Running the Application Using below commands 
  
+ ```bash 
+ docker compose bild -d 
+ OR 
+ docker compose build --no-cache
+ ```
+
+and 
+
+```bash 
+docker compose up -d
+```
+
+Since chat-app is running now, let's finish Task 4: Ship It in the correct order.
+
+Our flow is 
+```bash 
+Local project
+    ↓
+Build image
+    ↓
+Tag image
+    ↓
+Login to Docker Hub
+    ↓
+Push image
+    ↓
+Create README.md
+    ↓
+Verify Docker Hub image
+```
+### 1. Confirm your image
+From `~/chat-app`: 
+
+```bash 
+docker images 
+```
+we should see something like 
+
+
+```bash 
+REPOSITORY   TAG       IMAGE ID
+chat-app     latest    xxxxxxxxx
+```
+OUTPUT: 
+![alt text](image.png)
+
+if we see `chat-app:latest`. continue 
+
+
+### 2. Check your Docker Hub username
+
+RUN: 
+```bash 
+docker info | grep Username
+```
+- if we are already loggedin we should get something like 
+```
+username:Anuj2402 
+```
+If nothing appears, login:
+```bash 
+docker login 
+```
+Then enter your Docker Hub username and password/token.
+
+we should see 
+```
+Login Succeeded
+```
+### 3. Create the Docker Hub repository
+
+Go to [Docker Hub](https://hub.docker.com/?utm_source=chatgpt.com) and create a new repository.
+
+Use:
+```
+Repository name: chat-app
+```
+For now, you can make it Public as  this is a learning project and we want to share the image/link.
+
+our repository will look like:
+```
+YOUR_USERNAME/chat-app
+
+anujkumar007/go-chat-app
+
+```
+
+### 4. Tag your local image
+Assuming our Docker Hub username is anujkumar007:
+
+```bash 
+docker tag chat-app:latest anujkumar007/chat-app:latest
+```
+Now check: 
+```bash 
+docker images 
+```
+
+we should see 
+```
+REPOSITORY 
+anujkumar007/chat-app:latest
+```
+
+
+OUTPUT: 
+![alt text](image-1.png)
+
+
+The two image should have the same IMAGE ID 
+That's because `docker tag` doesn't rebuild the image. It simply gives the existing image another name.
+
+
+### 5. Push the image
+RUN: 
+```bash 
+docker push  anujkumar007/chat-app:latest
+```
+we will see docker uploading the layers 
+And at the end we will get someting similer
+```
+latest: digest: sha256:xxxxxxxxxxxxxxxx
+```
+OUTPUT: 
+![alt text](image-2.png)
+
+- That means the image has been successfully pushed.
+
+OUTPUT: 
+![alt text](image-3.png)
+
