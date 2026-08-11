@@ -2170,3 +2170,129 @@ we will see something similar to:
 NETWORK ID     NAME
 xxxxxxx        chat-net
 ```
+
+25. Why use a custom network?
+Because both services need to communicate: 
+
+```
+app ←──── chat-net ────→ db
+```
+Docker provides internal DNS 
+so : 
+```
+DB_HOST=db
+```
+works automatically.
+we don't need to find the MySQL container's IP address.
+
+That's one of the biggest benefits of Docker Compose networking.
+
+26. Define the named volume
+
+At the bottom:
+```YAML 
+volumes:
+  db-data:
+    driver: local
+```
+This creates a Docker named volume:
+```
+db-data
+```
+using Docker's local volume driver.
+
+Check it with:
+```bash 
+docker volume ls 
+```
+we should see something similar to 
+```
+DRIVER    VOLUME NAME
+local     chat-app_db-data
+```
+Compose may prefix the volume with the project name.
+
+#### Complete Architecture
+```
+                    HOST MACHINE
+                         │
+                         │ localhost:8080
+                         ▼
+                ┌─────────────────┐
+                │   chat-app      │
+                │                 │
+                │   Go Server     │
+                │   :8080         │
+                └────────┬────────┘
+                         │
+                         │ db:3306
+                         │
+                 ┌───────▼───────┐
+                 │   chat-net    │
+                 │ bridge network│
+                 └───────┬───────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │    chat-db      │
+                │                 │
+                │   MySQL 8.4     │
+                │   :3306         │
+                └────────┬────────┘
+                         │
+                         │ /var/lib/mysql
+                         ▼
+                ┌─────────────────┐
+                │    db-data      │
+                │  Docker Volume  │
+                └─────────────────┘
+
+```
+The startup sequence
+
+when we run :
+```bash 
+docker compose up 
+```
+the flow is 
+```
+docker compose up
+       │
+       ▼
+Create chat-net
+       │
+       ▼
+Create db-data
+       │
+       ▼
+Start MySQL
+       │
+       ▼
+MySQL initializes
+       │
+       ▼
+Healthcheck runs
+       │
+       ├── unhealthy → wait/retry
+       │
+       └── healthy
+              │
+              ▼
+         Start app
+              │
+              ▼
+      app connects to db:3306
+              │
+              ▼
+        Chat application ready
+  ```
+
+#### The 3 most important things to understand
+
+1. `depends_on + service_healthy` -> the app waits for MySQL to actually become healthy.
+2. `DB_HOST: db` -> he app reaches MySQL using the Compose service name, not an IP address.
+3. `db-data:/var/lib/mysql` -> MySQL data survives container recreation.
+
+This is a very good example of the Docker concepts you've been learning: **custom networks + named volumes + healthchecks + `depends_on` + environment variables + multi-stage application image**.
+
+ 
