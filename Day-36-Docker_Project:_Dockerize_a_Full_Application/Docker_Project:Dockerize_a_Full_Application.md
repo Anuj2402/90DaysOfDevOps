@@ -2430,3 +2430,243 @@ OUTPUT:
 OUTPUT: 
 ![alt text](image-3.png)
 
+# Task 5: Test the Whole Flow
+
+This is the final END-TO-END Docker Test . The goal is to prove that someone with a clean machine can get our project from Docker Hub and run the complete stack using our `docker-compose.yml`.
+
+#### Step 1: Check the current project files
+we should be inside:
+```bash 
+cd ~/chat-app
+```
+Check: 
+```bash 
+ls -la 
+```
+we should have at least:
+
+```
+/root/chat-app
+.env
+docker-compose.yml
+```
+- we are not using your Dockerfile or Go source code. We are testing whether the already-shipped image can run from Docker Hub.
+
+
+#### Step 2: Check your Compose configuration
+Run:
+```bash 
+docker-compose config
+```
+This checks that Docker Compose can read:
+- `docker-compose.yml`
+- `.env`
+
+Make sure the app image is:
+```
+anujkumar007/chat-app:latest
+```
+And MySQL is:
+```
+mysql:8.4
+```
+#### Step 3: Check the images before cleanup
+Run:
+```bash 
+docker images 
+```
+Currently we should see something like:
+```
+REPOSITORY                 TAG
+anujkumar007/chat-app      latest
+mysql                      8.4
+```
+- These were pulled successfully from Docker Hub and Docker Hub/registry.
+
+### Part A — Test that the currently pulled stack works
+### Step 4: Check the containers
+
+Run:
+```bash 
+docker-compose ps
+```
+we currently have:
+![alt text](image-4.png)
+
+### Step 5: Test the application
+Run:
+```
+curl -I http://localhost:8080
+```
+Output: 
+![alt text](image-5.png)
+
+This proves:
+```
+Killercoda
+    ↓
+Container port 8080
+    ↓
+Go application
+    ↓
+HTTP response works
+```
+### Step 6: Check application logs
+Run:
+```bash 
+docker-compose logs app
+```
+Check MySQL logs:
+```bash 
+docker-compose logs db
+```
+### Step 7: Verify the database health
+Run:
+```bash 
+docker inspect --format='{{.State.Health.Status}}' chat-db
+```
+Output: 
+```
+healthy
+```
+we can also check the app health:
+```bash 
+docker inspect --format='{{.State.Health.Status}}' chat-app
+```
+Expected:
+```
+healthy
+```
+
+### Part B — Test database persistence
+Before doing the completely fresh image test, let's prove the named volume works.
+
+#### Step 8: Enter MySQL
+Run:
+```bash 
+docker exec -it chat-db mysql -u chatuser -p
+```
+
+Enter your password from `.env`:
+```
+chatpass123
+```
+Then run:
+```SQL
+USE chatdb;
+```
+Create a test table:
+```SQL 
+CREATE TABLE task5_test (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    message VARCHAR(100)
+);
+```
+Insert data:
+```bash 
+INSERT INTO task5_test (message) VALUES ('Docker Task 5 persistence test');
+```
+Verify:
+```SQL 
+SELECT * FROM task5_test;
+```
+we should see:
+OUTPUT: 
+![alt text](image-6.png)
+```
++----+---------------------------------+
+| id | message                         |
++----+---------------------------------+
+| 1  | Docker Task 5 persistence test  |
++----+---------------------------------+
+```
+Exit MySQL:
+```SQL
+exit;
+```
+#### Step 9: Stop and remove containers
+Run:
+```bash 
+docker-compose down
+```
+Check containers:
+```bash
+docker ps -a 
+```
+`chat-app` and `chat-db` should be gone.
+
+#### Step 10: Verify the volume still exists
+RUN: 
+```bash 
+docker volume ls
+```
+we should see something similer to 
+```
+local     chat-app_db-data
+```
+Inspect it:
+```bash 
+docker volume inspect chat-app_db-data
+```
+This named volume contains our MySQL data.
+
+### Step 11: Start the stack again
+RUn: 
+```bash 
+docker-compose up -d
+```
+Wait for MySQL:
+```bash 
+sleep 15
+docker-compose ps
+```
+Check MySQL:
+```bash 
+docker inspect --format='{{.State.Health.Status}}' chat-db
+```
+Expected:
+```
+healthy
+```
+
+#### Step 12: Verify the data survived
+Enter MySQL again:
+```bash 
+docker exec -it chat-db mysql -u chatuser -p
+```
+Enter:
+```bash 
+chatpass123
+```
+Then:
+```SQL 
+USE chatdb;
+```
+Run:
+```SQL 
+SELECT * FROM task5_test;
+```
+should still see:
+OUTPUT: 
+![alt text](image-7.png)
+
+```
+Docker Task 5 persistence test
+```
+That proves:
+```
+Container removed
+       ↓
+Named volume remained
+       ↓
+New MySQL container created
+       ↓
+Same data still available
+```
+Exit:
+```SQL 
+exit;
+```
+
+
+
