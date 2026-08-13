@@ -2669,4 +2669,90 @@ exit;
 ```
 
 
+### Part C — The REAL clean deployment test
+
+Now we simulate a fresh machine as closely as possible.
+
+#### Step 13: Stop and remove the stack
+
+Run:
+```bash 
+docker-compose down 
+```
+check: 
+```bash 
+docker ps -a 
+```
+There should be no `chat-app` or `chat-db` container 
+
+### Step 14: Remove the local images
+
+Remove the application image:
+
+```bash
+docker rmi anujkumar007/chat-app:latest
+```
+Remove MySQL:
+```bash 
+docker rmi mysql:8.4
+```
+if an image says it can not be removed because the container exists , check : 
+```bash 
+docker ps -a 
+```
+Then remove an old containers if necessary: 
+```bash 
+docker rm -f chat-app chat-db
+```
+Then retry the `docker rmi` commands.
+
+#### Step 15: Verify the images are gone
+RUN: 
+```bash 
+docker images 
+```
+Make sure these are not present:
+
+```bash 
+anujkumar007/chat-app
+mysql
+```
+This is important.
+At this point:
+```
+Local chat-app image ❌
+Local MySQL image ❌
+chat-app container ❌
+chat-db container ❌
+```
+Our project still has 
+```
+docker-compose.yml ✅
+.env ✅
+```
+
+#### Step 16: Optional — remove the old database volume for a truly fresh deployment
+
+For the strictest fresh-environment test:
+```bash 
+docker volume rm chat-app_db-data
+```
+Check : 
+```bash 
+docker volume ls 
+```
+Now the old database data is gone too.
+
+our environment is now close to:
+```
+Fresh Killercoda machine
+        +
+docker-compose.yml
+        +
+.env
+```
+This is the cleanest test for Task 5.
+
+
+
 
