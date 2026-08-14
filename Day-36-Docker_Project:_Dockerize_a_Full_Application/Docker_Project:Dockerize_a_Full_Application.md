@@ -2754,5 +2754,143 @@ docker-compose.yml
 This is the cleanest test for Task 5.
 
 
+### Part D — Pull and run from Docker Hub
+
+#### Step 17: Run using only your Compose configuration
+
+Now Run: 
+```bash 
+docker-compose up -d 
+```
+Do not run: 
+```bash 
+docker build 
+```
+Do not run 
+```bash 
+docker buildx build 
+```
+Do not use your Dockerfile 
+
+Docker Compose should automatically:
+```bash 
+1. Pull anujkumar007/chat-app:latest
+2. Pull mysql:8.4
+3. Create chat-net
+4. Create db-data volume
+5. Start chat-db
+6. Start chat-app
+```
+- This is the key proof for the assignment 
+
+
+#### Step 18: Verify the images were pulled again
+Run: 
+```bash 
+docker images 
+```
+we should now see: 
+```bash 
+REPOSITORY                 TAG
+anujkumar007/chat-app      latest
+mysql                      8.4
+```
+This proves the images were downloaded again after we removed them.
+
+#### Step 19: Verify containers
+
+Run: 
+```bash 
+doceker-compose ps 
+```
+we should see 
+```
+chat-app   Up
+chat-db    Up
+```
+wait a little: 
+```bash 
+sleep 15
+docker-compose ps
+```
+Ideally:
+```
+chat-app   Up (healthy)
+chat-db    Up (healthy)
+```
+### Step 20: Verify both health checks
+
+```bash 
+docker inspect --format='{{.State.Health.Status}}' chat-app
+```
+Expected:
+```
+healthy
+```
+Then:
+```bash 
+docker inspect --format='{{.State.Health.Status}}' chat-db
+```
+Expected:
+```
+healthy
+```
+
+#### Step 21: Test the application
+Run:
+```bash 
+curl -I http://localhost:8080
+```
+Expected:
+```
+HTTP/1.1 200 OK
+```
+Then:
+```bash 
+curl http://localhost:8080
+```
+our application should return its page.
+
+#### Step 22: Verify the Docker network
+Run:
+```bash 
+docker network ls
+```
+we should see a Compose-created network similar to:
+```
+chat-app_chat-net
+```
+Inspect it:
+```bash 
+docker network inspect chat-app_chat-net
+```
+we should find both containers connected to it:
+```bash 
+chat-app
+chat-db
+```
+This proves the application can communicate internally with the database using:
+
+```
+DB_HOST=db
+DB_PORT=3306
+```
+#### Step 23: Verify the named volume
+Run: 
+```bash 
+docker volume ls 
+```
+we should see: 
+```
+chat-app_db-data
+```
+Inspect:
+```bash 
+docker volume inspect chat-app_db-data
+```
+- This confirms MySQL has persistent storage.
+
+
+
 
 
