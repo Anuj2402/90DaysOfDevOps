@@ -341,3 +341,49 @@ yamllint -d relaxed person.yaml server.yaml
 ### Notes
 
 YAML indentation is significant. Incorrect indentation can cause a YAML parsing or indentation error. YAML uses spaces for indentation; tabs should not be used.
+
+
+# Task 6: Spot the Difference
+
+Block 1 — Correct ✅
+```YAML 
+name: devops
+tools:
+  - docker
+  - kubernetes
+```
+Both list items (- `docker` and - `kubernetes`) have the same indentation.
+
+Block 2 — Broken ❌
+```YAML 
+
+name: devops
+tools:
+  - docker
+    - kubernetes
+    
+```
+What's wrong?
+The second list item:
+```YAML 
+    - kubernetes
+```
+is indented further than the first item:
+
+```YAML 
+  - docker
+```
+- YAML expects items belonging to the same list to have the same indentation level.
+
+Correct it to:
+```YAML 
+name: devops
+tools:
+  - docker
+  - kubernetes
+```
+
+#### Notes
+
+List items at the same level must have consistent indentation.
+In Block 2, `- kubernetes` is incorrectly indented, making YAML interpret it as a nested list rather than another item in `tools`.
