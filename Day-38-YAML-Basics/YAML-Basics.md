@@ -229,3 +229,115 @@ Quick memory trick
 
 `|` = "keep the lines"
 `>` = "join/fold the lines"
+
+
+# Task 5: Validate Your YAML
+
+we currently have two files: 
+- `person.yaml`
+- `server.yaml`
+
+Let's validate both properly 
+
+### step-01: Install `yamllint`
+On Ubuntu/Debian:
+```bash 
+sudo apt update
+sudo apt install yamllint -y
+```
+Verify:
+```bash 
+yamllint --version
+```
+we should get something like 
+```
+yamllint 1.x.x
+```
+
+### Step 2: Validate `person.yaml`
+
+RUN: 
+```bash 
+yamllint person.yaml
+```
+- If everything is clean, we may see no output, or you may see style warnings depending on the default `yamllint` configuration.
+
+To check syntax only; use : 
+```bash 
+yamllint -d relaxed person.yaml
+```
+
+### Step 3: Validate server.yaml
+```bash 
+yamllint -d relaxed server.yaml
+```
+Again, no output means the YAML passes the relaxed validation rules. 
+
+we can also validate both together:
+```bash 
+yamllint -d relaxed person.yaml server.yaml
+```
+
+### Step 4: Intentionally break indentation
+
+First make a backup:
+```bash 
+cp server.yaml server.yaml.backup
+```
+Now edit the file:
+
+```bash 
+vi server.yaml 
+```
+chnage this 
+```YAML 
+database:
+  host: localhost
+  name: chatdb
+```
+to something incorrectly indented, for example:
+```YAML 
+database:
+  host: localhost
+ name: chatdb
+```
+
+### Step 5: Validate the broken YAML
+RUN: 
+```bash 
+yamllint -d relaxed server.yaml
+```
+we should get an error similar to 
+```
+server.yaml
+  7:2       error    wrong indentation: expected 2 but found 1  (indentation)
+
+```
+- The exact line/column and wording can vary depending on where you broke the indentation.
+
+
+### Step 6: Fix it
+Change it back to:
+```YAML 
+database:
+  host: localhost
+  name: chatdb
+
+```
+
+Then run:
+```bash 
+yamllint -d relaxed server.yaml
+```
+If there is no output , we are good 
+
+### Step 7: Final validation
+RUN: 
+```bash 
+yamllint -d relaxed person.yaml server.yaml
+```
+
+
+### Notes
+
+YAML indentation is significant. Incorrect indentation can cause a YAML parsing or indentation error. YAML uses spaces for indentation; tabs should not be used.
