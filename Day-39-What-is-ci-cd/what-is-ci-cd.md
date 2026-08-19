@@ -235,3 +235,57 @@ In simple terms:
 
 Trigger starts the pipeline → Stage organizes the work → Job performs a task → Step executes an action → Runner provides the machine → Artifact is the output.
 
+# Task 4: Draw a Pipeline
+
+```
+                CI/CD PIPELINE
+
+Developer
+    │
+    │ git push
+    ▼
+┌───────────────┐
+│    GitHub     │
+│   Repository  │
+└───────┬───────┘
+        │
+        │ Trigger
+        ▼
+┌──────────────────────────────┐
+│  STAGE 1: TEST              │
+│                              │
+│  • Checkout code             │
+│  • Install dependencies      │
+│  • Run unit tests            │
+│  • Run security checks       │
+└──────────────┬───────────────┘
+               │
+             PASS
+               ▼
+┌──────────────────────────────┐
+│  STAGE 2: BUILD             │
+│                              │
+│  • Build application         │
+│  • Build Docker image        │
+│  • Tag Docker image          │
+└──────────────┬───────────────┘
+               │
+               │ Docker Image
+               ▼
+┌──────────────────────────────┐
+│  STAGE 3: DEPLOY            │
+│                              │
+│  • Push image to registry    │
+│  • Deploy to staging server  │
+│  • Verify application        │
+└──────────────┬───────────────┘
+               │
+               ▼
+         STAGING SERVER
+```
+Your 3 required stages are:
+TEST → BUILD → DEPLOY
+
+And the important flow to remember is:
+
+Developer pushes code → GitHub triggers pipeline → Test → Build Docker image → Deploy to staging.
