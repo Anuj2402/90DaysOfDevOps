@@ -117,3 +117,121 @@ Continuous Delivery = Integrate + Test + Ready to Deploy
 
 Continuous Deployment = Integrate + Test + Automatically Deploy
 
+
+# Task 3: Pipeline Anatomy
+
+1. Trigger
+
+A Trigger is the event that starts a CI/CD pipeline.
+
+Examples:
+- Developer pushes code to GitHub.
+- Pull request is created.
+- Code is merged into `main`.
+- A scheduled time is reached.
+- someone manually starts the workflow.
+
+Example:
+`git push` -> GitHub Action Pipline starts. 
+
+
+2. Stage
+
+A Stage is a logical phase of the pipeline that groups related work together.
+
+Common stages:
+```
+Build → Test → Deploy
+```
+Example:
+The **Test stage** may contain jobs that run unit tests, integration tests, and security checks.
+
+3. Job
+A **Job** is a specific unit of work inside a stage. It contains the commands/actions needed to accomplish a particular task.
+
+Example:
+```
+Test Stage
+├── Unit Test Job
+├── Integration Test Job
+└── Security Scan Job
+```
+Jobs may run sequentially or in parallel depending on the pipeline configuration.
+
+4. Step
+
+A Step is an individual command or action executed as part of a job.
+
+Example:
+```
+Job: Unit Tests
+
+Step 1 → Checkout code
+Step 2 → Install dependencies
+Step 3 → Run tests
+Step 4 → Generate test report
+
+```
+So:
+
+Job = collection of steps
+
+5. Runner
+
+A Runner is the machine/environment where a job actually executes.
+
+It provides the operating system, tools, CPU, memory, and other dependencies required to run the job.
+
+Examples in GitHub Actions:
+```
+runs-on: ubuntu-latest
+```
+This tells GitHub Actions to execute the job on an Ubuntu runner.
+
+Runners can be:
+- Hosted runners — provided by the CI/CD platform.
+- Self-hosted runners — machines managed by your organization.
+
+6. Artifact
+An Artifact is an output produced by a job that can be stored and used later in the pipeline or downloaded.
+
+Examples:
+
+- Compiled application
+- Docker image
+- Test reports
+- Build files
+- JAR/WAR files
+- Logs
+
+Example:
+
+```
+Source Code
+     ↓
+Build Job
+     ↓
+application.jar  ← Artifact
+     ↓
+Deploy Job
+     ↓
+Production
+```
+Easy way to remember
+```
+Trigger
+   ↓
+Stage
+   ↓
+Job
+   ↓
+Step
+   ↓
+Runner executes it
+   ↓
+Artifact is produced
+```
+In simple terms:
+
+Trigger starts the pipeline → Stage organizes the work → Job performs a task → Step executes an action → Runner provides the machine → Artifact is the output.
+
