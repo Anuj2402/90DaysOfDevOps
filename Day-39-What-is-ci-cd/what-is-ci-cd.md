@@ -289,3 +289,102 @@ TEST → BUILD → DEPLOY
 And the important flow to remember is:
 
 Developer pushes code → GitHub triggers pipeline → Test → Build Docker image → Deploy to staging.
+
+
+# Task 5: Explore in the Wild
+1. Repository
+
+[(FastAPI)gitHub Repo Link](https://github.com/fastapi/fastapi/blob/master/.github/workflows/test.yml)
+
+2. Navigate to the WorklFlow Folder 
+
+for the workflow we are choosing `test.yaml`
+
+3. WorkFlow YAML
+
+[(FastAPI)gitHub Repo Link](https://github.com/fastapi/fastapi/blob/master/.github/workflows/test.yml)
+
+Here we will get the exact test.yaml file which we are going to analyze 
+
+4. Notes
+
+Q-> What triggers it?
+
+The workflow is triggered by GitHub events such as **pushes and pull requests**.
+This means the CI pipeline can automatically run when developers push changes or create/update a PR.
+
+It has three triggers:
+- `push` to the `master` branch
+- `pull_request`
+- A weekly scheduled run — every Monday at `00:00 UTC`
+
+So:
+```
+Push to master ───────┐
+Pull Request ─────────┼──→ test.yml starts
+Weekly schedule ──────┘
+```
+
+
+Q->  How many jobs does it have?
+
+At the top level, the workflow has 3 jobs:
+```
+jobs:
+├── changes
+├── test
+└── benchmark
+```
+The `test` job uses a matrix, so GitHub can run many test combinations across different operating systems and Python versions.
+
+This is an important CI/CD concept:
+
+- One job definition can create multiple job runs through a matrix.
+
+3. What does it do?
+
+This is primarily a **CI testing workflow**.
+
+The flow is approximately:
+```
+Developer
+    │
+    │ Push / PR
+    ▼
+GitHub Actions
+    │
+    ▼
+┌──────────────┐
+│   changes    │
+│ Check what   │
+│ files changed│
+└──────┬───────┘
+       │
+       ▼
+┌─────────────────────┐
+│       test          │
+│                     │
+│ Setup Python        │
+│ Setup uv            │
+│ Install dependencies│
+│ Run tests           │
+│ Collect coverage    │
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│      benchmark      │
+│ Run benchmark tests │
+└─────────────────────┘
+```
+The `test` job test FastAPI across different OS/Python combinations , installs dependencies with `uv` , run's the project's test script , and can upload coverage files as artifacts.
+
+
+NOTES: 
+
+Workflow : `test.yaml` 
+Triggers: Push to `master` , `pull Requests`, and weekly scheduled run.
+Jobs:3 — `changes`, `test`, and `benchmark`.
+Purpose: This is a CI workflow that checks FastAPI code changes by setting up different Python/OS environments, installing dependencies, running tests, collecting coverage, and running benchmarks.
+
+This workflow does not primarily deploy FastAPI. It's focused on testing and validation, which makes it a good real-world example of Continuous Integration (CI).
