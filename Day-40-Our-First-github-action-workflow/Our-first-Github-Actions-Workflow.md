@@ -93,7 +93,7 @@ github-actions-practice/
 ```
 
 
-# Task 2: Hello Workflow
+# Task 2/3: Hello Workflow
 
 ### Step 1: Create `hello.yml`
 Run:
@@ -138,6 +138,7 @@ This means:
 jobs:
   greet:
 ```
+Remember: jobs = What work needs to be done?
 
 Creates one job named:
 ```
@@ -146,7 +147,9 @@ greet
 ```YAML
 runs-on: ubuntu-latest
 ```
+This tells GitHub Actions to run the job on an Ubuntu environment.
 GitHub will run the job on an Ubuntu-hosted runnner 
+Remember: `runs-on` = Where will the job run?
 
 ### Step 3: Understand the two steps
 
@@ -223,6 +226,20 @@ GitHub Actions
 ```
 
 #### Important CI/CD concept
+
+| Key        | Meaning                                           |
+| ---------- | ------------------------------------------------- |
+| `on:`      | Defines **when** the workflow starts              |
+| `jobs:`    | Defines the **jobs** to execute                   |
+| `runs-on:` | Defines **which runner/machine** executes the job |
+| `steps:`   | Lists the individual **tasks** in a job           |
+| `uses:`    | Uses an existing **GitHub Action**                |
+| `run:`     | Executes a **shell command**                      |
+| `name:`    | Gives a step a **readable name**                  |
+
+
+
+
 we have just created a very basic CI pipeline:
 ```
 git push
