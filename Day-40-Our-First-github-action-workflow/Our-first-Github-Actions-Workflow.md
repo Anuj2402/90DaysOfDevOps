@@ -259,6 +259,118 @@ Run command
 GREEN ✅
 ```
 
+# Task 4: Add More Steps
+
+we will update our existing `.github/workflows/hello.yml`
+
+Step 1: Open the workflow
+From our repository 
+```bash 
+
+cd ~/90DaysOfDevOps/github-actions-practice
+```
+Open:
+```
+code .github/workflows/hello.yml
+```
+
+Replace Old YAML File content with this one 
+```bash 
+name: Hello GitHub Actions
+
+on:
+  push:
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Say hello
+        run: echo "Hello from GitHub Actions!"
+
+      - name: Print date and time
+        run: date
+
+      - name: Print branch name
+        run: echo "Branch: ${{ github.ref_name }}"
+
+      - name: List repository files
+        run: ls -la
+
+      - name: Print operating system
+        run: echo "OS: $RUNNER_OS"
+```
+
+Step 2: Understand the new steps
+
+1. Current date and time
+```YAML 
+- name: Print date and time
+  run: date
+```
+`date` is a Linux command that prints the runner's current date and time.
+
+Example output:
+```
+Thu Aug 21 18:30:15 UTC 2026
+```
+2. Branch that triggered the workflow
+```YAML 
+- name: Print branch name
+  run: echo "Branch: ${{ github.ref_name }}"
+```
+GitHub provides information about the workflow through the `github` context.
+
+`${{ github.ref_name }}` gives the branch or tag name that triggered the workflow.
+
+For example:
+```bash 
+Branch: main
+```
+This is very important in real CI/CD pipelines because you can make different decisions based on the branch.
 
 
+3. List repository files
+```YAML 
+- name: List repository files
+  run: ls -la
+```
+This runs `ls -la` on the GitHub Actions runner.
+You should see files such as:
+```bahs 
+.github 
+```
+and anything else we've added to the repository.
 
+4. Print the runner's operating system
+```YAML
+- name: Print operating system
+  run: echo "OS: $RUNNER_OS"
+```
+`RUNNER_OS` is a GitHub Actions environment variable.
+
+Because you're using:
+```bash 
+runs-on: ubuntu-latest
+```
+we should get 
+```
+OS: Linux
+```
+Push it 
+```bash 
+git status 
+git add .github/workflows/hello.yml
+git commit -m "Add more workflow steps"
+git push origin main
+```
+Because our workflow has:
+```YAML 
+on: 
+  push: 
+```
+this push automatically starts a new workflow run.
