@@ -374,3 +374,185 @@ on:
   push: 
 ```
 this push automatically starts a new workflow run.
+
+
+# Task 5: Break It On Purpose
+
+This task is important because CI/CD troubleshooting is something we will constantly in real Devops/Sre work 
+
+### Step 1: Add a deliberately failing step
+Open our workflow : 
+```bash 
+cd ~/90DaysOfDevOps/github-actions-practice
+code .github/workflows/hello.yml
+```
+Add this step at the end 
+```YAML 
+      - name: Deliberately fail
+        run: exit 1
+```
+Our Workflow should look like: 
+```YAML 
+name: Hello GitHub Actions
+
+on:
+  push:
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Say hello
+        run: echo "Hello from GitHub Actions!"
+
+      - name: Print date and time
+        run: date
+
+      - name: Print branch name
+        run: echo "Branch: ${{ github.ref_name }}"
+
+      - name: List repository files
+        run: ls -la
+
+      - name: Print operating system
+        run: echo "OS: $RUNNER_OS"
+
+      - name: Deliberately fail
+        run: exit 1
+```
+
+ What does `exit 1` mean?
+ - In Linux/shell commands:
+```bash  
+exit 0 # normally means success.
+```
+```bash 
+exit 1 
+```
+means failure/error.
+
+so we are intentionally telling GitHub Actions: 
+-> This step failed.
+
+### Step 2: Commit and push
+
+```bash 
+git add .github/workflows/hello.yml
+git commit -m "Test pipeline failure"
+git push origin main
+
+```
+Because Our workflow triggers on `push` , a new run will start automatically
+
+### Step 3: Watch the failure
+Go to:
+**GitHub → Your repository → Actions → Hello GitHub Actions**
+
+we will see something like 
+```
+❌ Hello GitHub Actions
+```
+Open the failed run.
+
+Then click:
+```
+greet
+```
+we should see 
+```
+✓ Checkout code
+✓ Say hello
+✓ Print date and time
+✓ Print branch name
+✓ List repository files
+✓ Print operating system
+❌ Deliberately fail
+```
+The important thing is that the earlier steps can be green, while the failing step is red.
+
+
+### Step 4: Read the error
+Click:
+
+Deliberately fail
+
+we will see the output similar to : 
+```bash 
+Run exit 1
+Error: Process completed with exit code 1.
+```
+The important information is 
+```
+Process completed with exit code 1
+```
+That tells you the command executed but returned a failure status.
+
+Output: 
+![alt text](image-1.png)
+
+### How to troubleshoot it
+When a CI job fails, read the log from top to bottom, but focus first on: 
+1. 🔴 Which step failed?
+2. What command was executed?
+3. What is the error message?
+4. What exit code was returned?
+5. What happened immediately before the failure?
+For this Example: 
+```bash 
+Failed step:
+    ↓
+Deliberately fail
+
+Command:
+    ↓
+exit 1
+
+Result:
+    ↓
+exit code 1
+
+Pipeline:
+    ↓
+❌ FAILED
+```
+### Step 5: Fix the pipeline
+Remove the deliberately failing step:
+```YAML 
+      - name: Deliberately fail
+        run: exit 1
+
+```
+Save the file.
+
+Then 
+```bash 
+git add .github/workflows/hello.yml
+git commit -m "Fix failing workflow"
+git push origin main
+```
+
+### Step 6: Verify again
+Go back to:
+
+**Actions → Hello GitHub Actions**
+
+we should now have a new successful run:
+```
+✓ Hello GitHub Actions
+```
+And the job should show:
+```
+✓ Checkout code
+✓ Say hello
+✓ Print date and time
+✓ Print branch name
+✓ List repository files
+✓ Print operating system
+```
+### Notes — What does a failed pipeline look like?
+A failed pipeline appears with a red ❌ status in GitHub Actions. The failed job contains a failed step marked in red. To troubleshoot, I open the failed job, identify the failed step, read the command that was executed and examine the error message and exit code. After fixing the problem, I push the change and verify that the new workflow run becomes green.
+
