@@ -503,4 +503,201 @@ GitHub Actions
 
  This workflow_dispatch trigger is especially useful later for manual **deployments, rollbacks, maintenance tasks, and operational workflows.**
 
+# Task 4: Matrix Builds
 
+This task introduces an important GitHub Actions concept: **matrix strategy**.
+
+Instead of writing three separate jobs for Python 3.10, 3.11, and 3.12, we define **one job** and let GitHub Actions create three job runs automatically.
+
+### Step 1: Create matrix.yml
+From our repository: 
+```bash 
+cd ~/90DaysOfDevOps/github-actions-practice
+# create the file 
+touch .github/workflows/matrix.yml
+# open it 
+code .github/workflows/matrix.yml
+```
+Put this inside 
+
+```YAML
+name: Python Matrix
+
+on:
+  push:
+
+jobs:
+  test-python:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Print Python version
+        run: python --version
+```
+
+### Step 2: Understand the matrix
+
+This is the important part: 
+```YAML 
+strategy:
+  matrix:
+    python-version:
+      - "3.10"
+      - "3.11"
+      - "3.12"
+```
+we are telling GitHub: 
+- Run the same job once for each pyhton version 
+
+So GitHub Effectively creates: 
+```
+test-python (Python 3.10)
+test-python (Python 3.11)
+test-python (Python 3.12)
+```
+- This can run in parallel 
+
+#### Expected output
+we will see three jobs runs  with output similer to:
+```
+Python 3.10.x
+Python 3.11.x
+Python 3.12.x
+```
+### Step 3: Commit and push
+```bash 
+git add .github/workflows/matrix.yml
+
+git commit -m "Add Python matrix workflow"
+git push
+```
+Then go to:
+**GitHub → Actions → Python Matrix**
+
+Open the latest run.
+we will see three matrix jobs 
+
+
+### Step 4: Add two operating systems
+Now modify the matrix 
+```YAML 
+strategy:
+  matrix:
+    python-version:
+      - "3.10"
+      - "3.11"
+      - "3.12"
+
+    os:
+      - ubuntu-latest
+      - windows-latest
+```
+Then change: 
+```YAML 
+runs-on: ubuntu-latest 
+```
+to: 
+```YAML 
+runs-on: ${{ matrix.os }}
+```
+our complete workflow becomes:
+```YAML 
+name: Python Matrix
+
+on:
+  push:
+
+jobs:
+  test-python:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Print Python version
+        run: python --version
+
+      - name: Print operating system
+        run: echo "Running on ${{ matrix.os }}"
+```
+
+### Step 5: How many jobs now?
+we have 
+
+**3 Python versions × 2 operating systems = 6 jobs** 
+
+GitHub creates this combination:
+| Operating System | Python | Job |
+| ---------------- | ------ | --- |
+| Ubuntu           | 3.10   | 1   |
+| Ubuntu           | 3.11   | 2   |
+| Ubuntu           | 3.12   | 3   |
+| Windows          | 3.10   | 4   |
+| Windows          | 3.11   | 5   |
+| Windows          | 3.12   | 6   |
+
+So the answer is: -> 6 total jobs.
+
+Conceptually:
+```
+                    Matrix
+                       │
+             ┌─────────┴─────────┐
+             │                   │
+          Ubuntu              Windows
+             │                   │
+        ┌────┼────┐         ┌────┼────┐
+       3.10 3.11 3.12      3.10 3.11 3.12
+        │    │    │          │    │    │
+        ▼    ▼    ▼          ▼    ▼    ▼
+       Job  Job  Job         Job  Job  Job
+
+                  = 6 jobs
+```
+
+Notes
+
+- Matrix strategy allows the same job to run with multiple combinations of variables.
+- 3 Python versions = 3 jobs.
+- 3 Python versions × 2 operating systems = 6 jobs.
+
+The matrix combinations can run in parallel, making it easy to test software across multiple environments.
+
+#### Key syntax to remember:
+```YAML 
+strategy:
+  matrix:
+    variable:
+      - value1
+      - value2
+```
+And access the current matrix value with:
+```YAML 
+${{ matrix.variable }}
+```
+This is heavily used in real CI pipelines for testing applications across multiple language versions, operating systems, databases, Kubernetes versions, and other environments.
