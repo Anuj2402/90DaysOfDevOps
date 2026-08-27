@@ -701,3 +701,194 @@ And access the current matrix value with:
 ${{ matrix.variable }}
 ```
 This is heavily used in real CI pipelines for testing applications across multiple language versions, operating systems, databases, Kubernetes versions, and other environments.
+
+
+
+# Task 5: Exclude & Fail-Fast
+
+we will continue with our `matrix.yaml`. 
+
+### Step 1: Update the matrix
+
+Open: 
+```bash
+cd ~/90DaysOfDevOps/github-actions-practice
+code .github/workflows/matrix.yml
+```
+Update it to: 
+```YAML 
+name: Python Matrix
+
+on:
+  push:
+
+jobs:
+  test-python:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+        exclude:
+          - python-version: "3.10"
+            os: windows-latest
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Print Python version
+        run: python --version
+
+      - name: Print operating system
+        run: echo "Running on ${{ matrix.os }}"
+
+```
+
+#### what does `exclude` do ? 
+Originally: 
+```
+3 python version X 2 os = 6 jobs
+```
+
+we excluded 
+```
+pyhton 3.10 + windows 
+```
+Therefore : 
+```
+6-1 = 5 jobs 
+```
+The remaining combinations are : 
+
+| OS      | Python |
+| ------- | ------ |
+| Ubuntu  | 3.10   |
+| Ubuntu  | 3.11   |
+| Ubuntu  | 3.12   |
+| Windows | 3.11   |
+| Windows | 3.12   |
+
+Total = 5 jobs.
+
+### Step 2: Understand `fail-fast: false`
+
+we added : 
+```YAML 
+strategy: 
+  fail-fast: false
+```
+- This tells the GITHUB Actions if one matrix jobs fails , **do not cancel the other matrix jobs** 
+
+To demonstrate it , temporarily add a failing step:
+```YAML 
+      - name: Deliberately fail
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+        run: exit 1
+```
+we will put it after the operating system step 
+
+Our step become: 
+```YAML 
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Print Python version
+        run: python --version
+
+      - name: Print operating system
+        run: echo "Running on ${{ matrix.os }}"
+
+      - name: Deliberately fail
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+        run: exit 1
+```
+- This makes only the **Ubuntu + python 3.11 combination fail**
+
+### Step 3: Push it
+```bash 
+git add .github/workflows/matrix.yml
+git commit -m "Test matrix exclude and fail-fast"
+git push
+```
+when we go to check on Action tab of github we should see fail as  : 
+
+one should fail 
+```
+❌ Ubuntu / Python 3.11
+```
+But the other jobs should continue running 
+```
+✅ Ubuntu / Python 3.10
+❌ Ubuntu / Python 3.11
+✅ Ubuntu / Python 3.12
+✅ Windows / Python 3.11
+✅ Windows / Python 3.12
+```
+That's the behaviour we want to observe 
+
+OUTPUT: 
+![alt text](image-3.png)
+
+### Step 4: Understand `fail-fast: true`
+
+Now change: 
+```YAML 
+strategy: 
+  fail-fast: true 
+```
+push again : with `true` so when one matrix job fails , Github acrtions **cancels any in-progress matrix jobs**.
+
+OUTPUT:
+![alt text](image-4.png) 
+
+
+Important : it doesn't necessarily mean every other job instantly disappears. Jobs that have already completed successfully remain successful, and jobs that are already running may be cancelled.
+
+Conceptually:
+```
+fail-fast: true
+
+Job 1 ──────────────── ✅
+Job 2 ──────── ❌
+Job 3 ──────────── 🚫 CANCELLED
+Job 4 ──────────────── 🚫 CANCELLED
+Job 5 ──────────────── 🚫 CANCELLED
+```
+with 
+```YAML 
+fail-fast: false
+```
+we get like : 
+```
+Job 1 ──────────────── ✅
+Job 2 ──────── ❌
+Job 3 ──────────────── ✅
+Job 4 ──────────────── ✅
+Job 5 ──────────────── ✅
+```
+#### Notes — Answer
+`fail-fast: true`— default
+- When one matrix job fails, GitHub Actions cancels the **other in-progress matrix jobs**. This saves time and resources when continuing the remaining tests is unnecessary.
+
+`fail-fast: false`
+- When one matrix job fails, GitHub Actions allows the other matrix jobs to continue. This is useful when we want to see the results of every environment, even if one combination fails.
+
+**Real-world example:** If you're testing an application against 20 combinations of Python versions and operating systems, `fail-fast: false` is useful because you can discover all incompatible combinations in one pipeline run rather than fixing them one at a time.
+
+
