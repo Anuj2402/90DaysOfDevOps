@@ -156,3 +156,143 @@ And with your three jobs:
 OUTPUT Example: 
 ![alt text](image.png)
 
+# Task 2: Explore What's Pre-installed
+we will use our existing `ubuntu-latest` runner and check the four tools
+
+### Step 1: Create the workflow
+
+create:
+```bash 
+cd ~/90DaysOfDevOps/github-actions-practice
+touch .github/workflows/software.yml
+code .github/workflows/software.yml
+```
+Add
+```YAML 
+name: Pre-installed Software
+
+on:
+  push:
+
+jobs:
+  check-tools:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Docker
+        run: docker --version
+
+      - name: Check Python
+        run: python --version
+
+      - name: Check Node
+        run: node --version
+
+      - name: Check Git
+        run: git --version
+```
+
+#### What this does? 
+The job runs on : 
+```YAML 
+runs-on: ubuntu-latest 
+```
+Then executes four Command 
+```
+docker --version
+python --version
+node --version
+git --version
+```
+we should get output similar to : 
+```
+Docker version ...
+Python 3.x.x
+v24.x.x
+git version 2.x.x
+```
+- The exact versions can change, because GitHub periodically updates its runner images. GitHub says the software on GitHub-owned images is updated weekly.
+
+### Step 2: Commit and push
+```bash 
+git add .github/workflows/software.yml
+git commit -m "Check pre-installed runner software"
+git push
+```
+Then go to:
+**GitHub → Actions → Pre-installed Software → check-tools**
+Open each step and read the output 
+
+### Step 3: Explore the full software list
+GitHub maintains the official runner-image repository containing the VM image definitions and the software included on GitHub-hosted runners.
+
+[Runner Imgaes Git Repo](https://github.com/actions/runner-images?utm_source=chatgpt.com)
+
+For the current `ubuntu-latest` image, GitHub currently maps ubuntu-latest` to Ubuntu 24.04 x64.
+
+The image contains many categories of software, including tools such as:
+
+- Docker
+- Git
+- Python
+- Node.js
+- Java
+- Go
+- .NET
+- Terraform-related tooling
+- AWS CLI
+- Google Cloud CLI
+- Kubernetes tooling
+- Build tools
+- Package managers
+- Browsers and drivers
+
+**Important: Don't depend blindly on pre-installed versions**
+
+GitHub recommends using setup actions when you need a particular tool/version because setup actions give you more control over version selection and help make the workflow consistent even when the runner image is updated.
+
+For example, instead of assuming the runner's Python version:
+```YAML
+- run: python --version
+```
+a real project might explicitly configure Python:
+
+```YAML
+- name: Set up Python
+  uses: actions/setup-python@v5
+  with:
+    python-version: "3.12"
+```
+### Notes: Why does pre-installed software matter?
+
+GitHub-hosted runners come with many commonly used development and CI/CD tools already installed. This saves time because the pipeline doesn't need to download and install every tool from scratch on every run. It makes builds faster and provides a ready-to-use environment. However, for reproducibility, we should explicitly configure important tool versions instead of relying only on whatever version happens to be pre-installed.
+
+Simple example
+
+Without pre-installed Docker:
+```
+Start runner
+    ↓
+Download Docker
+    ↓
+Install Docker
+    ↓
+Configure Docker
+    ↓
+Build image
+```
+With Docker pre-installed:
+```
+Start runner
+    ↓
+Docker already available
+    ↓
+Build image
+```
+
+#### CI/CD lesson
+**Pre-installed tools = faster pipeline startup.**
+
+**Explicit tool versions = more predictable/reproducible pipelines.**
+
+That's an important distinction you'll use later when we build a proper **Docker → test → build → deploy** pipeline.
