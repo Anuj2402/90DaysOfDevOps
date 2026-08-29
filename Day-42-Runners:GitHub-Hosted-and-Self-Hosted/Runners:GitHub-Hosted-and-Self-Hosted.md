@@ -296,3 +296,276 @@ Build image
 **Explicit tool versions = more predictable/reproducible pipelines.**
 
 That's an important distinction you'll use later when we build a proper **Docker → test → build → deploy** pipeline.
+
+# Task 3: Set Up a Self-Hosted Runner
+Let's do this on a Linux machine. If you have your Ubuntu VM/"kilerkoda" available, that's a good choice because you can keep the runner separate from your Mac.
+
+A `self-hosted runner` is a machine you deploy and manage that executes GitHub Actions jobs. Unlike GitHub-hosted runners, you're responsible for the machine's OS, software, security, and maintenance.
+
+- **Security note**: our repository is public. GitHub recommends using self-hosted runners with private repositories, because workflows from forks of a public repository can potentially execute untrusted code on your runner. For this learning exercise, don't put secrets or sensitive data on the runner.
+
+### Step 1: Open your repository settings
+Go to our repository:
+[My repo ](https://github.com/Anuj2402/github-actions-practice?utm_source=chatgpt.com)
+
+Then : 
+
+**setting -> Action -> Runners**
+
+Click: 
+
+**New self-hosted runner**
+Select
+```
+Operating system: Linux
+Architecture: x64
+```
+GitHub will display installation commands specifically for your repository. **Use the token and URL GitHub gives you there** rather than copying a token from anywhere else—the registration token is temporary.
+
+### Step 2: Prepare our Linux machine
+
+From your terminal, SSH into your existing machine.
+Use the same SSH command you normally use for `kilerkoda`.
+
+Once connected, run:
+```
+hostname
+```
+
+we should get 
+```
+kilerkoda
+```
+Then check:
+```bash 
+uname -m
+```
+
+We want:
+```
+x86_64
+```
+And check the OS:
+```
+cat /etc/os-release
+```
+we should see our ubuntu information 
+
+### Step 3 — Create the runner directory
+Stay connected to this Ubuntu machine
+
+Run only this first:
+```bash 
+mkdir -p ~/actions-runner
+cd ~/actions-runner
+```
+verify: 
+```bash 
+pwd 
+```
+we should get something similar to : 
+```bash 
+/root/actions-runner
+```
+Then run: 
+```bash 
+ls -la 
+```
+It should currently be essentially empty.
+
+### Step 4 — Download the GitHub Actions runner
+Now go back to our GitHub repository:
+
+**Settings → Actions → Runners → New self-hosted runner**
+we already selected : 
+```
+Linux
+x64
+```
+GitHub should now show a section like:
+
+Download
+
+with a command similar to:
+```bash 
+curl -o actions-runner.tar.gz -L https://github.com/actions/runner/releases/download/...
+```
+Important
+
+Because GitHub changes runner versions, use the exact curl command displayed on your GitHub page.
+
+Copy that command and run it on `kilerkoda`:
+
+After it finishes, run:
+```bash 
+ls -lh
+```
+we should see something like 
+```
+actions-runner.tar.gz
+```
+OUTPUT: 
+![alt text](image-1.png)
+
+### Step 5 — Extract the runner
+we are already in the correct directory:
+```
+/root/actions-runner
+```
+Run: 
+```bash 
+tar xzf actions-runner-linux-x64-2.336.0.tar.gz
+```
+Then check:
+```bash 
+ls -la
+```
+we should see files/directories such as:
+```
+config.sh
+run.sh
+svc.sh
+bin/
+externals/
+```
+OUTPUT: 
+
+![alt text](image-2.png)
+
+### Step 6: — Configure the runner
+
+Now go to GitHub:
+**Repository → Settings → Actions → Runners → New self-hosted runner → Linux → x64**
+Run the exact configure command GitHub gives you, which will look like:
+```
+./config.sh --url https://github.com/Anuj2402/github-actions-practice --token YOUR_NEW_TOKEN
+```
+When it asks:
+Runner name:
+
+```
+kilerkoda-runner
+```
+Additional labels:
+
+Press Enter to accept the default.
+
+Work folder:
+
+Press Enter to accept:
+```
+_work
+```
+Expected result
+```
+we should eventually see something similar to:
+```
+√ Connected to GitHub
+
+√ Runner successfully added
+√ Runner connection is good
+```
+
+### Verify in GitHub BEFORE starting it
+
+Go to:
+
+**GitHub → github-actions-practice → Settings → Actions → Runners**
+
+we should see:
+```
+kilerkoda-runner
+Offline
+```
+or possibly:
+```
+kilerkoda-runner
+● Offline
+```
+- That's expected right now because we've registered the runner but haven't started the runner application yet.
+
+Why?
+
+```
+Registration
+     ↓
+GitHub knows the machine exists
+     ↓
+Runner application NOT running
+     ↓
+Offline
+```
+
+After we start it:
+```
+./run.sh
+     ↓
+Runner connects to GitHub
+     ↓
+🟢 Idle
+```
+OUTPUT: 
+![alt text](image-3.png)
+
+### Step 7 — Start the self-hosted runner
+we are already logged in as:
+
+```
+ubuntu@ubuntu
+```
+and located at:
+```
+/home/ubuntu/actions-runner
+```
+Run:
+```bahs 
+./run.sh
+```
+we should see output similar to:
+```
+√ Connected to GitHub
+
+Current runner version: '2.336.0'
+2026-...: Listening for Jobs
+```
+The important line is:
+```
+Listening for Jobs
+```
+That means your runner is connected to GitHub and waiting for work.
+
+Then check GitHub
+
+Go to:
+
+Settings → Actions → Runners
+
+Refresh the page.
+
+we should now see:
+```
+kilerkoda-runner
+🟢 Idle
+```
+OUTPUT: 
+![alt text](image-4.png)
+
+### Write this in your notes
+A self-hosted runner is a machine that we provide and manage to execute GitHub Actions jobs. GitHub connects the runner to our repository, but we are responsible for its OS, software, security, and maintenance.
+
+#### What we built
+```
+GitHub Repository
+      │
+      │ GitHub Actions Job
+      ▼
+kilerkoda-runner
+      │
+      ▼
+Ubuntu 24.04
+      │
+      ▼
+Runs the workflow
+```
+
+
