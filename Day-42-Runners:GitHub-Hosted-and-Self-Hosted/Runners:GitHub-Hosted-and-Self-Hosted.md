@@ -568,4 +568,205 @@ Ubuntu 24.04
 Runs the workflow
 ```
 
+# Task 4: Use Your Self-Hosted Runner
 
+Step 1 — Create `self-hosted.yml`
+On my  local machine/Mac, inside my github-actions-practice repository, create:
+
+```bash 
+cd ~/90DaysOfDevOps/github-actions-practice
+touch .github/workflows/self-hosted.yml
+```
+Open it: 
+```bash 
+code .github/workflows/self-hosted.yml
+```
+Add:
+```YAML 
+name: Self-Hosted Runner Test
+
+on:
+  push:
+
+jobs:
+  test-self-hosted:
+    runs-on: self-hosted
+
+    steps:
+      - name: Print hostname
+        run: hostname
+
+      - name: Print working directory
+        run: pwd
+
+      - name: Create test file
+        run: |
+          echo "Created by GitHub Actions on self-hosted runner" > ~/github-actions-test.txt
+
+      - name: Verify test file
+        run: |
+          ls -l ~/github-actions-test.txt
+          cat ~/github-actions-test.txt
+```
+### Step 2 — Understand runs-on: self-hosted
+This is the most important line:
+```YAML 
+runs-on: self-hosted
+```
+GitHub will look for an **online self-hosted runner** matching the `self-hosted label`.
+
+our runner has:
+```bash 
+self-hosted
+Linux
+X64
+```
+So GitHub should select:
+```bash 
+kilerkoda-runner 🟢
+```
+Instead of a GitHub-hosted VM.
+
+### Step 3 — Commit and push
+```bash 
+git add .github/workflows/self-hosted.yml
+git commit -m "Add self hosted runner workflow"
+git push
+```
+Because we have:
+```YAML 
+on:
+  push:
+```
+the workflow will start automatically.
+
+### Step 4 — Watch the runner
+Go to:
+
+**GitHub → Actions → Self-Hosted Runner Test**
+
+Open the running job.
+
+we should see:
+```
+test-self-hosted
+    │
+    ├── Print hostname
+    ├── Print working directory
+    ├── Create test file
+    └── Verify test file
+```
+OUTPUT: 
+![alt text](image-5.png)
+
+Hostname
+
+The first step:
+```YAML 
+run: hostname
+```
+should return:
+```
+ubuntu
+```
+because your VM's hostname is currently` ubuntu.`
+
+This is the important proof:
+```
+GitHub
+   │
+   │ sends job
+   ▼
+kilerkoda-runner
+   │
+   ▼
+your Ubuntu VM
+   │
+   ▼
+hostname → ubuntu
+```
+### Step 5 — Check the working directory
+The second step:
+```YAML 
+run: pwd
+```
+will show the directory where the runner executes the job.
+
+It will likely be something similar to:
+```bash 
+/home/ubuntu/actions-runner/_work/github-actions-practice/github-actions-practice
+```
+
+Don't worry if the exact path differs slightly.
+
+The important thing is that it is under our self-hosted runner's `_work `directory
+
+### Step 6 — Create the file
+This step:
+```YAML 
+- name: Create test file
+  run: |
+    echo "Created by GitHub Actions on self-hosted runner" > ~/github-actions-test.txt
+```
+
+creates:
+```bash 
+/home/ubuntu/github-actions-test.txt
+```
+on your Ubuntu VM.
+
+It is not being created on GitHub.
+
+### Step 7 — Verify from the workflow
+The next step runs:
+```bash 
+ls -l ~/github-actions-test.txt
+cat ~/github-actions-test.txt
+```
+OUTPUT: 
+![alt text](image-6.png)
+
+### Step 8 — Verify directly on kilerkoda
+Run:
+```bash
+ls -l ~/github-actions-test.txt
+```
+we should see:
+```
+-rw-r--r-- 1 ubuntu ubuntu ... github-actions-test.txt
+```
+Then:
+```bash 
+cat ~/github-actions-test.txt
+```
+- This is the main verification for the task.
+
+OUTPUT: 
+![alt text](image-6.png)
+
+#### Notes
+`runs-on: self-hosted` tells GitHub Actions to execute the job on a self-hosted runner instead of a GitHub-hosted runner. In this task, the job actually ran on my Ubuntu VM, and the file created by the workflow remained on my machine after the workflow finished.
+
+#### GitHub-hosted vs self-hosted
+GitHub-hosted:
+```
+Workflow
+   ↓
+GitHub VM
+   ↓
+Job
+   ↓
+VM disappears/recycled
+```
+Our self-hosted runner:
+```
+Workflow
+   ↓
+kilerkoda
+   ↓
+Ubuntu VM
+   ↓
+Job
+   ↓
+File remains on VM
+```
