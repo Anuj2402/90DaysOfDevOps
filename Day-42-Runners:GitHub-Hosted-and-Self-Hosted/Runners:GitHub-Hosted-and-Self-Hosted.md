@@ -956,3 +956,39 @@ So instead of:
 
 we can say: 
 - "Give me a self-hosted runner with these specific capabilities."
+
+
+# Task 6: GitHub-Hosted vs Self-Hosted
+
+|                         | **GitHub-Hosted**                                                          | **Self-Hosted**                                                                                  |
+| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Who manages it?**     | GitHub                                                                     | You / your organization                                                                          |
+| **Cost**                | Uses GitHub Actions minutes/plan limits; can incur charges                 | You pay/manage the VM or hardware and its maintenance                                            |
+| **Pre-installed tools** | Many common tools are pre-installed                                        | You install and manage the tools yourself                                                        |
+| **Good for**            | Most normal CI/CD workloads; easy setup                                    | Custom environments, special hardware, private network access, or specific software requirements |
+| **Security concern**    | Runner environment is managed by GitHub; jobs run on GitHub infrastructure | **You are responsible for security, patching, access control, and isolation**                    |
+| **Persistence**         | Typically fresh/ephemeral environments                                     | Can be persistent, depending on how you configure it                                             |
+| **Maintenance**         | Very little for you                                                        | You maintain the OS, runner, dependencies, etc.                                                  |
+
+
+#### Easy way to remember
+
+GitHub-hosted: GitHub gives me the machine.
+```
+GitHub
+  ↓
+VM
+  ↓
+My workflow
+```
+Self-hosted: I give GitHub my machine.
+```
+My VM / Server
+      ↓
+GitHub Runner
+      ↓
+My workflow
+```
+#### Q-> Why would you choose a self-hosted runner?
+
+I'd use a self-hosted runner when the pipeline requires custom software, specialized hardware, access to internal infrastructure, or a controlled network environment that isn't available on GitHub-hosted runners. However, it comes with the responsibility of securing, patching, and maintaining the runner.
