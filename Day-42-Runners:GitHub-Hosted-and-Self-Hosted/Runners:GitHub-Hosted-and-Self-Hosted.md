@@ -770,3 +770,189 @@ Job
    ↓
 File remains on VM
 ```
+
+# Task 5: Labels
+
+Suppose we are Running it in killer-Koda so after configuring all the settings like taht ie need for that self hosted runners 
+
+At this prompt:
+```
+Enter the name of the runner group to add this runner to: [press Enter for Default]
+```
+### Step 1 — Press Enter
+
+just press **ENTER**
+
+This accepts the default runner group:
+```
+Default
+```
+we should then get: 
+```
+Enter the name of runner: [press Enter for ubuntu]
+```
+### Step 2 — Enter the runner name
+
+TYPE: 
+```
+kilerkoda-runner
+```
+and press Enter
+
+we shouldl then see 
+```
+This runner will have the following labels: 'self-hosted', 'Linux', 'X64'
+Enter any additional labels (ex. label-1,label-2): [press Enter to skip]
+```
+
+### Step 3 — Add our custom label
+
+Here is the important part for Task 5.
+
+Enter 
+```
+my-linux-runner
+```
+Then press Enter.
+
+So your labels will become:
+```
+self-hosted
+Linux
+X64
+my-linux-runner
+```
+### Step 4 — Work folder
+we will then see: 
+
+```
+Enter name of work folder: [press Enter for _work]
+```
+just press Enter 
+
+### Expected final output
+![alt text](image-7.png)
+
+
+### Step 4 — Start the runner
+
+we are already in correct directory 
+```
+ubuntu@ubuntu:~/actions-runner$
+```
+RUN: 
+```bash 
+./run.sh
+```
+
+we should eventually see 
+```
+√ Connected to GitHub
+...
+Listening for Jobs
+```
+Keep this terminal open.
+
+Then go to:
+
+GitHub → Settings → Actions → Runners
+
+we should see:
+```
+kilerkoda-runner
+self-hosted
+Linux
+X64
+my-linux-runner
+
+🟢 Idle
+
+```
+
+### Step 5 — Update self-hosted.yml
+
+Find: 
+```YAML 
+runs-on: self-hosted 
+```
+Chnage it to : 
+```YAML 
+runs-on: [self-hosted, my-linux-runner]
+```
+our relevant section should now look like:
+```YAML 
+jobs:
+  test-self-hosted:
+    runs-on: [self-hosted, my-linux-runner]
+
+    steps:
+      - name: Print hostname
+        run: hostname
+
+      - name: Print working directory
+        run: pwd
+
+      - name: Create test file
+        run: |
+          echo "Created by GitHub Actions on self-hosted runner" > ~/github-actions-test.txt
+
+      - name: Verify test file
+        run: |
+          ls -l ~/github-actions-test.txt
+          cat ~/github-actions-test.txt
+```
+### Step 6 — Commit and push
+
+```bash 
+git add .github/workflows/self-hosted.yml
+git commit -m "Use custom runner label"
+git push
+```
+GitHub should then find a runner matching both:
+```
+self-hosted
+       +
+my-linux-runner
+```
+
+### Step 7 — Verify
+
+Go to:
+
+GitHub → Actions → Self-Hosted Runner Test
+
+we should see the job run successfully.
+
+Check the hostname step. It should show:
+```
+ubuntu
+```
+because that's the hostname of our current kilerkoda VM.
+
+Then verify on the VM:
+```bash 
+ls -l ~/github-actions-test.txt
+cat ~/github-actions-test.txt
+```
+OUTPUT: 
+![alt text](image-8.png)
+
+#### Notes — Why are labels useful?
+Labels allow GitHub Actions to select a specific type of self-hosted runner. When an organization has multiple runners with different operating systems, hardware, software, or environments, labels let a workflow request the appropriate runner.
+
+For example:
+```
+Runner 1 → Linux + Docker
+Runner 2 → Linux + GPU
+Runner 3 → Windows
+Runner 4 → macOS
+```
+Workflows can target exactly what they need:
+```YAML 
+runs-on: [self-hosted, linux, docker]
+```
+So instead of: 
+- "Give me any self-hosted runner"
+
+we can say: 
+- "Give me a self-hosted runner with these specific capabilities."
