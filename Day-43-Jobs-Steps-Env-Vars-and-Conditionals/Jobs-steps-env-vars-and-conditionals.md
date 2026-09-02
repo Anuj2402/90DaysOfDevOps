@@ -134,3 +134,169 @@ OUTPUT:
 That's the real value of `needs:` **a failed build prevents downstream jobs from deploying.**
 
 Then remove `exit 1` and push again.
+
+# Task 2: Environment Variables
+
+### Step 1 — Create the workflow
+on our local machine
+
+```bash 
+cd ~/90DaysOfDevOps/github-actions-practice
+touch .github/workflows/env-vars.yml
+```
+Open it: 
+```bash 
+code .github/workflows/env-vars.yml
+```
+Add: 
+
+```YAML 
+name: Environment Variables
+
+on:
+  push:
+
+env:
+  APP_NAME: myapp
+
+jobs:
+  show-vars:
+    runs-on: ubuntu-latest
+
+    env:
+      ENVIRONMENT: staging
+
+    steps:
+      - name: Print variables
+        env:
+          VERSION: 1.0.0
+        run: |
+          echo "APP_NAME: $APP_NAME"
+          echo "ENVIRONMENT: $ENVIRONMENT"
+          echo "VERSION: $VERSION"
+          echo "COMMIT SHA: $GITHUB_SHA"
+          echo "ACTOR: $GITHUB_ACTOR"
+```
+
+### Step 2 — Understand the three levels
+
+1. Workflow Level 
+
+```YAML 
+env: 
+  APP_NAME: myapp 
+```
+This is available to all jobs and steps in this workflow
+
+```
+Workflow
+   │
+   ├── Job 1 → APP_NAME ✓
+   ├── Job 2 → APP_NAME ✓
+   └── Job 3 → APP_NAME ✓
+```
+
+2. Job level
+```YAML 
+jobs:
+  show-vars:
+    env:
+      ENVIRONMENT: staging
+```
+This variable is available to all steps inside `show-vars.`
+```
+show-vars
+   │
+   ├── Step 1 → ENVIRONMENT ✓
+   ├── Step 2 → ENVIRONMENT ✓
+   └── Step 3 → ENVIRONMENT ✓
+```
+3. Step level
+
+```YAML
+steps:
+  - name: Print variables
+    env:
+      VERSION: 1.0.0
+```
+`VERSION` is available only inside that particular step
+
+```
+Step: Print variables
+        │
+        └── VERSION ✓
+```
+
+### Step 3 — GitHub context variables
+
+These are provided automatically by GitHub.
+
+Commit SHA
+```bash 
+$GITHUB_SHA
+```
+This identifies the commit that triggered the workflow.
+
+Actor
+
+```bash 
+$GITHUB_ACTOR
+```
+This identifies the GitHub user who triggered the workflow.
+
+So this:
+```YAML
+echo "COMMIT SHA: $GITHUB_SHA"
+echo "ACTOR: $GITHUB_ACTOR"
+```
+might produce:
+```
+APP_NAME: myapp
+ENVIRONMENT: staging
+VERSION: 1.0.0
+COMMIT SHA: 8f31c...
+ACTOR: Anuj2402
+```
+The SHA will obviously be different for each commit.
+
+OUTPUT: 
+
+![alt text](image-1.png)
+
+### Step 4 — Push it
+
+```bash 
+git add .github/workflows/env-vars.yml
+git commit -m "Add environment variables workflow"
+git push
+```
+Then go to:
+
+**GitHub → Actions → Environment Variables**
+
+Open the job and check the Print variables step.
+
+Expected result
+```
+✓ APP_NAME: myapp
+✓ ENVIRONMENT: staging
+✓ VERSION: 1.0.0
+✓ COMMIT SHA: <40-character SHA>
+✓ ACTOR: <GitHub username>
+```
+### Notes
+Workflow-level variables are available throughout the workflow. Job-level variables are available to all steps within that job. Step-level variables are available only to that specific step. GitHub also provides context/environment variables such as `GITHUB_SHA` for the commit SHA and `GITHUB_ACTOR` for the user who triggered the workflow.
+
+Easy way to remember
+```
+Workflow env
+     ↓
+  Job env
+     ↓
+ Step env
+```
+
+**Scope gets narrower as you go down.**
+
+
+          
