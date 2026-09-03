@@ -299,4 +299,53 @@ Workflow env
 **Scope gets narrower as you go down.**
 
 
-          
+# Task 3: Job Outputs
+This task is about passing data from one job to another.
+
+we will use two jobs: 
+```
+generate-date
+      │
+      │ output: today
+      ▼
+show-date
+```
+### Step 1 — Create the workflow
+on our local machine:
+
+```bash 
+cd ~/90DaysOfDevOps/github-actions-practice
+touch .github/workflows/job-outputs.yml
+```
+Open it:
+```bash 
+code .github/workflows/job-outputs.yml
+```
+Put this in it:
+```YAML 
+name: Job Outputs
+
+on:
+  push:
+
+jobs:
+  generate-date:
+    runs-on: ubuntu-latest
+
+    outputs:
+      today: ${{ steps.date.outputs.today }}
+
+    steps:
+      - name: Get today's date
+        id: date
+        run: echo "today=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+  show-date:
+    needs: generate-date
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print date
+        run: echo "Today's date is ${{ needs.generate-date.outputs.today }}"
+```
+
