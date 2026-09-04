@@ -349,3 +349,14 @@ jobs:
         run: echo "Today's date is ${{ needs.generate-date.outputs.today }}"
 ```
 
+### Step 2 — Understand the important pieces
+
+1. Create the output
+Inside the first job:
+```YAML 
+outputs:
+  today: ${{ steps.date.outputs.today }}
+```
+We're saying:
+
+- The job's output called today comes from the step output called today.
