@@ -360,3 +360,173 @@ outputs:
 We're saying:
 
 - The job's output called today comes from the step output called today.
+
+2. Give the step an ID
+
+```YAML 
+- name: Get today's date
+  id: date 
+```
+The `id` allows us to reference this step later:
+like
+```
+step.date 
+```
+
+3. Create the step output
+
+This is the key command 
+```bash 
+echo "today=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+```
+For example, it might create:
+```
+today=2026-09-02
+```
+GitHub Actions reads `$GITHUB_OUTPUT` and makes that value available as a step output.
+
+So:
+```
+Step
+ │
+ ├── id: date
+ │ 
+ └── outputs: # this is job level 
+       today = 2026-09-02
+```
+
+### Step 3 — Make the output available to another job
+The second job has:
+```YAML 
+needs: generate-date
+```
+This does Two things: 
+1. Make `show-date `wait for `generate-date`
+2. Allows `show-date` to access the first job's outputs.
+
+We then access it using
+```YAML 
+${{ needs.generate-date.outputs.today }}
+```
+Break it down:
+```
+needs
+  ↓
+generate-date
+  ↓
+outputs
+  ↓
+today
+```
+
+### Step 4 — Push the workflow
+Run:
+```bash 
+git add .github/workflows/job-outputs.yml
+# then 
+git commit -m "Add job outputs workflow"
+# then 
+git push
+
+```
+Go to : **GitHub → Actions → Job Outputs**
+
+we should see:
+```
+generate-date ✓
+      │
+      ▼
+show-date ✓
+```
+OUTPUT: 
+![alt text](image-2.png)
+
+Open **show-date**
+we should see something like : 
+```
+Today's date is 2026-09-02
+```
+OUTPUT: 
+![alt text](image-3.png)
+
+### Notes
+The mental model: I'd remember GitHub Actions outputs like this:
+
+```
+┌──────────────────────────────┐
+│ Job: generate-date            │
+│                              │
+│  ┌────────────────────────┐  │
+│  │ Step: date             │  │
+│  │                        │  │
+│  │ today = 2026-09-05     │  │
+│  └───────────┬────────────┘  │
+│              │               │
+│              │ step output   │
+│              ▼               │
+│       Job output: today      │
+└──────────────┬───────────────┘
+               │
+               │ needs
+               ▼
+┌──────────────────────────────┐
+│ Job: show-date               │
+│                              │
+│ needs.generate-date.outputs  │
+│ .today                       │
+│                              │
+│          ↓                   │
+│    2026-09-05                │
+└──────────────────────────────┘
+
+```
+
+- **When someone pushes code, run generate-date, have its date step produce today's date, expose that value as a job output, wait for that job to finish, then let show-date consume that output and print it**.
+
+- **Job outputs allow one job to pass dynamically generated data to another job. This is useful when a later job needs information produced by an earlier job, such as a version number, image tag, build ID, artifact name, or deployment information.**
+
+#### Real world CI/CD example: 
+Imagine:
+```
+Build
+ │
+ ├── Build Docker image
+ └── Generate image tag
+          │
+          ▼
+      Test
+          │
+          ▼
+      Deploy
+```
+The build job could output:
+```
+IMAGE_TAG=1.5.2
+```
+Then the deploy job could use:
+```YAML
+${{ needs.build.outputs.image_tag }}
+```
+to deploy exactly that image.
+
+Remember this syntax
+```YAML 
+outputs:
+  name: ${{ steps.step-id.outputs.value }}
+```
+Then from another job:
+```YAML 
+${{ needs.job-id.outputs.name }}
+```
+So the complete flow is:
+```
+Step output
+     ↓
+Job output
+     ↓
+needs.<job>.outputs.<name>
+     ↓
+Another job
+```
+
+
