@@ -529,4 +529,447 @@ needs.<job>.outputs.<name>
 Another job
 ```
 
+# Task 4: Conditionals
 
+### Part 1 — Step runs only on `main`
+
+First we will create the workflow: 
+```bash 
+cd ~/github-actions-practice
+touch .github/workflows/conditionals.yml
+```
+Put this in 
+```YAML 
+name: Conditionals
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conditional-steps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Normal step
+        run: echo "This always runs"
+
+      - name: Main branch step
+        if: github.ref == 'refs/heads/main'
+        run: echo "This runs only on main"
+
+```
+#### What is happening?
+This line is important part
+```YAML 
+if: github.ref == 'refs/heads/main'
+```
+Github Checks: Is the current Git reference `refs/heads/main?`
+if Yes -> step runs ✅
+If no -> step is skipped ⏭️
+
+For a push to another branch such as `feature/test:`
+```
+Normal step       → runs
+Main branch step  → skipped
+```
+For a push to `main:`
+```
+Normal step       → runs
+Main branch step  → runs
+```
+#### Push It nOw
+```bash 
+git add .github/workflows/conditionals.yml
+git commit -m "Add conditional workflow"
+git push
+```
+
+OUTPUT: 
+![alt text](image-4.png)
+
+### Part 2 — Run a step only when the previous step fails
+
+Now let's intentionally create a failing step and then use the `failure() ` condition.
+
+Update our workflow to:
+```YAML 
+name: Conditionals
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conditional-steps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Normal step
+        run: echo "This always runs"
+
+      - name: Main branch step
+        if: github.ref == 'refs/heads/main'
+        run: echo "This runs only on main"
+
+      - name: Intentional failure
+        run: |
+          echo "This step will fail"
+          exit 1
+
+      - name: Failure handler
+        if: failure()
+        run: echo "The previous step failed!"
+```
+#### New concept
+This:
+```YAML 
+if: failure()
+```
+- Means : **Run this step if a previous step in the job has failed.**
+Our flow is:
+```
+Normal step
+     ↓
+Main branch step
+     ↓
+Intentional failure ❌
+     ↓
+Failure handler ✅
+```
+Normally, when a step fails, GitHub Actions stops executing subsequent steps.
+
+But:
+```YAML 
+if: failure()
+```
+allows the failure-handling step to execute.
+One important thing:
+
+The overall job will still be marked failed because `Intentional failure` failed.
+
+we'll therefore see something like:
+```
+Normal step          ✅
+Main branch step     ✅
+Intentional failure  ❌
+Failure handler      ✅
+Complete job         ❌
+```
+That's expected.
+
+#### Push it : 
+Modify the workflow, commit and push:
+```bash 
+git add .github/workflows/conditionals.yml
+git commit -m "Add failure condition"
+git push
+```
+
+OUTPUT: 
+![alt text](image-5.png)
+
+
+##### Imp Q -> How do you execute a cleanup or notification step when an earlier step fails?
+
+I can use the `failure()` conditional expression with `if:.` For example, `if: failure()` makes the step execute when a previous step in the job has failed. This is useful for failure notifications, collecting logs, or cleanup.
+
+### Part 3 — Job runs only on Push
+Now we'll create a second job that runs only when the workflow was triggered by a `push`, and doesn't run for a pull request.
+
+
+Add this job underneath our existing `conditional-steps` job:
+```YAML 
+  push-only-job:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Push only
+        run: echo "This job runs only on push events"
+```
+so our workflow should now look like:
+```YAML 
+name: Conditionals
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conditional-steps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Normal step
+        run: echo "This always runs"
+
+      - name: Main branch step
+        if: github.ref == 'refs/heads/main'
+        run: echo "This runs only on main"
+
+      - name: Intentional failure
+        run: |
+          echo "This step will fail"
+          exit 1
+
+      - name: Failure handler
+        if: failure()
+        run: echo "The previous step failed!"
+
+  push-only-job:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Push only
+        run: echo "This job runs only on push events"
+```
+
+#### New concept
+This condition:
+```YAML 
+if: github.event_name == 'push'
+```
+checks how the **workflow was triggered**
+
+GitHub provides the event name through:
+```
+github.event_name
+```
+Examples:
+```
+Push event       → github.event_name = "push"
+Pull request     → github.event_name = "pull_request"
+```
+Therefore:
+```
+Push
+ │
+ ├── conditional-steps
+ └── push-only-job ✅
+```
+But:
+```
+Pull Request
+ │
+ ├── conditional-steps
+ └── push-only-job ⏭️ skipped
+```
+Commit and push:
+```bash 
+git add .github/workflows/conditionals.yml
+git commit -m "Add push only job"
+git push
+```
+OUTPUT: 
+![alt text](image-6.png)
+
+### Part 4 — continue-on-error: true
+Now let's learn the last concept.
+
+Add this step after our `Normal step`:
+```YAML 
+      - name: Allowed failure
+        continue-on-error: true
+        run: |
+          echo "This step will fail"
+          exit 1
+
+      - name: After allowed failure
+        run: echo "The workflow continues!"
+```
+So that section becomes:
+```YAML 
+name: Conditionals
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conditional-steps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Normal step
+        run: echo "This always runs"
+
+      - name: Allowed failure
+        continue-on-error: true
+        run: |
+          echo "This step will fail"
+          exit 1
+
+      - name: After allowed failure
+        run: echo "The workflow continues!"
+
+      - name: Main branch step
+        if: github.ref == 'refs/heads/main'
+        run: echo "This runs only on main"
+
+      - name: Intentional failure
+        run: |
+          echo "This step will fail"
+          exit 1
+
+      - name: Failure handler
+        if: failure()
+        run: echo "The previous step failed!"
+```
+
+#### commit ans push 
+```bash 
+git add .github/workflows/conditionals.yml
+git commit -m "Add continue on error condition"
+git push
+```
+OUTPUT: 
+![alt text](image-7.png)
+
+#### What does continue-on-error: true do?
+Normally:
+```
+Step A ✅
+   ↓
+Step B ❌
+   ↓
+Step C ⏭️
+```
+The failure stops the normal flow.
+
+With:
+```YAML 
+continue-on-error: true
+```
+we get:
+```
+Step A ✅
+   ↓
+Step B ❌  ← allowed failure
+   ↓
+Step C ✅  ← continues
+```
+The key distinction for interviews:
+
+`continue-on-error` vs `failure()`
+
+| Feature                   | Purpose                                           |
+| ------------------------- | ------------------------------------------------- |
+| `if: failure()`           | **Run something because a failure occurred**      |
+| `continue-on-error: true` | **Allow a failing step to not stop the workflow** |
+
+A real-world example:
+```YAML 
+- name: Run optional security scan
+  continue-on-error: true
+  run: ./security-scan.sh
+```
+we might want the security scan to report problems but **not block the rest of a development pipeline.**
+
+#### imp Q-> What does `continue-on-error: true` do in GitHub Actions?
+
+`continue-on-error: true` allows a step that fails to continue with subsequent steps instead of stopping the job. It's useful for non-critical or optional checks where we want to record the failure but don't want it to block the pipeline.
+
+# Task 5: Putting It Together
+
+The goal is to combine what you've just learned:
+```
+Push to any branch
+       │
+       ├──────────────┐
+       ↓              ↓
+     lint            test
+       │              │
+       └──────┬───────┘
+              ↓
+           summary
+              │
+       ┌──────┴──────┐
+       ↓             ↓
+     main         feature
+```
+The important concept here is that `lint` and `test` should run in parallel, while `summary` waits for both.
+
+
+### Step 1 — Create the workflow
+From our repository:
+```bash 
+cd ~/github-actions-practice
+# Create the file:
+vi  .github/workflows/smart-pipeline.yml
+
+```
+For now, let's build only the **trigger + two parallel jobs**.
+
+Put this in the file:
+```YAML 
+name: Smart Pipeline
+
+on:
+  push:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Lint
+        run: echo "Running lint"
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test
+        run: echo "Running tests"
+```
+
+#### Understand this carefully
+
+The trigger:
+```YAML 
+on:
+  push:
+```
+means the workflow runs whenever there is a push, regardless of whether the branch is:
+
+```bash 
+main
+develop
+feature/login
+feature/payment
+anything-else
+```
+We deliberately don't specify:
+```YAML
+branches:
+  - main
+```
+because the task says any branch.
+
+      
+#### Why are `lint` and `test` parallel?
+Notice that neither job has:
+```YAML 
+needs:
+```
+So GitHub Actions can start them independently:
+```
+             Push
+               │
+        ┌──────┴──────┐
+        ↓             ↓
+      lint           test
+      2 sec          3 sec
+        │             │
+        └──────┬──────┘
+               ↓
+            summary
+```
+Later we'll add:
+```YAML 
+needs:
+  - lint
+  - test
+```
