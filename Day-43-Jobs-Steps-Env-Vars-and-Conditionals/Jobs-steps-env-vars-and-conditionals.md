@@ -968,8 +968,139 @@ So GitHub Actions can start them independently:
             summary
 ```
 Later we'll add:
+
 ```YAML 
 needs:
   - lint
   - test
 ```
+to `summary`.
+
+That will make `summary` wait for both jobs.
+
+#### Save the file and run:
+```bash
+git add .github/workflows/smart-pipeline.yml
+git commit -m "Add smart pipeline"
+git push
+```
+OUTPUT: 
+![alt text](image-8.png)
+
+### Step 2 — Add the summary job
+
+Keep our existing `lint` and `test` jobs and add this underneath them:
+
+```YAML 
+  summary:
+    needs:
+      - lint
+      - test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show branch type
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            echo "This is a main branch push"
+          else
+            echo "This is a feature branch push"
+          fi
+
+      - name: Show commit message
+        run: echo "Commit message: ${{ github.event.head_commit.message }}"
+```
+
+So the complete workflow should now be:
+```YAML 
+name: Smart Pipeline
+
+on:
+  push:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Lint
+        run: echo "Running lint"
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test
+        run: echo "Running tests"
+
+  summary:
+    needs:
+      - lint
+      - test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show branch type
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            echo "This is a main branch push"
+          else
+            echo "This is a feature branch push"
+          fi
+
+      - name: Show commit message
+        run: echo "Commit message: ${{ github.event.head_commit.message }}"
+```
+#### Understand `needs`
+
+This is the most important part:
+```YAML 
+needs: 
+  - lint: 
+  - test: 
+```
+It means:
+```
+             Push
+               │
+        ┌──────┴──────┐
+        ↓             ↓
+      lint           test
+        │             │
+        └──────┬──────┘
+               ↓
+            summary
+```
+summary waits for both `lint` and `test`.
+
+If either one fails, `summary` will normally be skipped.
+
+Why use `$GITHUB_REF_NAME?`
+
+GitHub provides:
+```bash 
+$GITHUB_REF_NAME
+```
+which gives the branch name.
+
+For example:
+```
+Push to main
+→ GITHUB_REF_NAME = main
+
+Push to feature/login
+→ GITHUB_REF_NAME = feature/login
+```
+So our shell `if` determines whether this is a main or feature branch push.
+      
+Save and push:
+```bash 
+git add .github/workflows/smart-pipeline.yml
+git commit -m "Add summary job"
+git push
+```
+
+OUTPUT: 
+![alt text](image-9.png)
