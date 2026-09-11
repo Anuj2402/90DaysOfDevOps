@@ -22,6 +22,8 @@ After creating it, we should see something like:
 MY_SECRET_MESSAGE
 Updated just now
 ```
+OUTPUT: 
+![alt text](image.png)
 
 ### Step 2 — Create the workflow
 on our local machine 
@@ -93,6 +95,7 @@ we  should see:
 The secret is set: true
 ```
 OUTPUT: 
+![alt text](image-1.png)
 
 ### Step 4 — Your experiment
 Once Step 3 works, we'll deliberately add:
@@ -103,5 +106,175 @@ Once Step 3 works, we'll deliberately add:
 and observe what GitHub does.
 
 
+our workflow should now have both:
+```YAML 
+name: GitHub Secrets
+
+on:
+  push:
+
+jobs:
+  check-secret:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if secret is set
+        run: |
+          if [ -n "${{ secrets.MY_SECRET_MESSAGE }}" ]; then
+            echo "The secret is set: true"
+          else
+            echo "The secret is set: false"
+          fi
+      - name: Try printing the secret
+        run : echo "${{ secrets.MY_SECRET_MESSAGE }}"
+```
+Then:
+
+```bash 
+git add .github/workflows/secrets.yml
+git commit -m "Test secret masking"
+git push
+```
+**Go to Actions → GitHub Secrets → latest run → Try printing the secret.**
+
+we should see the value masked, typically as:
+```
+***
+```
+OUTPUT: 
+![alt text](image-2.png)
+#### Note for your Task 1
+#### QIMP -> Why should we never print secrets in CI logs?
+CI/CD logs may be accessible to developers, stored for a period of time, copied into tickets, or exposed through screenshots/log collection. Printing credentials, tokens, passwords, or API keys can allow unauthorized access to systems. Even though GitHub masks many secrets, we should follow the principle of never intentionally printing secrets.
 
 
+GitHub Secrets are encrypted values used to store sensitive information such as passwords, API keys, and tokens. Workflows can access them using `${{ secrets.SECRET_NAME }}`. GitHub masks secret values in logs to reduce accidental exposure, but secrets should never be intentionally printed.
+
+# Task 2 — Use Secrets as Environment Variables
+
+### Step 1 — Add DOCKER_USERNAME
+Go to:
+
+**GitHub → `github-actions-practice` → Settings → Secrets and variables → Actions → Secrets**
+
+Click **New repository secret.**
+Name
+```
+DOCKER_USERNAME
+```
+
+Secret
+- our Docker Hub username.
+
+After adding it, we should have:
+```
+MY_SECRET_MESSAGE
+DOCKER_USERNAME
+```
+Output: 
+![alt text](image-3.png)
+
+### Step 2 — Add DOCKER_TOKEN
+Go to:
+
+**GitHub → `github-actions-practice` → Settings → Secrets and variables → Actions → Secrets → New repository secret**
+
+Set:
+
+Name:
+```
+DOCKER_TOKEN
+```
+Secret:
+```
+Paste your Docker Hub access token here.
+```
+
+### Step 3 — Create the workflow
+```bash 
+cd ~/github-actions-practice
+touch .github/workflows/docker-secrets.yml
+```
+
+Use this:
+```YAML 
+name: Docker Secrets as Environment Variables
+
+on:
+  push:
+
+jobs:
+  docker-secrets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Use Docker credentials
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          echo "Docker username is configured: $([ -n "$DOCKER_USERNAME" ] && echo true || echo false)"
+          echo "Docker token is configured: $([ -n "$DOCKER_TOKEN" ] && echo true || echo false)"
+```
+### What we're learning
+
+Here:
+```YAML 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+```
+GitHub takes the secrets and makes them available to the shell as environment variables.
+
+Then:
+```bash 
+"$DOCKER_USERNAME"
+"$DOCKER_TOKEN"
+```
+uses those variables.
+
+**We never hardcode either credential.**
+
+And notice that we only print  `true/false`, not the actual values.
+
+### Step 4 — Push it
+```bash 
+git add .github/workflows/docker-secrets.yml
+git commit -m "Use Docker secrets as environment variables"
+git push
+```
+
+Then check Actions → Docker Secrets as Environment Variables.
+
+we should see:
+```
+Docker username is configured: true
+Docker token is configured: true
+```
+
+OUTPUT: 
+![alt text](image-4.png)
+
+Using secrets as environment variables:
+
+Secrets can be passed to a workflow step through the `env:` section. The shell can then access them using environment variables instead of hardcoding credentials.
+
+Example:
+```YAML
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+```
+This keeps credentials out of the workflow source code and GitHub masks secret values in logs.
+
+Why this matters in real CI/CD
+Later, when we do Docker CI/CD, we'll be able to use:
+```
+DOCKER_USERNAME
+DOCKER_TOKEN
+      ↓
+docker login
+      ↓
+docker push
+```
+without putting our Docker credentials directly into the YAML.
