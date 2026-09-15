@@ -363,3 +363,151 @@ Verified: The `test-report` artifact was successfully uploaded by GitHub Actions
 
 **Artifacts:** Artifacts are files generated during a GitHub Actions workflow, such as test reports, logs, binaries, or build packages. `actions/upload-artifact ` stores these files so they can be downloaded after the workflow completes.
 
+# Task 4: Download Artifacts Between Jobs
+
+### Step 1: Create Job 1
+
+Create :
+```bash 
+.github/workflows/artifact-between-jobs.yml
+```
+For now, put only this:
+```YAML 
+name: Artifact Between Jobs
+
+on:
+  push:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate file
+        run: |
+          echo "Hello from Job 1" > message.txt
+          cat message.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: job1-artifact
+          path: message.txt
+
+```
+
+#### What this does
+Job 1 (`generate`):
+
+1. Creates `message.txt`
+2. Puts `Hello from Job 1` inside it
+3. Uploads it as an artifact named `job1-artifact`
+
+Add workflow commit and push 
+
+OUTPUT: 
+![alt text](image-6.png)
+
+From your screenshot:
+- `generate`→ ✅ succeeded
+- `message.txt` → successfully created
+- Contents → `Hello from Job 1`
+- `job1-artifact` → ✅ successfully uploaded
+- Artifact ID is shown → `10331997933`
+
+###  Step 2 — Create Job 2
+
+Modify the same `artifact-between-jobs.yml` and add this below the generate job:
+
+```YAML 
+  use-artifact:
+    needs: generate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: job1-artifact
+
+      - name: Read artifact
+        run: |
+          echo "Contents of artifact:"
+          cat message.txt
+```
+our workflow should now have:
+```YAML 
+name: Artifact Between Jobs
+
+on:
+  push:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate file
+        run: |
+          echo "Hello from Job 1" > message.txt
+          cat message.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: job1-artifact
+          path: message.txt
+
+  use-artifact:
+    needs: generate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: job1-artifact
+
+      - name: Read artifact
+        run: |
+          echo "Contents of artifact:"
+          cat message.txt
+```
+#### Important concept
+Notice:
+```
+needs: generate
+```
+This means:
+
+Job 1 (`generate`) → Job 2 (`use-artifact`)
+Job 2 will wait until Job 1 successfully finishes.
+
+Then:
+```YAML 
+uses: actions/download-artifact@v4
+```
+downloads the artifact created by Job 1.
+
+Finally:
+```bash 
+cat message.txt
+```
+should print:
+```
+Contents of artifact:
+Hello from Job 1
+```
+OUTPUT: 
+![alt text](image-7.png)
+
+Push the change and check the Actions → workflow run.
+1. `generate` → ✅ created `message.txt`
+2. Upload artifact → ✅ uploaded `job1-artifact`
+3. `use-artifact` → ✅ waited for `generate`
+4. Download artifact → ✅ downloaded `job1-artifact`
+5. Read artifact → ✅ printed:
+
+#### Q(IMP) -> When would you use artifacts in a real pipeline?
+Artifacts are used to store and pass files generated during a CI/CD workflow, such as test reports, logs, build packages, binaries, coverage reports, or deployment files. They are especially useful when one job needs to use files produced by another job.
+ 
