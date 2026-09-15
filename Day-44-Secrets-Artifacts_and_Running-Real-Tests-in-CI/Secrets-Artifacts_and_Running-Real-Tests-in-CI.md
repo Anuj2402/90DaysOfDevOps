@@ -510,4 +510,152 @@ Push the change and check the Actions → workflow run.
 
 #### Q(IMP) -> When would you use artifacts in a real pipeline?
 Artifacts are used to store and pass files generated during a CI/CD workflow, such as test reports, logs, build packages, binaries, coverage reports, or deployment files. They are especially useful when one job needs to use files produced by another job.
- 
+
+
+# Task 5: Run Real Tests in CI
+
+In This task the Goal is to Learn How **CI executes a real script and detects failures** we'll use a simple Shell script first. It also avoids installing dependencies.
+
+### Step 1: Add the script
+our `github-actions-practice` repo, create:
+```
+scripts/health_check.sh
+```
+Put this inside:
+```bash 
+#!/bin/bash
+
+echo "Starting health check..."
+
+echo "Checking Linux environment..."
+uname -s
+
+echo "Checking current user..."
+whoami
+
+echo "Health check passed!"
+exit 0
+```
+
+Then make it executable locally:
+```bash 
+chmod +x scripts/health_check.sh
+```
+Run it:
+```bash 
+./scripts/health_check.sh
+```
+we  should get something similar to:
+```
+Starting health check...
+Checking Linux environment...
+Linux
+Checking current user...
+...
+Health check passed!
+```
+And importantly, the command should finish with exit code 0.
+
+OUTOUT: 
+![alt text](image-8.png)
+
+### Step 2 — Create the CI workflow
+Now create: 
+```
+.github/workflows/run-script.yml
+```
+Put this in it:
+```YAML 
+name: Run Health Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run health check
+        run: ./scripts/health_check.sh
+```
+#### Why this works
+```YAML 
+uses: actions/checkout@v4
+```
+- Downloads our repository onto the GitHub runner.
+
+Then:
+```bash 
+run: ./scripts/health_check.sh
+```
+executes our script.
+
+And because we have:
+```bash 
+exit 0 
+```
+the script succeeds, so GitHub Actions should show a green ✅ job
+
+Also notice we aren't using `continue-on-error`. Therefore, if the script returns a non-zero exit code, the CI job will fail automatically.
+
+#### Create the workflow, commit it, and push:
+```bash 
+git add .github/workflows/run-script.yml
+git commit -m "Add health check CI workflow"
+git push
+```
+Then check **GitHub → Actions.**
+
+we should see something like
+```
+Run Health Check
+└── health-check ✅
+    ├── Checkout code ✅
+    └── Run health check ✅
+```
+OUTPUT: 
+![alt text](image-9.png)
+
+### Step 3 — Intentionally break the script
+
+We want to prove that CI actually detects failures.
+
+Open:
+```bash 
+scripts/health_check.sh
+```
+Change the last line from:
+```bash 
+exit 0 
+``
+to: 
+```bash 
+exit 1
+```
+so the end of the script becomes: 
+```bash 
+echo "Health check passed!"
+exit 1
+```
+Commit and push:
+```bash 
+git add scripts/health_check.sh
+git commit -m "Intentionally break health check"
+git push
+```
+OUTPUT: 
+![alt text](image-10.png)
+
+### Now do the final step: Fix it
+Go back to your `scripts/health_check.sh` and undo whatever change you made to intentionally cause the failure.
+
+Then locally run:
+```bash 
+./scripts/health_check.sh
+echo $?
+```
