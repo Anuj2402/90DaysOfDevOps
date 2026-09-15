@@ -652,10 +652,135 @@ OUTPUT:
 ![alt text](image-10.png)
 
 ### Now do the final step: Fix it
-Go back to your `scripts/health_check.sh` and undo whatever change you made to intentionally cause the failure.
+Go back to our `scripts/health_check.sh` and undo whatever change you made to intentionally cause the failure.
 
 Then locally run:
 ```bash 
 ./scripts/health_check.sh
 echo $?
 ```
+
+# Task 6: Caching
+
+### Step 1: Create a workflow that installs dependencies
+
+We'll use Python + pip because it's easy to observe caching.
+
+First, create:
+```bash 
+.github/workflows/cache-demo.yml
+```
+Put this in it:
+```YAML 
+name: Cache Demo
+
+on:
+  push:
+
+jobs:
+  install-dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+```
+But first, we need `requirements.txt`
+
+At the root of our repository, create:
+```
+requirements.txt
+```
+For example:
+```
+requests
+pytest
+```
+our repository should look approximately like:
+```
+github-actions-practice/
+├── .github/
+│   └── workflows/
+│       └── cache-demo.yml
+├── scripts/
+│   └── health_check.sh
+└── requirements.txt
+```
+OUTPUT: 
+![alt text](image-12.png)
+
+### Step 3 — Run the workflow a second time
+
+Since our workflow triggers on `push`, make a tiny change and push it:
+```bash 
+echo "# cache test" >> requirements.txt
+
+git add requirements.txt
+git commit -m "Test dependency caching"
+git push
+```
+Then open the new GitHub Actions run.
+
+#### What we're looking for
+Open the Cache pip step.
+
+On the first run, we should have seen something like:
+
+```
+Cache not found for input keys
+```
+On the second run, ideally:
+```
+Cache restored from key: ...
+```
+And during `Install dependencies`, we should notice that packages are retrieved from the local pip cache rather than downloaded again.
+
+**Important**: Because we changed `requirements.txt`, the `hashFiles('**/requirements.txt')` part creates a new cache key. So this particular second run may be a cache miss.
+
+If that happens, that's actually a useful lesson.
+
+OUTPUT : 
+![alt text](image-13.png)
+
+our screenshot shows the important lines:
+```
+Cache hit for restore-key
+Cache restored successfully
+Cache restored from key: Linux-pip-...
+```
+And during installation:
+```
+Using cached requests...
+Using cached pytest...
+```
+The workflow also dropped from about **39 seconds on the first run to 8 seconds** on this run. That's exactly the observation Task 6 wants.
+
+**Now write this in your notes**
+
+**What is being cached?**
+
+The workflow caches the Python `pip` package download cache located at `~/.cache/pip.` This contains downloaded Python packages/wheels and metadata, so subsequent workflow runs can reuse them instead of downloading everything again.
+
+**Where is it stored?**
+GitHub Actions stores the cache remotely for the repository and restores it onto the runner at `~/.cache/pip` when the cache key matches.
+
+**Why is caching useful?**
+Caching reduces dependency download time and makes CI pipelines faster.
