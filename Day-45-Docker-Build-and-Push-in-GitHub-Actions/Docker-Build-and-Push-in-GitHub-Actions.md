@@ -188,3 +188,84 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/chat-app:sha-${{ steps.vars.outputs.sha_short }}
 ```
 
+#### Let's Understand the Above YAML for Push to Docker Hub
+
+1. Get Short Commit SHA
+```YAML 
+- name: Get short commit SHA
+  id: vars
+  run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+```
+-  Gets The short Version of the GIT Commit ID 
+
+Example:
+```
+a7f32c1
+```
+Then we can use: 
+```
+chat-app:sha-a7f32c1
+```
+2. Log In To Docker Hub 
+```YAML 
+uses: doceker/login-action@v3
+with: 
+  username: ${{ secrets.DOCKER_USERNAME }}
+  password: ${{ secrets.DOCKER_TOKEN }}
+```
+- Logs GitHub Actions into our Docker Hub account
+- The credentials come from GitHub Secrets, not hardcoded values.
+
+3. Build AND push
+```YAML 
+push: true
+```
+- This is the important change.
+Previously:
+```YAML 
+push: false
+```
+Build only
+Now:
+```YAML 
+push: true
+```
+- Build + upload to Docker Hub
+
+4. Two image tags
+```YAML 
+tags: |
+  ${{ secrets.DOCKER_USERNAME }}/chat-app:latest
+  ${{ secrets.DOCKER_USERNAME }}/chat-app:sha-${{ steps.vars.outputs.sha_short }}
+```
+we will get: 
+```
+yourusername/chat-app:latest
+yourusername/chat-app:sha-a7f32c1
+```
+So:
+`latest` → points to the latest image.
+`sha-a7f32c1` → points to a specific Git commit.
+
+OUTPUT: 
+![alt text](image-1.png)
+
+DOCKER HUB OUTPUT: 
+![alt text](image-2.png)
+
+Overall flow
+```
+GitHub push
+    ↓
+Checkout code
+    ↓
+Setup Docker
+    ↓
+Get commit SHA
+    ↓
+Login Docker Hub
+    ↓
+Build image
+    ↓
+Push image 🚀
+```
