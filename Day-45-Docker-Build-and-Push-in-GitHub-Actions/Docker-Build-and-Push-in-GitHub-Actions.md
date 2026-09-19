@@ -413,5 +413,42 @@ push: fasle
 Docker image: only BUILD but will Not PUSH 
 
 
+# Task 5: Add a Status Badge
+### Step 1: Get the badge URL
 
+Go to your repo on GitHub → Actions tab → click on the "Docker Build and Push" workflow in the left sidebar (not a specific run — the workflow itself) → click the ... (three-dot menu) in the top right → "Create status badge".
 
+GitHub will show you a Markdown snippet like:
+Get the badge URL from the Actions tab
+
+```
+[![Docker Build and Push](https://github.com/Anuj2402/github-actions-practice/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/Anuj2402/github-actions-practice/actions/workflows/docker-build-push.yml)
+```
+
+### Step 2: Add it to `README.md`
+```bash 
+cd ~/github-actions-practice
+sed -i '1i [![Docker Build and Push](https://github.com/Anuj2402/github-actions-practice/actions/workflows/docker-build-push.yml/badge.svg)](https://github.com/Anuj2402/github-actions-practice/actions/workflows/docker-build-push.yml)\n' README.md
+```
+Verify:
+```bash 
+head -3 README.md
+```
+Expect the badge Markdown as line 1, a blank line, then our existing README content starting at line 3.
+OUTPUT: 
+![alt text](image-3.png)
+
+### Step 3: Push and verify green 
+```bash 
+git add README.md
+git commit -m "Add CI status badge to README"
+git push origin main
+```
+Then open:
+
+```
+https://github.com/Anuj2402/github-actions-practice
+```
+OUTPUT: 
+![alt text](image-4.png)
+- The rendered README on GitHub shows the badge live and green — "passing"
