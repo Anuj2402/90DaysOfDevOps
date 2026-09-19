@@ -269,3 +269,149 @@ Build image
     ↓
 Push image 🚀
 ```
+
+# Task 4: Only Push on Main
+
+This task is about controlling when our Docker image is pushed to Docker Hub.
+You want to test that the Docker image can be built successfully on feature branches, but you don't want every developer branch to upload images to Docker Hub.
+
+### Step 1: Update the workflow
+```YAML 
+name: Docker Build and Push
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get short commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/chat-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/chat-app:sha-${{ steps.vars.outputs.sha_short }}
+```
+#### Let's Understand 
+1. we changed the trigger
+Previously you had:
+```YAML 
+on:
+  push:
+    branches: [main]
+```
+- That means -> Run this workflow only when the code is pushed to `main.`
+
+Now you have:
+```YAML 
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+```
+`push: '**'`
+```YAML 
+push:
+  branches:
+    - '**'
+```
+This Means -> Run this workflow when code is pushed to any branch.
+
+
+2. You added `pull_request`
+
+```YAML 
+pull_request:
+  branches:
+    - main
+```
+- This means -> Run the workflow when a Pull Request is made toward `main.`
+For example:
+```
+feature-login
+      |
+      | Pull Request
+      ↓
+    main
+```
+The workflow runs and builds the Docker image.
+But it should not push the image.
+
+3. The most important change: `push:`
+our Old version was 
+```YAML 
+push: true 
+```
+- That means Build the image AND push it to Docker Hub.
+
+Now we have 
+```YAML 
+push: ${{ github.ref == 'refs/heads/main' }}
+```
+This is a condition.
+GitHub checks:
+```
+Is the current ref exactly refs/heads/main?
+             |
+       ┌─────┴─────┐
+      YES          NO
+       ↓            ↓
+   push: true    push: false
+```
+On `main`
+```YAML 
+github.ref == 'refs/heads/main'
+```
+is `true`
+Therefore:
+```YAML 
+push: true
+```
+- Docker image: BUILD AND PUSH 
+
+On a `feature branch`
+
+For example:
+```YAML 
+github.ref == 'refs/heads/feature-login'
+```
+- The condition is false 
+
+Therefore: 
+```YAML 
+push: fasle
+```
+Docker image: only BUILD but will Not PUSH 
+
+
+
+
