@@ -452,3 +452,117 @@ https://github.com/Anuj2402/github-actions-practice
 OUTPUT: 
 ![alt text](image-4.png)
 - The rendered README on GitHub shows the badge live and green — "passing"
+
+# Task 6: Pull and Run It
+Let's actually pull the image we pushed (not just reuse the locally-built one) so this genuinely proves the whole pipeline works end-to-end from Docker Hub.
+
+#### Step 1: Pull the image explicitly
+On your Linux machine (or a fresh cloud server if you want a stronger proof — pulling on a machine that never built the image locally is the real test):
+```bash 
+docker pull anujkumar007/chat-app:sha-aedb3d7
+```
+Confirm it actually downloaded from the registry, not just used a local cache:
+```bash 
+docker images anujkumar007/chat-app
+```
+OUTPUT : 
+![alt text](image-5.png)
+- Pulled clean from Docker Hub — `Status: Downloaded newer image, 19MB, image ID bb1d515586bc.` Confirmed this came from the registry, not a local build.
+
+#### Step 2: Run it
+```bash 
+# Network so the app and DB can reach each other by name
+docker network create real-app-net 2>/dev/null
+
+# Database
+docker run -d --name real-mysql \
+  --network real-app-net \
+  -e MYSQL_ROOT_PASSWORD=testpass \
+  -e MYSQL_DATABASE=chatdb \
+  -e MYSQL_USER=chatapp \
+  -e MYSQL_PASSWORD=testpass \
+  mysql:8.4
+
+sleep 25
+
+# App
+docker run -d --name real-chat-app \
+  --network real-app-net \
+  -p 8080:8080 \
+  -e DB_HOST=real-mysql \
+  -e DB_PORT=3306 \
+  -e DB_USER=chatapp \
+  -e DB_PASSWORD=testpass \
+  -e DB_NAME=chatdb \
+  anujkumar007/chat-app:sha-aedb3d7
+```
+
+#### Step 3: Confirm it works
+
+```
+docker logs real-chat-app
+curl "http://localhost:8080/api/chat-history?from=alice&to=bob"
+```
+Expect: Chat `server started at http://localhost:8080 `in the logs, {"messages":[]} from curl.
+
+### Notes: The full journey from git push to a running container
+
+## CI/CD Journey: git push → running container
+
+1. **Local development** — code is written/edited in `main.go`, `index.html`,
+   `history.html`, `go.mod`, `go.sum`, `Dockerfile` in the local repo clone.
+
+2. **git push origin main** — commits are pushed to the `main` branch on GitHub.
+
+3. **GitHub Actions trigger** — the push event matches the `on: push: branches`
+   condition in `.github/workflows/docker-build-push.yml`, which queues a new
+   workflow run on a GitHub-hosted `ubuntu-latest` runner.
+
+4. **Checkout code** (`actions/checkout@v4`) — the runner clones the exact
+   commit that was just pushed into its own filesystem.
+
+5. **Set up Docker Buildx** (`docker/setup-buildx-action@v3`) — configures
+   BuildKit on the runner so the image can be built with modern caching/
+   multi-platform support.
+
+6. **Compute short SHA** — a step captures `git rev-parse --short HEAD` so the
+   image can be tagged traceably to this exact commit.
+
+7. **Log in to Docker Hub** (`docker/login-action@v3`) — authenticates using
+   the `DOCKER_USERNAME` / `DOCKER_TOKEN` repo secrets, never exposing them
+   in logs.
+
+8. **Build and push** (`docker/build-push-action@v6`) — runs the multi-stage
+   Dockerfile:
+     - Stage 1 (`golang:1.22-alpine`): downloads Go modules, compiles a
+       static binary (`CGO_ENABLED=0`, stripped symbols).
+     - Stage 2 (`alpine:3.20`): copies only the compiled binary + static
+       HTML assets, creates a non-root user, sets `USER appuser`.
+   The resulting image is tagged (`latest` and `sha-<hash>`) and, since the
+   push is on `main`, pushed to Docker Hub.
+
+9. **Docker Hub** — now hosts the new image under both tags, each pointing
+   at the same image digest.
+
+10. **Pull anywhere** — `docker pull anujkumar007/chat-app:<tag>` on any
+    machine with Docker and internet access retrieves the exact same image
+    bytes that were built in CI — no local build step needed.
+
+11. **Run** — `docker run` starts the container. Because the app needs
+    MySQL, it's run alongside a `mysql` container on a shared Docker
+    network, with connection details passed as environment variables
+    (`DB_HOST`, `DB_USER`, etc.) rather than hardcoded.
+
+12. **Confirm it works** — check container logs for a successful startup
+    message, hit the REST endpoint with `curl`, and open the app in a
+    browser to confirm the WebSocket-based real-time chat functions
+    end-to-end.
+
+**Key lesson learned along the way:** a green build/push in CI only proves
+the *pipeline* works — it doesn't prove the *content* is correct. Verifying
+by digest comparison against a known-good reference, and by actually
+exercising the app's real behavior (not just "did it start"), caught two
+real bugs that pure CI success would have masked: a stale/wrong source repo,
+and an environment-specific frontend bug (ws:// vs wss:// mixed content)
+that only local build-and-run testing surfaced.
+
