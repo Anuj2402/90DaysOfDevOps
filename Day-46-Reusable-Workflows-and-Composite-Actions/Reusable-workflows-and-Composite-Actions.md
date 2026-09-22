@@ -439,3 +439,299 @@ ${{ secrets.docker_token }}
 ```
 That's the core purpose of `workflow_call`.
 
+# Task 4: Add Outputs to the Reusable Workflow
+This Task Teaches an important concept : **Outputs from a reusable worflow can be passed back to the caller workflow**
+
+Let's Do it step by step 
+
+### Step 1 — Modify `reusable-build.yml`
+
+we currently have: 
+```YAML 
+on:
+  workflow_call:
+    inputs:
+      ...
+    secrets:
+      ...
+```
+Add `output` under `workflow_call:`
+
+```YAML 
+outputs:
+  build_version:
+    description: "Generated build version"
+    value: ${{ jobs.build.outputs.build_version }}
+```
+So the top part becomes: 
+```YAML 
+name: Reusable Build
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        type: string
+        required: true
+
+      environment:
+        type: string
+        required: true
+        default: staging
+
+    secrets:
+      docker_token:
+        required: true
+
+    outputs:
+      build_version:
+        description: "Generated build version"
+        value: ${{ jobs.build.outputs.build_version }}
+```
+#### Why jobs.build.outputs?
+Because the version will first be created inside the `build` job.
+
+Think 
+```
+Step
+ ↓
+Job output
+ ↓
+Reusable workflow output
+ ↓
+Caller workflow
+```
+### Step 2 — Create the job output
+
+Inside the `job.build`, add: 
+```YAML 
+outputs: 
+  build_version: ${{ steps.version.outputs.build_version }}
+```
+So: 
+```YAML 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      build_version: ${{ steps.version.outputs.build_version }}
+```
+This Says: 
+- Take the output calles `build_version` from the step called `version` and expose it as job output
+
+### Step 3 — Generate the version
+Add this step before our build step: 
+```YAML 
+- name: Generate build version
+  id: version
+  run: |
+    SHORT_SHA=$(git rev-parse --short HEAD)
+    echo "build_version=v1.0-$SHORT_SHA" >> "$GITHUB_OUTPUT"
+```
+For example, if the commit is:
+```
+a7f32c1
+```
+the output becomes:
+```
+v1.0-a7f32c1
+```
+The important part is:
+```bash 
+echo "build_version=..." >> "$GITHUB_OUTPUT"
+```
+That's How Github Actions steps creates an output.GitHub reads `$GITHUB_OUTPUT` and recognizes:
+
+our reusable workflow should now look like this
+```YAML 
+name: Reusable Build
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        type: string
+        required: true
+
+      environment:
+        type: string
+        required: true
+        default: staging
+
+    secrets:
+      docker_token:
+        required: true
+
+    outputs:
+      build_version:
+        description: "Generated build version"
+        value: ${{ jobs.build.outputs.build_version }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      build_version: ${{ steps.version.outputs.build_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate build version
+        id: version
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "build_version=v1.0-$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: echo "Building ${{ inputs.app_name }} for ${{ inputs.environment }}"
+
+      - name: Check Docker token
+        run: |
+          if [ -n "${{ secrets.docker_token }}" ]; then
+            echo "Docker token is set: true"
+          else
+            echo "Docker token is set: false"
+          fi
+```
+
+Commit and push it : 
+
+# Step 2 — Update call-build.yml
+our current `build` job calls the reusable workflow 
+we need to add a second job that waits for it: 
+
+```YAML 
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      app_name: "my-web-app"
+      environment: "production"
+    secrets:
+      docker_token: ${{ secrets.DOCKER_TOKEN }}
+
+  show-version:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show build version
+        run: echo "Build version is ${{ needs.build.outputs.build_version }}"
+```
+#### What does this mean ? 
+First: 
+```YAML 
+needs: build
+```
+means-> Don't start `show-version` until the reusable workflow's `build` job finishes successfully.
+
+Then: 
+```YAML 
+${{ needs.build.outputs.build_version }}
+```
+means: Get the `build_version` output from the `build ` job.
+So the flow becomes:
+```
+call-build.yml
+       │
+       ▼
+   build job
+       │
+       │ reusable-build.yml
+       │
+       ▼
+ generates:
+ v1.0-a7f32c1
+       │
+       ▼
+ show-version
+       │
+       ▼
+ Build version is v1.0-a7f32c1
+ ```
+
+ Now our complete `call-build.yaml`
+ ```YAML 
+ name: Call Reusable Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      app_name: "my-web-app"
+      environment: "production"
+    secrets:
+      docker_token: ${{ secrets.DOCKER_TOKEN }}
+
+  show-version:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show build version
+        run: echo "Build version is ${{ needs.build.outputs.build_version }}"
+```
+
+Now commit and push:
+```bash 
+git add .github/workflows/call-build.yml
+git commit -m "Read reusable workflow build output"
+git push
+```
+Then check Actions → Call Reusable Build.
+
+should see two jobs:
+```
+build          ✅
+     ↓
+show-version   ✅
+```
+And `show-version` should print something like:
+```
+Build version is v1.0-abc1234
+```
+OUTPUT: 
+![alt text](image-1.png)
+
+The important flow we just implemented is:
+```
+reusable-build.yml
+        │
+        │ generates
+        ▼
+v1.0-1f3180a
+        │
+        │ workflow output
+        ▼
+call-build.yml
+        │
+        ▼
+show-version job
+        │
+        ▼
+Build version is v1.0-1f3180a
+```
+#### The key concept
+we now know the difference between these three levels:
+```
+Step output
+    ↓
+Job output
+    ↓
+Reusable workflow output
+    ↓
+Caller workflow
+```
+And our `needs:` ensures the second job waits for the first:
+```YAML 
+show-version:
+  needs: build
+```
