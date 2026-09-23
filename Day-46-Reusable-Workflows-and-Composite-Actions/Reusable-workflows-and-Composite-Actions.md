@@ -927,3 +927,35 @@ Greeted: true
 
 
 # Task 6: Reusable Workflow vs Composite Action
+
+
+|                                  | **Reusable Workflow**                            | **Composite Action**                       |
+| -------------------------------- | ------------------------------------------------ | ------------------------------------------ |
+| **Triggered by**                 | `workflow_call`                                  | `uses:` in a step                          |
+| **Can contain jobs?**            | ✅ Yes                                            | ❌ No                                       |
+| **Can contain multiple steps?**  | ✅ Yes                                            | ✅ Yes                                      |
+| **Lives where?**                 | `.github/workflows/`                             | `.github/actions/<action-name>/action.yml` |
+| **Can accept secrets directly?** | ✅ Yes, through `workflow_call.secrets`           | ❌ Not directly; pass secrets as inputs/env |
+| **Best for**                     | Reusing **entire workflows/pipelines with jobs** | Reusing **a group of steps within a job**  |
+
+
+#### Easy way to remember
+Think of it like:
+```
+Reusable Workflow
+       ↓
+   Whole pipeline
+       ↓
+  Job 1 → Job 2 → Job 3
+```
+Whereas:
+
+```
+Composite Action
+       ↓
+   Reusable steps
+       ↓
+Step 1 → Step 2 → Step 3
+```
+**One key interview point**: a reusable workflow can contain multiple jobs, while a composite action is essentially a reusable collection of steps that runs as part of a job.
+
