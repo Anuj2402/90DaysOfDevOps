@@ -599,7 +599,7 @@ jobs:
 
 Commit and push it : 
 
-# Step 2 — Update call-build.yml
+### Step 2 — Update call-build.yml
 our current `build` job calls the reusable workflow 
 we need to add a second job that waits for it: 
 
@@ -736,3 +736,194 @@ show-version:
   needs: build
 ```
 
+# Task 5: Create a Composite Action
+
+### Step 1 — Create the custom action
+Create this file: 
+```
+.github/actions/setup-and-greet/action.yml
+```
+
+put this inside 
+```YAML 
+name: Setup and Greet
+description: A custom composite action that prints a greeting and runner information
+
+inputs:
+  name:
+    description: Name to greet
+    required: true
+
+  language:
+    description: Language for the greeting
+    required: false
+    default: en
+
+outputs:
+  greeted:
+    description: Whether the greeting was printed
+    value: ${{ steps.greet.outputs.greeted }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Print greeting
+      id: greet
+      shell: bash
+      run: |
+        case "${{ inputs.language }}" in
+          en)
+            echo "Hello, ${{ inputs.name }}!"
+            ;;
+          hi)
+            echo "Namaste, ${{ inputs.name }}!"
+            ;;
+          es)
+            echo "Hola, ${{ inputs.name }}!"
+            ;;
+          *)
+            echo "Hello, ${{ inputs.name }}!"
+            ;;
+        esac
+
+        echo "greeted=true" >> "$GITHUB_OUTPUT"
+
+    - name: Print runner information
+      shell: bash
+      run: |
+        echo "Current date: $(date)"
+        echo "Runner OS: $RUNNER_OS"
+```
+
+#### What is different here?
+This is a composite action, so notice:
+```YAML
+runs:
+  using: composite
+```
+Unlike your reusable workflow:
+```YAML
+on:
+  workflow_call:
+```
+A composite action is a collection of steps that can be reused inside another workflow.
+
+And we're creating an output:
+```YAML
+echo "greeted=true" >> "$GITHUB_OUTPUT"
+```
+which becomes:
+```YAML
+outputs:
+  greeted:
+```
+Later, the calling workflow can read it.
+
+
+### Step 2 — Create the workflow
+Create:
+```
+.github/workflows/test-composite-action.yml
+```
+our structure will become:
+```
+.github/
+├── actions/
+│   └── setup-and-greet/
+│       └── action.yml
+│
+└── workflows/
+    ├── reusable-build.yml
+    ├── call-build.yml
+    └── test-composite-action.yml
+```
+Put this in `test-composite-action.yml:`
+```YAML 
+name: Test Composite Action
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run setup and greet
+        id: greeting
+        uses: ./.github/actions/setup-and-greet
+        with:
+          name: "Anuj"
+          language: "en"
+
+      - name: Check output
+        run: echo "Greeted: ${{ steps.greeting.outputs.greeted }}"
+```
+#### What's important here?
+This is the line that uses our custom action:
+```YAML
+uses: ./.github/actions/setup-and-greet
+```
+Notice the difference:
+
+GitHub's action:
+```YAML 
+uses: actions/checkout@v4
+```
+our own action:
+```YAML 
+uses: ./.github/actions/setup-and-greet
+```
+Then we pass our inputs:
+```YAML 
+with:
+  name: "Anuj"
+  language: "en"
+```
+our action should produce something like:
+```
+Hello, Anuj!
+Current date: ...
+Runner OS: Linux
+```
+And finally:
+```
+Greeted: true
+```
+#### our task now
+
+Commit and push: 
+```bash 
+git add .github/actions/setup-and-greet/action.yml .github/workflows/test-composite-action.yml
+git commit -m "Add custom composite action"
+git push
+```
+
+OUTPUT: 
+![alt text](image-2.png)
+flow is
+```
+test-composite-action.yml
+        ↓
+uses: ./.github/actions/setup-and-greet
+        ↓
+setup-and-greet/action.yml
+        ↓
+Hello, Anuj!
+Current date: ...
+Runner OS: Linux
+        ↓
+greeted = true
+        ↓
+Greeted: true
+```
+- The reusable workflow is called at the job level, while the composite action is used at the step level.
+
+
+# Task 6: Reusable Workflow vs Composite Action
