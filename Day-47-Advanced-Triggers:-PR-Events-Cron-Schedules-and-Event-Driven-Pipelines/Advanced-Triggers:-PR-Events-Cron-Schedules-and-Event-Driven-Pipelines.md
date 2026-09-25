@@ -285,3 +285,25 @@ PR was merged
 This PR was merged successfully!
 ```
 
+# Task 2: PR Validation Workflow
+
+This task is building a real PR gate: before a PR can be merged, GitHub Actions checks file size, branch naming, and PR description.
+
+### Step 1 — Create `pr-checks.yml`
+Create:
+```YAML 
+.github/workflows/pr-checks.yml
+```
+Start with trigger 
+```YAML 
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+```
+This means:-> Run this workflow for PR activity targeting `main.`
+
+Unlike our previous `pr-lifecycle.yml`, we aren't specifying `types`, so the workflow uses the default PR activity types.
+
