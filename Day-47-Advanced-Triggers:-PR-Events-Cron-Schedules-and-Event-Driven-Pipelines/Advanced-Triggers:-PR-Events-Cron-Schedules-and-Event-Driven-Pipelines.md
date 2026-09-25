@@ -307,3 +307,229 @@ This means:-> Run this workflow for PR activity targeting `main.`
 
 Unlike our previous `pr-lifecycle.yml`, we aren't specifying `types`, so the workflow uses the default PR activity types.
 
+### Step 2 — Add the first job
+Now add the  `file-size-check` job:
+
+```YAML
+jobs:
+  file-size-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check file sizes
+        run: |
+          for file in $(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}); do
+            if [ -f "$file" ]; then
+              size=$(stat -c%s "$file")
+
+              if [ "$size" -gt 1048576 ]; then
+                echo "❌ File is larger than 1 MB: $file"
+                exit 1
+              fi
+
+              echo "✅ File size OK: $file"
+            fi
+          done
+```
+
+#### What this does
+First, this gets the files changed by the PR:
+```bash 
+git diff --name-only base-sha head-sha
+```
+Then: 
+```bash 
+stat -c%s "$file"
+```
+gets the file size in bytes.
+
+And 
+```
+1 MB = 1,048,576 bytes
+```
+So: 
+```bash 
+if [ "$size" -gt 1048576 ]
+```
+Means:-> If the file is larger than 1 MB, fail the job.
+
+The important part is:
+```bash 
+exit 1
+```
+That makes the GitHub Actions job fail.
+
+### Step 2 — Add `branch-name-check`
+
+Now add this below the `file-size-check` job:
+
+```YAML 
+  branch-name-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check branch name
+        run: |
+          branch="${{ github.head_ref }}"
+
+          echo "Branch name: $branch"
+
+          if [[ "$branch" == feature/* || "$branch" == fix/* || "$branch" == docs/* ]]; then
+            echo "✅ Branch name is valid"
+          else
+            echo "❌ Invalid branch name: $branch"
+            echo "Branch must start with feature/, fix/, or docs/"
+            exit 1
+          fi
+```
+### What we're checking
+`github.head_ref` gives us the source branch of the PR.
+
+For example:
+```
+feature/login       ✅
+fix/database-error  ✅
+docs/readme         ✅
+
+test-branch         ❌
+my-feature          ❌
+bugfix/login        ❌
+```
+The important condition is:
+```bash 
+[[ "$branch" == feature/* || "$branch" == fix/* || "$branch" == docs/* ]]
+```
+If none match, `exit 1` makes the PR check fail.
+
+So our workflow now has two independent jobs:
+```
+PR → file-size-check   ✅/❌
+  ↘ branch-name-check  ✅/❌
+  ```
+
+### Step 3 — Add pr-body-check
+
+Add this below `branch-name-check:`
+```YAML
+  pr-body-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check PR description
+        run: |
+          if [ -z "${{ github.event.pull_request.body }}" ]; then
+            echo "⚠️ Warning: PR description is empty"
+          else
+            echo "✅ PR description is present"
+          fi
+```
+#### Why no `exit 1`?
+The task says the empty description should warn but not fail.
+
+So:
+```
+PR body exists
+     ↓
+✅ PR description is present
+```
+Empty:
+```
+PR body empty
+     ↓
+⚠️ Warning
+     ↓
+Job still succeeds ✅
+```
+our complete workflow will now be
+```YAML
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  file-size-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check file sizes
+        run: |
+          for file in $(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}); do
+            if [ -f "$file" ]; then
+              size=$(stat -c%s "$file")
+
+              if [ "$size" -gt 1048576 ]; then
+                echo "❌ File is larger than 1 MB: $file"
+                exit 1
+              fi
+
+              echo "✅ File size OK: $file"
+            fi
+          done
+
+  branch-name-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check branch name
+        run: |
+          branch="${{ github.head_ref }}"
+
+          echo "Branch name: $branch"
+
+          if [[ "$branch" == feature/* || "$branch" == fix/* || "$branch" == docs/* ]]; then
+            echo "✅ Branch name is valid"
+          else
+            echo "❌ Invalid branch name: $branch"
+            echo "Branch must start with feature/, fix/, or docs/"
+            exit 1
+          fi
+
+  pr-body-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check PR description
+        run: |
+          if [ -z "${{ github.event.pull_request.body }}" ]; then
+            echo "⚠️ Warning: PR description is empty"
+          else
+            echo "✅ PR description is present"
+          fi
+```
+
+#### Next step — test the branch-name check
+
+We want to intentionally create a bad branch name and verify that the workflow fails.
+
+Run these commands one at a time:
+```bash 
+git checkout -b test-pr-validation
+```
+Then make a small change, for example:
+```bash 
+echo "PR validation test" >> validation-test.txt
+```
+Then:
+```bash 
+git add .
+git commit -m "test PR validation"
+git push -u origin test-pr-validation
+```
+Now open a PR:
+`test-pr-validation` → `main`
+
+OUTPUT: 
+![alt text](image-4.png)
+
+Now let's test the valid branch-name case.
+OUTPUT: 
+![alt text](image-5.png)
