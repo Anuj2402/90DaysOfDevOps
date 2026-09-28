@@ -536,3 +536,91 @@ OUTPUT:
 
 
 # Task 3: Scheduled Workflows (Cron Deep Dive)
+### Step 1 — Create the workflow
+Create: 
+```
+.github/workflows/scheduled-tasks.yml
+```
+Use this YAML 
+```YAML 
+name: Scheduled Tasks
+
+on:
+  schedule:
+    - cron: '30 2 * * 1'
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  scheduled-health-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show trigger
+        run: |
+          echo "Triggered by schedule: ${{ github.event.schedule }}"
+
+      - name: Health check
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://github.com)
+
+          echo "HTTP response code: $response"
+
+          if [ "$response" -ne 200 ]; then
+            echo "❌ Health check failed"
+            exit 1
+          fi
+
+          echo "✅ Health check passed"
+```
+#### What the Two CRON entries Means: 
+```
+* * * * *
+│ │ │ │ │
+│ │ │ │ └── Day of week (0-7)
+│ │ │ └──── Month (1-12)
+│ │ └────── Day of month (1-31)
+│ └──────── Hour (0-23)
+└────────── Minute (0-59)
+
+```
+```
+30 2 * * 1
+```
+- Every **Monday at 02:30 UTC**
+```
+0 */6 * * *
+```
+- Every **6 hours:** 00:00, 06:00, 12:00, 18:00 UTC.
+
+And 
+```YAML 
+workflow_dispatch: 
+```
+allows us to run it manually from GitHub instead of waiting for cron.
+
+OUR NOTES: 
+
+**Every weekday at 9:00 AM IST:**
+```
+30 3 * * 1-5
+```
+- Because IST = UTC + 5:30, so 9:00 AM IST = 3:30 AM UTC.
+
+
+**First day of every month at midnight UTC:**
+
+```
+0 0 1 * *
+```
+GitHub notes that scheduled workflows can be delayed or skipped when repositories are inactive because scheduled workflows are intended for repositories with activity; GitHub may disable scheduled workflows in repositories with no activity for a prolonged period.
+
+### Step 2 — Commit and push the workflow
+```bash 
+git add .github/workflows/scheduled-tasks.yml
+git commit -m "add scheduled health check workflow"
+git push
+```
+OUTPUT: 
+![alt text](image-6.png)
+
