@@ -234,3 +234,118 @@ ext4 Filesystem
 Mounted at /mnt/app-data
 
 ```
+
+### Q-> Can you explain process of Creating a and Mounting an filesystem 
+Process of creating and mounting a new filesystem in Linux
+```
+Create disk/partition
+       ↓
+Create filesystem
+       ↓
+Create mount point
+       ↓
+Mount filesystem
+       ↓
+Verify
+       ↓
+(Optional) Configure /etc/fstab for automatic mounting
+
+```
+1. Identify the disk/partition
+```bash 
+lsblk 
+```
+Example: 
+```
+/dev/sdb
+└─/dev/sdb1 -> This will create after partition 
+
+```
+2. Create a partition
+If the disk is new/unpartitioned, use `fdisk` or `parted`:
+```bash 
+ sudo fdisk /dev/sdb
+ ```
+ Create a partition such as `/dev/sdb1`.
+ Then check:
+ ```
+ lsblk 
+ ```
+ 3. Create the filesystem
+ For an `ext4` filesystem:
+ ```bash 
+ sudo mkfs.ext4 /dev/sdb1
+```
+This **formats the partition**, so make sure it doesn't contain data you need.
+
+4. Create a mount point
+A mount point is the directory where the filesystem will appear:
+```bash 
+sudo mkdir -p /data
+```
+5. Mount the filesystem
+```bash 
+sudo mount /dev/sdb1 /data
+```
+Now `/dev/sdb1` is accessible through `/data.`
+
+6. Verify
+```bash 
+df -h /data
+or:
+mount | grep /data  
+```
+You can also use:
+```bash 
+lsblk -f
+```
+7. Configure permanent mounting
+A manual mount disappears after reboot. To mount it automatically, add an entry to `/etc/fstab`.
+First find the UUID:
+```bash 
+sudo blkid /dev/sdb1
+```
+Example:
+```
+UUID="abc123..." TYPE="ext4"
+
+```
+Then add:
+```
+UUID=abc123...  /data  ext4  defaults  0  2
+```
+Test the configuration before rebooting:
+```bash 
+sudo mount -a
+```
+
+If there are no errors, the filesystem should automatically mount at `/data `after boot.
+
+Interview-ready answer
+“To create and mount a new filesystem in Linux, I follow a few steps.
+
+First, I identify the available disk using lsblk. If the disk is new and needs partitioning, I create a partition using tools like fdisk or parted.
+
+Next, I create a filesystem on the partition using mkfs, for example mkfs.ext4 /dev/sdb1.
+
+Then I create a mount-point directory, such as /data, using mkdir.
+
+After that, I mount the filesystem using the mount command:
+
+mount /dev/sdb1 /data
+
+I verify that it was mounted successfully using df -h, mount, or lsblk -f.
+
+Finally, if I want the filesystem to be mounted automatically after a reboot, I get its UUID using blkid and add an entry to /etc/fstab. I then test it with mount -a to make sure there are no configuration errors.”
+
+```bash 
+lsblk
+sudo fdisk /dev/sdb
+sudo mkfs.ext4 /dev/sdb1
+sudo mkdir /data
+sudo mount /dev/sdb1 /data
+df -h /data
+sudo blkid /dev/sdb1
+sudo vi /etc/fstab
+sudo mount -a
+```
