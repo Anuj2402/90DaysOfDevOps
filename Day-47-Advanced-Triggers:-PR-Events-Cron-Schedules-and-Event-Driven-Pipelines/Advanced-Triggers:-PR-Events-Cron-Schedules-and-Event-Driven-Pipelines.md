@@ -624,3 +624,126 @@ git push
 OUTPUT: 
 ![alt text](image-6.png)
 
+# Task 4: Path & Branch Filters
+This Task Ask for **two workflows** because `paths` and `paths-ignore` are different triggers rules.
+
+### Step 1 — Create the first workflow
+Create: 
+```
+.github/workflows/smart-triggers.yml
+```
+Add: 
+```YAML 
+name: Smart Triggers
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+    paths:
+      - 'src/**'
+      - 'app/**'
+
+jobs:
+  smart-trigger-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show trigger
+        run: |
+          echo "Workflow triggered!"
+          echo "Branch: ${{ github.ref_name }}"
+```
+#### What this means:
+The workflow runs only when both conditions are satisfied:
+
+Branch:
+```
+main
+release/*
+```
+AND changed files include:
+```
+src/**
+app/**
+```
+For example:
+| Change         | Branch         | Runs? |
+| -------------- | -------------- | ----- |
+| `src/app.py`   | `main`         | ✅     |
+| `app/index.js` | `release/v1`   | ✅     |
+| `README.md`    | `main`         | ❌     |
+| `src/app.py`   | `feature/test` | ❌     |
+
+### Step 2 — Add the second workflow
+Create:
+```bash 
+
+touch .github/workflows/docs-ignore.yml
+```
+ADD: 
+```YAML
+name: Docs Ignore Test
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+
+jobs:
+  docs-ignore-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show trigger
+        run: |
+          echo "Workflow triggered!"
+          echo "Branch: ${{ github.ref_name }}"
+
+```
+What `paths-ignore `means
+This workflow will NOT run when the push contains only:
+```
+README.md
+CONTRIBUTING.md
+docs/setup.md
+docs/guide/example.md
+```
+But if the same push contains:
+```
+README.md
+src/app.py
+```
+the workflow will run, because there is a `non-ignored` file change.
+
+#### our notes
+Use `paths` when:-> You want the workflow to run only for specific paths.
+
+Use `paths-ignore` when:-> You want the workflow to run normally but skip changes to specific paths, such as documentation.
+
+Also Commit and push Both the files: 
+
+### Step 3 — Test with a Markdown-only change
+Make a small change to a `.md` file, for example:
+```bash 
+echo "Testing path filters" >> README.md
+```
+Then run:
+```bash 
+git add README.md
+git commit -m "test markdown path filters"
+git push
+```
+After the push, go to GitHub → Actions.
+Expected result
+
+For this push to main:
+
+Smart Triggers →should NOT run because README.md isn't under src/ or app/.
+Docs Ignore Test → should NOT run because the change is only to README.md.
+
