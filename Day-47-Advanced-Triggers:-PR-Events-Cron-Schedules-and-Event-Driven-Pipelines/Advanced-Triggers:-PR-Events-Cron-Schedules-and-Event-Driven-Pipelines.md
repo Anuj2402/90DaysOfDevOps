@@ -747,3 +747,100 @@ For this push to main:
 Smart Triggers →should NOT run because README.md isn't under src/ or app/.
 Docs Ignore Test → should NOT run because the change is only to README.md.
 
+# Task 5: `workflow_run` — Chain Workflows Together
+### Step 1 — Create `tests.yml`
+
+Create: 
+```bash 
+touch .github/workflows/tests.yml
+```
+Add:
+```YAML 
+name: Run Tests
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          echo "Running tests..."
+          echo "All tests passed!"
+```
+#### Important
+The workflow name must be exactly 
+```
+Run Tests 
+```
+because our second workflow will look for: 
+```YAML 
+workflows: ["Run Tests"]
+```
+
+### Step 2 — Create deploy-after-tests.yml
+Create : 
+```bash 
+touch .github/workflows/deploy-after-tests.yml
+```
+Add: 
+```YAML 
+name: Deploy After Tests
+
+on:
+  workflow_run:
+    workflows: ["Run Tests"]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check test result
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "⚠️ Tests failed. Deployment will not proceed."
+            exit 1
+          fi
+
+          echo "✅ Tests passed. Proceeding with deployment."
+
+      - name: Deploy
+        run: |
+          echo "🚀 Deploying application..."
+          echo "Deployment completed successfully!"
+```
+#### How the chain works
+```
+Push
+  ↓
+Run Tests
+  ↓
+Tests complete
+  ↓
+Deploy After Tests
+  ↓
+Check conclusion
+  ↓
+success → Deploy
+failure → Stop
+```
+Notice that `workflow_run` fires when Run Tests completes, regardless of success/failure. Our `if` logic then decides whether deployment can proceed.
+
+### Step 3 — Commit and push 
+
+```bash 
+git add .github/workflows/tests.yml .github/workflows/deploy-after-tests.yml
+git commit -m "add workflow run deployment chain"
+git push
+```
+After the push, go to GitHub → Actions.
+OUTPUT: 
+![alt text](image-7.png)
