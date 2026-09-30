@@ -844,3 +844,5 @@ git push
 After the push, go to GitHub → Actions.
 OUTPUT: 
 ![alt text](image-7.png)
+
+# Task 6: repository_dispatch — External Event Triggers.
