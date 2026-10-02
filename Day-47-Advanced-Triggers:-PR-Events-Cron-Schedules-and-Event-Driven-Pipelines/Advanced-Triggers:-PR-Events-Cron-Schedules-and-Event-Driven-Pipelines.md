@@ -846,3 +846,98 @@ OUTPUT:
 ![alt text](image-7.png)
 
 # Task 6: repository_dispatch — External Event Triggers.
+### Step 1 — Create the workflow
+Create:
+```bash 
+touch .github/workflows/external-trigger.yml
+```
+ADD: 
+```YAML 
+name: External Trigger
+
+on:
+  repository_dispatch:
+    types:
+      - deploy-request
+
+jobs:
+  external-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show deployment environment
+        run: |
+          echo "External deployment request received"
+          echo "Environment: ${{ github.event.client_payload.environment }}"
+
+      - name: Deploy
+        run: |
+          echo "🚀 Deploying to ${{ github.event.client_payload.environment }}"
+```
+#### What is happening?
+Normally GitHub Actions starts from events like:
+```
+push
+pull_request
+schedule
+```
+`repository_dispatch` allows an external system to tell GitHub:
+-   "Hey GitHub, start this workflow."
+The external system sends:
+```
+event_type = deploy-request
+environment = production
+```
+Then our workflow receives it through:
+```YAML 
+${{ github.event.client_payload.environment }}
+```
+#### Real-world examples
+An external system might trigger a pipeline when:
+- A monitoring system detects a recovery and wants an automated action.
+- A Slack/ChatOps bot receives an approved deployment command.
+- An external release-management system approves a deployment.
+- Another CI/CD platform finishes a prerequisite job.
+
+
+### Step 2 — Commit the file
+Run these commands one at a time:
+```bash 
+git add .github/workflows/external-trigger.yml
+git commit -m "add external repository dispatch trigger"
+git push
+```
+### Step 3 — Send the external event
+Run this command in your terminal:
+```bash 
+gh api repos/Anuj2402/github-actions-practice/dispatches \
+  -f event_type=deploy-request \
+  -f client_payload='{"environment":"production"}'
+
+  # To send it as a JSON object 
+
+  gh api --method POST \
+  repos/Anuj2402/github-actions-practice/dispatches \
+  --input - <<'EOF'
+{
+  "event_type": "deploy-request",
+  "client_payload": {
+    "environment": "production"
+  }
+}
+EOF
+
+  ```
+- Expected result: The command should return no output if the request succeeds (usually HTTP 204 No Content).
+
+Then open GitHub → Actions → External Trigger.
+we should see a new workflow run. Open it and check whether the logs show:
+
+```
+External deployment request received
+Environment: production
+Deploying to production
+```
+
+OUTPUT: 
+![alt text](image-8.png)
