@@ -136,3 +136,31 @@ kubelet + container runtime start them
 ```
 
 Worker node failure affects the workloads running on that node, but the control plane and other healthy nodes can continue operating. Controllers can recreate managed Pods on available nodes to restore the desired state.
+
+# Task 3: Install kubectl
+`kubectl` is the CLI tool we will use to talk to your Kubernetes cluster.
+
+Install it:
+```
+# macOS
+brew install kubectl
+
+# Linux (amd64)
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Windows (with chocolatey)
+choco install kubernetes-cli
+```
+Verify:
+```bash 
+kubectl version --client
+```
+OUTPUT: 
+```
+anujrai@anujrai-mn4561 90DaysOfDevOps % kubectl version --client 
+Client Version: v1.34.1
+Kustomize Version: v5.7.1
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
