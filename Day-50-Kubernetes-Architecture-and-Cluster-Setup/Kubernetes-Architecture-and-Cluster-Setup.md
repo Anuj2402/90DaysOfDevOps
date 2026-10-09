@@ -164,3 +164,50 @@ Client Version: v1.34.1
 Kustomize Version: v5.7.1
 anujrai@anujrai-mn4561 90DaysOfDevOps % 
 ```
+
+# Task 4: Set Up Your Local Cluster
+
+Choose one of the following. Both give you a fully functional Kubernetes cluster on your machine.
+
+#### Option A: kind (Kubernetes in Docker)
+
+```
+# Install kind
+# macOS
+brew install kind
+
+# Linux
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+# Create a cluster
+kind create cluster --name devops-cluster
+
+# Verify
+kubectl cluster-info
+kubectl get nodes
+```
+
+#### Option B: minikube
+
+```
+# Install minikube
+# macOS
+brew install minikube
+
+# Linux
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Start a cluster
+minikube start
+
+# Verify
+kubectl cluster-info
+kubectl get nodes
+```
+##### Q-> Write down: Which one did you choose and why?
+
+- I chose **Option A: kind (Kubernetes in Docker)** because it allows me to create and manage a local Kubernetes cluster using Docker containers as nodes. It supports multiple worker nodes, making it useful for practicing Kubernetes architecture, Deployments, Services, networking, scaling, and troubleshooting. Since I already have a multi-node kind cluster running locally, I can continue practicing hands-on without setting up a separate virtual machine.
+
