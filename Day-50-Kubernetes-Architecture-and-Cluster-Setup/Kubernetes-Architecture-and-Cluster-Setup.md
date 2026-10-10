@@ -211,3 +211,64 @@ kubectl get nodes
 
 - I chose **Option A: kind (Kubernetes in Docker)** because it allows me to create and manage a local Kubernetes cluster using Docker containers as nodes. It supports multiple worker nodes, making it useful for practicing Kubernetes architecture, Deployments, Services, networking, scaling, and troubleshooting. Since I already have a multi-node kind cluster running locally, I can continue practicing hands-on without setting up a separate virtual machine.
 
+# Task 5: Explore Your Cluster
+Now that your cluster is running, explore it:
+
+```
+# See cluster info
+kubectl cluster-info
+
+# List all nodes
+kubectl get nodes
+
+# Get detailed info about your node
+kubectl describe node <node-name>
+
+# List all namespaces
+kubectl get namespaces
+
+# See ALL pods running in the cluster (across all namespaces)
+kubectl get pods -A
+```
+
+Look at the pods running in the `kube-system` namespace:
+```bash 
+kubectl get pods -n kube-system
+```
+OUTPUT: 
+```bash 
+anujrai@anujrai-mn4561 90DaysOfDevOps % kubectl get pods -n kube-system
+NAME                                                         READY   STATUS    RESTARTS   AGE
+coredns-7d764666f9-9n6vb                                     1/1     Running   0          12d
+coredns-7d764666f9-c2fqn                                     1/1     Running   0          12d
+etcd-k8s-practice-cluster-control-plane                      1/1     Running   0          12d
+kindnet-94vhm                                                1/1     Running   0          12d
+kindnet-mmhh8                                                1/1     Running   0          12d
+kindnet-pz9zx                                                1/1     Running   0          12d
+kindnet-wn9p4                                                1/1     Running   0          12d
+kube-apiserver-k8s-practice-cluster-control-plane            1/1     Running   0          12d
+kube-controller-manager-k8s-practice-cluster-control-plane   1/1     Running   0          12d
+kube-proxy-48wwv                                             1/1     Running   0          12d
+kube-proxy-dqvwh                                             1/1     Running   0          12d
+kube-proxy-rn9lz                                             1/1     Running   0          12d
+kube-proxy-tsvx4                                             1/1     Running   0          12d
+kube-scheduler-k8s-practice-cluster-control-plane            1/1     Running   0          12d
+anujrai@anujrai-mn4561 90DaysOfDevOps % 
+```
+
+we can  see pods like `etcd`, `kube-apiserver`, `kube-scheduler`, `kube-controller-manager`, `coredns`, and `kube-proxy`. These are the architecture components we drew in Task 2 — running as pods inside the cluster.
+
+#### Verify: Can you match each running pod in kube-system to a component in your architecture diagram?
+
+
+| Pod Name                    | Architecture Component         | Purpose                                                     |
+| --------------------------- | ------------------------------ | ----------------------------------------------------------- |
+| `kube-apiserver-*`          | API Server                     | Entry point for Kubernetes API requests                     |
+| `etcd-*`                    | etcd                           | Stores Kubernetes cluster state                             |
+| `kube-scheduler-*`          | Scheduler                      | Selects a suitable worker node for unscheduled Pods         |
+| `kube-controller-manager-*` | Controller Manager             | Runs controllers that reconcile desired and actual state    |
+| `kube-proxy-*`              | kube-proxy                     | Manages network rules for Kubernetes Services               |
+| `kindnet-*`                 | CNI / Cluster Networking       | Provides networking for Pods                                |
+| `coredns-*`                 | CoreDNS                        | Provides DNS and service discovery inside the cluster       |
+| Not listed as a Pod         | kubelet                        | Communicates with the API Server and manages Pods on a node |
+| Not listed as a Pod         | Container Runtime (containerd) | Pulls images and runs containers                            |
