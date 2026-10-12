@@ -272,3 +272,76 @@ we can  see pods like `etcd`, `kube-apiserver`, `kube-scheduler`, `kube-controll
 | `coredns-*`                 | CoreDNS                        | Provides DNS and service discovery inside the cluster       |
 | Not listed as a Pod         | kubelet                        | Communicates with the API Server and manages Pods on a node |
 | Not listed as a Pod         | Container Runtime (containerd) | Pulls images and runs containers                            |
+
+
+# Task 6: Practice Cluster Lifecycle
+
+Build muscle memory with cluster operations:
+```bash 
+# Delete your cluster
+kind delete cluster --name devops-cluster
+# (or: minikube delete)
+
+# Recreate it
+kind create cluster --name devops-cluster
+# (or: minikube start)
+
+# Verify it is back
+kubectl get nodes
+```
+
+Try these useful commands:
+```bash 
+# Check which cluster kubectl is connected to
+kubectl config current-context
+
+# List all available contexts (clusters)
+kubectl config get-contexts
+
+# See the full kubeconfig
+kubectl config view
+```
+
+1. What is a kubeconfig?
+
+-  A **kubeconfig** is a configuration file that allows kubectl to connect to a Kubernetes cluster and authenticate with it.
+
+It contains three main things:
+- **Clusters:** Kubernetes API server addresses and certificate information.
+
+- **Users:** Authentication details, such as certificates or tokens.
+
+- **Contexts:** A combination of a cluster, user, and optionally a namespace.
+
+For example, when we run:
+```bash 
+kubectl get pods
+```
+`kubectl` reads our kubeconfig to determine **which cluster to connect to and which credentials to use.**
+
+2. Where is it stored?
+
+On our Mac or Linux machine, the default location is:
+```bash 
+~/.kube/config
+```
+
+On your Mac, ~ represents our home directory, so the full path is typically:
+```bash 
+/Users/anujrai/.kube/config
+```
+we can check whether the file exists:
+```bash 
+ls -l ~/.kube/config
+```
+To see which Kubernetes context is currently active:
+```bash 
+kubectl config current-context
+```
+To list all configured contexts:
+```bash 
+kubectl config get-contexts
+```
+**Important:** A kubeconfig may contain sensitive credentials. Don't share it publicly or commit it to GitHub.
+
+A kubeconfig is a configuration file used by `kubectl` to connect to a Kubernetes cluster. It stores cluster details, user authentication information, and contexts that determine which cluster and user to use. Its default location on macOS and Linux is `~/.kube/config.`
