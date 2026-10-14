@@ -77,3 +77,31 @@ OUTPUT:
 Yes we are able to see 
 OUTPUT: 
 ![alt text](image-3.png)
+
+# Task 2: Create a Custom Pod (BusyBox)
+Write a new manifest `busybox-pod.yaml` from scratch (do not copy-paste the nginx one):
+```YAML 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-pod
+  labels:
+    app: busybox
+    environment: dev
+spec:
+  containers:
+  - name: busybox
+    image: busybox:latest
+    command: ["sh", "-c", "echo Hello from BusyBox && sleep 3600"]
+```
+Apply and verify:
+```bash 
+kubectl apply -f busybox-pod.yaml
+kubectl get pods
+kubectl logs busybox-pod
+```
+OUTPUT: 
+![alt text](image-4.png)
+
+#### Verify: Can you see "Hello from BusyBox" in the logs?
+Yes i am able to see "Hello from BusyBox" in the logs 
