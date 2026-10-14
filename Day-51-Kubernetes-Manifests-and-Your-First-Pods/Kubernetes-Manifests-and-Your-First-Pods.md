@@ -24,3 +24,56 @@ spec:                   # The actual specification (what you want)
 
 ---
 
+# Task 1: Create Your First Pod (Nginx)
+Create a file called `nginx-pod.yaml:`
+
+```YAML 
+apiversion: v1 
+kind: pod 
+metadata:
+  name: nginx-pod 
+  labels: 
+    app: nginx 
+spec: 
+  containers: 
+  - name: nginx 
+    image: nginx:latest 
+    ports: 
+    - containerPort: 80
+```
+Apply it: 
+```bash 
+kubectl apply -f  nginx-pod.yaml
+```
+verify: 
+```bash 
+kubectl get pods
+kubectl get pods -o wide 
+```
+OUTPUT: 
+![alt text](image.png)
+
+Wait until the STATUS shows `Running`. Then explore:
+```bash 
+# Detailed info about the pod
+kubectl describe pod nginx-pod
+
+# Read the logs
+kubectl logs nginx-pod
+
+# Get a shell inside the container
+kubectl exec -it nginx-pod -- /bin/bash
+
+# Inside the container, run:
+curl localhost:80
+exit
+```
+OUTPUT: 
+![alt text](image-1.png)
+![alt text](image-2.png)
+
+#### Verify: Can you see the Nginx welcome page when you curl from inside the pod?
+
+Yes we are able to see 
+OUTPUT: 
+![alt text](image-3.png)
