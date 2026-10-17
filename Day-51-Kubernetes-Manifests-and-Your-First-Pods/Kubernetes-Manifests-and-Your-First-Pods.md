@@ -510,3 +510,25 @@ kubectl get pods --show-lables
 ```
 OUTPUT: 
 ![alt text](image-10.png)
+
+# Task 6: Clean Up
+
+Delete all the pods you created:
+```bash 
+# Delete by name
+kubectl delete pod nginx-pod
+kubectl delete pod busybox-pod
+kubectl delete pod redis-pod
+
+# Or delete using the manifest file
+kubectl delete -f nginx-pod.yaml
+
+# Verify everything is gone
+kubectl get pods
+```
+- Notice that when you delete a standalone Pod, it is gone forever. There is no controller to recreate it. This is why in production you use Deployments (coming on Day 52) instead of bare Pods.
+
+OUTPUT: 
+![alt text](image-11.png)
+
+
