@@ -426,3 +426,87 @@ The Pod "nginx-pod" is invalid: spec.containers[0].image: Required value
 **Meaning:** The first container (containers[0]) does not have the required image field.
 
 **Interview-ready answer:** Kubernetes rejects the Pod manifest with a validation error stating `spec.containers[0].image: Required value`.
+
+# Task 5: Pod Labels and Filtering
+### Step 1: Create third-pod.yaml
+
+Create the file:
+```bash 
+vi third-pod.yaml
+```
+Add this manifest:
+```YAML 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: third-pod
+  labels:
+    app: nginx
+    environment: dev
+    team: devops
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+```
+#### Understand the labels:
+```
+Label	       Value	       Purpose
+app	           nginx	   Identifies the application
+environment	    dev	       Identifies the environment
+team	      devops	   Identifies the responsible team
+```
+- Labels are key-value pairs used to organize and select Kubernetes resources.
+
+### Step 2: Apply and verify
+Run these commands one at a time:
+```bash 
+kubectl apply -f third-pod.yaml
+kubectl get pods --show-labels
+```
+OUTPUT: 
+![alt text](image-7.png)
+
+- we can see third-pod with all three labels.
+
+### Step 3: Practice filtering
+Try each command:
+```bash 
+kubectl get pods -l app=nginx # Lists Pods with the label app=nginx.
+kubectl get pods -l environment=dev #Lists Pods with the label environment=dev.
+kubectl get pods -l 'app=nginx,environment=dev' # Lists Pods matching both labels.
+```
+OUTPUT: 
+![alt text](image-8.png)
+
+
+### Next step: Add a label to an existing Pod
+Run:
+```bash 
+kubectl label pod nginx-pod environment=production
+#verify 
+kubectl get pods --show-labels
+# If Kubernetes says the label already exists, use this instead:
+kubectl label pod nginx-pod environment=production --overwrite
+
+```
+OUTPUT: 
+![alt text](image-9.png)
+
+
+- **Important concept:** we changed the live Pod's `label` using `kubectl label`. our `third-pod.yaml` file still says `environment: dev`, so the file and the live resource are now different. If we reapply that manifest, Kubernetes may change the label back to `dev`.
+
+### Next step: Remove a label
+Run this command:
+```bash 
+kubectl label pod third-pod team- 
+```
+- The `team- `syntax removes the `team` label from the live Pod.
+
+Then verify:
+```bash 
+kubectl get pods --show-lables 
+```
+OUTPUT: 
+![alt text](image-10.png)
