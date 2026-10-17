@@ -368,3 +368,61 @@ controlplane ~ ➜
 Likely differences from your `nginx-pod.yaml` are the **Pod name**, **container name**, and any fields you explicitly added to your `YAML`. The exact differences depend on the contents of your file, 
 
 Also, the generated YAML includes resources: {} and status: {}. These are not necessarily fields you need to include in a minimal hand-written Pod manifest.
+
+
+# Task 4: Validate Before Applying
+Before applying a manifest, you can validate it:
+```bash 
+# Check if the YAML is valid without actually creating the resource
+kubectl apply -f nginx-pod.yaml --dry-run=client
+
+# Validate against the cluster's API (server-side validation)
+kubectl apply -f nginx-pod.yaml --dry-run=server
+```
+
+### Step 1: Intentionally remove the image field
+
+Open your `nginx-pod.yaml` and temporarily remove the `image: nginx line.` 
+
+For example:
+```YAML 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+```
+Save the file. Don't apply it normally yet.
+
+### Step 2: Run client-side validation
+```bash 
+kubectl apply -f nginx-pod.yaml --dry-run=client
+```
+Then try server-side validation:
+```bash 
+kubectl apply -f nginx-pod.yaml --dry-run=server
+```
+### Step 3: What error should you expect?
+Kubernetes should reject the Pod because the container's image field is required. The error will typically mention a missing required field, such as:
+```
+The Pod "nginx-pod" is invalid:
+spec.containers[0].image: Required value
+```
+OUTPUT: 
+![alt text](image-6.png)
+
+- The client accepted the manifest and simulated the operation. It did not create the Pod. This shows that client-side dry-run is not sufficient to catch every server-side validation error.
+
+**Important:** --dry-run=client and --dry-run=server don't create the resource. Server-side dry-run sends the request to the API server for validation. 
+
+#### Q-> What error does Kubernetes give when the image field is missing?
+
+Kubernetes gives this error when the container's `image` field is missing:
+```bash 
+The Pod "nginx-pod" is invalid: spec.containers[0].image: Required value
+```
+**Meaning:** The first container (containers[0]) does not have the required image field.
+
+**Interview-ready answer:** Kubernetes rejects the Pod manifest with a validation error stating `spec.containers[0].image: Required value`.
