@@ -115,3 +115,92 @@ OUTPUT:
 #### Verify: Does `kubectl get pods` show these pods? What about `kubectl get pods -A`?
 - `kubectl get pods` does not show these Pods because it lists Pods only in the current (`default`) namespace, which has no Pods.
 - `kubectl get pods -A` shows Pods across all namespaces, including dev, staging, and kube-system.
+
+
+---
+
+### Q -> What is Deployment in Kubernetes? 
+
+A **Deployment in Kubernetes (K8s)** is a resource that manages your application's Pods and helps keep the desired number of replicas running. It also lets you update and roll back your application with minimal downtime.
+
+Think of it this way:
+- **Pod** = runs your application container.
+- **Deployment** = manages how many application replicas should run and how they are updated.
+- **ReplicaSet** = created and managed by the Deployment to maintain the desired number of Pods.
+
+#### Example: Why do we need a Deployment?
+
+Suppose you're running an Nginx web application and want 3 copies running for availability.
+
+![alt text](image-6.png)
+
+- If one of these Pods is deleted, the ReplicaSet creates a replacement to restore the desired replica count, assuming the cluster has the capacity and can schedule the Pod.
+
+# Task 3: Create Your First Deployment
+
+A Deployment tells Kubernetes: "I want X replicas of this Pod running at all times." If a Pod crashes, the Deployment controller recreates it automatically.
+
+Create a file `nginx-deployment.yaml:`
+```YAML 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: dev
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.24
+        ports:
+        - containerPort: 80
+```
+Key differences from a standalone Pod:
+
+- `kind: Deployment` instead of `kind: Pod`
+- `apiVersion: apps/v1` instead of `v1`
+- `replicas: 3` tells Kubernetes to maintain 3 identical pods
+- `selector.matchLabels` connects the Deployment to its Pods
+- `template` is the Pod template — the Deployment creates Pods using this blueprint
+
+Apply it:
+```bash 
+kubectl apply -f nginx-deployment.yaml
+```
+Check the result:
+```bash 
+kubectl get deployments -n dev
+kubectl get pods -n dev
+```
+OUTPUT:
+![alt text](image-7.png)
+
+we can see 3 pods with names like nginx-deployment-xxxxx-yyyyy.
+
+#### Verify: What do the READY, UP-TO-DATE, and AVAILABLE columns mean in the deployment output?
+
+OUTOUT EXAMPLE: 
+```
+NAME               READY   UP-TO-DATE   AVAILABLE
+nginx-deployment   3/3     3            3
+```
+
+What does each column mean?
+
+- **READY: 3/3** -> Three Pods are ready out of the three desired replicas. A ready Pod can receive traffic from Services that select it.
+
+- **UP-TO-DATE: 3** -> All three replicas have been updated to match the Deployment's current Pod template.
+
+- **AVAILABLE: 3** -> Three replicas are available to serve the application, meeting Kubernetes' availability criteria.
+
+- **Interview-ready answer**: `READY` tells me how many desired replicas are ready, `UP-TO-DATE ` tells me how many replicas use the latest Pod template, and `AVAILABLE` tells me how many replicas are available to serve the application.
