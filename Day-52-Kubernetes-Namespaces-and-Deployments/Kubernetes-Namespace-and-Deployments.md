@@ -67,3 +67,51 @@ OUTPUT:
 - `svclb-traefik` — Running (2/2 containers ready)
 - `traefik` — Running
 - The two `helm-install-traefik` Pods have status Completed, so they aren't counted as running.
+
+# Task 2: Create and Use Custom Namespaces
+
+#### Create two namespaces — one for a `development` environment and one for `staging`:
+
+```bash 
+kubectl create namespace dev
+kubectl create namespace staging
+```
+Verify they exist:
+```bash 
+kubectl get namespaces
+```
+OUTPUT: 
+![alt text](image-3.png)
+
+#### we can also create a namespace from a manifest:
+```YAML 
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+```
+Apply the file: 
+```bash 
+kubectl apply -f namespace.yaml
+```
+OUTPUT: 
+![alt text](image-4.png)
+
+#### Now run a pod in a specific namespace:
+```bash 
+kubectl run nginx-dev --image=nginx:latest -n dev
+kubectl run nginx-staging --image=nginx:latest -n staging
+```
+List pod accross all the namespace; 
+```bash 
+kubetl get pods -A 
+```
+OUTPUT: 
+![alt text](image-5.png)
+
+- Notice that `kubectl get pods` without -n only shows the default namespace. You must specify -n <namespace> or use -A to see everything.
+
+#### Verify: Does `kubectl get pods` show these pods? What about `kubectl get pods -A`?
+- `kubectl get pods` does not show these Pods because it lists Pods only in the current (`default`) namespace, which has no Pods.
+- `kubectl get pods -A` shows Pods across all namespaces, including dev, staging, and kube-system.
