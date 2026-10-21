@@ -204,3 +204,61 @@ What does each column mean?
 - **AVAILABLE: 3** -> Three replicas are available to serve the application, meeting Kubernetes' availability criteria.
 
 - **Interview-ready answer**: `READY` tells me how many desired replicas are ready, `UP-TO-DATE ` tells me how many replicas use the latest Pod template, and `AVAILABLE` tells me how many replicas are available to serve the application.
+
+# Task 4: Self-Healing — Delete a Pod and Watch It Come Back
+
+This is the key difference between a Deployment and a standalone Pod.
+```bash 
+# List pods
+kubectl get pods -n dev
+
+# Delete one of the deployment's pods (use an actual pod name from your output)
+kubectl delete pod <pod-name> -n dev
+
+# Immediately check again
+kubectl get pods -n dev
+```
+- The Deployment controller detects that only 2 of 3 desired replicas exist and immediately creates a new one. The deleted pod is replaced within seconds.
+
+#### Verify: Is the replacement pod's name the same as the one you deleted, or different?
+
+The replacement Pod's name is different.
+- **Deleted Pod:** `ginx-deployment-5d9c84579f-g2dpd`
+- **Replacement Pod:** `nginx-deployment-5d9c84579f-8bqw9`
+
+**Why?** The Deployment manages the desired number of replicas through a ReplicaSet. When you deleted the Pod, the ReplicaSet detected that only two Pods remained instead of the desired three and created a replacement with a new, unique name.
+
+**Notice** that the middle part, `5d9c84579f`, remains the same because the replacement belongs to the same ReplicaSet. The final part, `8bqw9`, is different.
+
+**Key takeaway:** Kubernetes replaces the deleted Pod to maintain the desired state, but it does not recreate it with the same name.
+
+# Task 5: Scale the Deployment
+Change the number of replicas:
+```bash 
+# Scale up to 5
+kubectl scale deployment nginx-deployment --replicas=5 -n dev
+kubectl get pods -n dev
+
+# Scale down to 2
+kubectl scale deployment nginx-deployment --replicas=2 -n dev
+kubectl get pods -n dev
+```
+OUTPUT: 
+![alt text](image-8.png)
+
+- Watch how Kubernetes creates or terminates pods to match the desired count.
+
+
+- we  can also scale by editing the manifest — change replicas: 4 in our YAML file and run `kubectl apply -f nginx-deployment.yaml` again.
+
+#### Verify: When you scaled down from 5 to 2, what happened to the extra pods?
+
+When we scaled down the Deployment, the extra Pods were terminated, reducing the number of Pods from 5 to 2.
+
+In our output, only two Pods remained in the Running state:
+- `nginx-deployment-5d9c84579f-8bqw9`
+- `nginx-deployment-5d9c84579f-pkkpk`
+
+The other Pods were removed by Kubernetes to match the desired replica count of 2.
+
+**Key takeaway:** When we scale down a Deployment, Kubernetes deletes excess Pods to maintain the requested number of replicas. The specific Pods selected for deletion are determined by Kubernetes; you shouldn't assume it always deletes the newest ones.
