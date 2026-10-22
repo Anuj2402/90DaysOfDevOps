@@ -336,3 +336,28 @@ controlplane ~ ➜
 Image Version `nginx:1.24` is runnign after rollback 
 
 
+# Task 7: Clean Up
+
+```bash 
+kubectl delete deployment nginx-deployment -n dev
+kubectl delete pod nginx-dev -n dev
+kubectl delete pod nginx-staging -n staging
+kubectl delete namespace dev staging production
+```
+**Deleting a namespace removes everything inside it. Be very careful with this in production.**
+```bash 
+kubectl get namespaces
+kubectl get pods -A
+```
+#### Verify: Are all your resources gone?
+```
+controlplane ~ ➜  kubectl get all 
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.43.0.1    <none>        443/TCP   59m
+
+controlplane ~ ➜  
+```
+- Verified that all resource is gone after clean up 
+
+
+
