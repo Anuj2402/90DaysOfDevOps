@@ -262,3 +262,77 @@ In our output, only two Pods remained in the Running state:
 The other Pods were removed by Kubernetes to match the desired replica count of 2.
 
 **Key takeaway:** When we scale down a Deployment, Kubernetes deletes excess Pods to maintain the requested number of replicas. The specific Pods selected for deletion are determined by Kubernetes; you shouldn't assume it always deletes the newest ones.
+
+# Task 6: Rolling Update
+
+Q-> What is Rolling Update in Kubernetes ?
+
+- In Kubernetes, a Rolling Update is a deployment strategy that updates an application gradually by replacing old Pods with new Pods, instead of stopping all the old Pods at once.
+
+- The main goal is to **update an application with minimal downtime.**
+
+1. Example: Rolling Update
+
+Suppose our Deployment has 3 replicas running Nginx version `1.26`, and you want to upgrade to version `1.28`.
+
+![alt text](image-9.png)
+
+2. How does it work?
+- You update the Deployment's container image.
+- Kubernetes creates new Pods using the updated configuration.
+- It waits for new Pods to become ready, according to the rollout strategy and readiness checks.
+- It gradually terminates old Pods.
+- The process continues until all desired replicas run the new version.
+
+This helps keep the application available during the update, provided enough healthy replicas and capacity are available.
+
+
+---
+
+Update the Nginx image version to trigger a rolling update:
+```bash 
+kubectl set image deployment/nginx-deployment nginx=nginx:1.25 -n dev
+```
+Watch the rollout in real time:
+```bash 
+kubectl rollout status deployment/nginx-deployment -n dev
+```
+Verify the new version of IMAGE :
+```bash 
+kubectl describe deployment nginx-deployment -n dev | grep Image
+```
+
+OUTPUT:
+![alt text](image-10.png)
+
+- Kubernetes replaces pods one by one — old pods are terminated only after new ones are healthy. This means zero downtime.
+
+
+Check the rollout history:-> It will show how many times we deploy new version and rolled it back 
+```bash 
+kubectl rollout history deployment/nginx-deployment -n dev
+```
+OUTPUT:
+![alt text](image-11.png)
+
+Now roll back to the previous version:
+```bash 
+kubectl rollout undo deployment/nginx-deployment -n dev
+kubectl rollout status deployment/nginx-deployment -n dev
+```
+Verify the image is back to the previous version:
+```bash 
+kubectl describe deployment nginx-deployment -n dev | grep Image
+```
+
+#### Verify: What image version is running after the rollback?
+
+```
+controlplane ~ ➜  kubectl describe deployment nginx-deployment -n dev | grep Image
+    Image:         nginx:1.24
+
+controlplane ~ ➜  
+```
+Image Version `nginx:1.24` is runnign after rollback 
+
+
