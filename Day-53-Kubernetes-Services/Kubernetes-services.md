@@ -95,3 +95,65 @@ web-app-6cffb4b956-qgdgr	10.22.0.10	Running
 web-app-6cffb4b956-wtgb9	10.22.0.9	Running
 ```
 **Key takeaway:** Each Pod has its own IP address. These IPs can change when Pods are replaced, which is one reason we use a Kubernetes Service to provide a stable endpoint.
+
+# Task 2: ClusterIP Service (Internal Access)
+
+**ClusterIP** -> The default Service type. It exposes an application using an internal cluster IP, making it accessible from within the cluster.
+
+![alt text](image-2.png)
+
+- Example: one application accessing another application inside Kubernetes.
+
+- **ClusterIP** is the default Service type. It gives your Pods a stable internal IP that is only reachable from within the cluster.
+
+Create `clusterip-service.yaml:`
+
+```YAML 
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-clusterip
+spec:
+  type: ClusterIP
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+```
+Key fields:
+- `selector.app: web-app` — this Service routes traffic to all Pods with the label `app: web-app`
+- `port: 80` — the port the Service listens on
+- `targetPort: 80` — the port on the Pod to forward traffic to
+
+```bash 
+kubectl apply -f clusterip-service.yaml
+kubectl get services
+```
+OUTPUT: 
+![alt text](image-3.png)
+
+- we can see `web-app-clusterip` with a CLUSTER-IP address. This IP is stable — it will not change even if Pods restart.
+
+Now test it from inside the cluster:
+```bash 
+# Run a temporary pod to test connectivity
+kubectl run test-client --image=busybox:latest --rm -it --restart=Never -- sh
+
+# Inside the test pod, run:
+wget -qO- http://web-app-clusterip
+exit
+```
+OUTPUT: 
+![alt text](image-4.png)
+
+- we can see the Nginx welcome page. The Service load-balanced our request to one of the 3 Pods.
+
+#### Verify: Does the Service respond? Try running the wget command multiple times — the Service distributes traffic across all healthy Pods.
+
+
+You should receive the Nginx welcome page each time.
+
+**Important:** Repeated successful responses confirm connectivity, but they don't prove that traffic reached different Pods. Since all three Pods serve the same default page, you can't identify which Pod responded just from this output.
+
+**Key takeaway:** A Kubernetes Service provides a stable endpoint for accessing the application without needing to know the individual Pod IP addresses.
