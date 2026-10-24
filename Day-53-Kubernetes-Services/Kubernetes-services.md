@@ -157,3 +157,108 @@ You should receive the Nginx welcome page each time.
 **Important:** Repeated successful responses confirm connectivity, but they don't prove that traffic reached different Pods. Since all three Pods serve the same default page, you can't identify which Pod responded just from this output.
 
 **Key takeaway:** A Kubernetes Service provides a stable endpoint for accessing the application without needing to know the individual Pod IP addresses.
+
+# Task 3: Discover Services with DNS
+
+In Kubernetes, **“Discover Services with DNS”** means accessing a Kubernetes Service using its DNS name instead of remembering or typing its IP address.
+
+
+1. Without DNS vs. with DNS
+
+Imagine your Service is named `web-app-clusterip.`
+
+Without DNS, you would need to know the Service's ClusterIP:
+```bash 
+wget -qO- http://10.96.100.25
+```
+The IP above is just an example.
+
+With DNS, you can use its name:
+```bash 
+wget -qO- http://web-app-clusterip
+```
+That's what we already did in our previous task lab, and we received the Nginx welcome page!
+
+2. How does it work?
+
+![alt text](image-5.png)
+
+Kubernetes typically uses CoreDNS to resolve Service names. The Service then directs traffic to eligible backend Pods.
+
+3. Service DNS name format
+
+A Service in the same namespace can usually be accessed by its short name:
+
+```
+web-app-clusterip
+```
+The fully qualified DNS name follows this format:
+
+```
+<service-name>.<namespace>.svc.cluster.local
+```
+
+For example, if the Service is in the `default ` namespace:
+
+```bash 
+wget -qO- http://web-app-clusterip.default.svc.cluster.local
+```
+If the Service is in the `dev` namespace, use:
+
+```bash 
+wget -qO- http://web-app-clusterip.dev.svc.cluster.local
+```
+The short name generally works when the client and Service are in the same namespace.
+
+
+---
+
+### Step 1: Check the Service
+
+First, in your Kubernetes lab terminal, run:
+```bash 
+kubectl get services
+```
+What we're checking: Whether the `web-app-clusterip` Service exists and what its `CLUSTER-IP` is.
+
+OUTPUT: 
+![alt text](image-6.png)
+
+### Step 2: Create a temporary DNS test Pod
+Run this command in your terminal:
+```bash 
+kubectl run dns-test --image=busybox:latest --rm -it --restart=Never -- sh
+```
+This creates a temporary BusyBox Pod and opens a shell inside it. You should see a prompt similar to:
+```
+/ #
+```
+### Step 3: Test the Service's DNS name
+
+Run this command inside the Pod:
+```bash 
+nslookup web-app-clusterip
+```
+OUTPUT: 
+![alt text](image-7.png)
+
+Compare it with the Service IP from Step 1:
+```
+Check	                         IP address
+kubectl get svc — ClusterIP	     10.43.220.190
+nslookup — DNS result	        10.43.220.190
+Result	                          Match! ✅
+```
+
+### Step 4: Test the full DNS name
+
+You're still inside the Pod at / #. Run:
+```bash 
+wget -qO- http://web-app-clusterip.default.svc.cluster.local
+```
+- This tests whether you can access the Service using its fully qualified DNS name. You should see the Nginx welcome page.
+
+OUTPUT:
+![alt text](image-8.png)
+
+- returned the Nginx Welcome page, confirming that the request reached the application through the Service.
