@@ -262,3 +262,61 @@ OUTPUT:
 ![alt text](image-8.png)
 
 - returned the Nginx Welcome page, confirming that the request reached the application through the Service.
+
+---
+
+# Task 4: NodePort Service (External Access via Node)
+
+A NodePort Service exposes your application on a port on every node in the cluster. This lets you access the Service from outside the cluster.
+
+
+Exposes a Service on a port across the cluster's nodes, allowing access through a node IP and that port, subject to network access.
+
+Example: accessing a lab application through a node's IP address and NodePort.
+
+![alt text](image-9.png)
+
+
+Create `nodeport-service.yaml:`
+```YAML 
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+```
+- `nodePort: 30080` — the port opened on every node (must be in range 30000-32767)
+
+- Traffic flow: `<NodeIP>:30080` -> Service -> Pod:80
+
+```bash 
+kubectl apply -f nodeport-service.yaml
+kubectl get services
+```
+OUTPUT: 
+
+Access the service: -> # If using Minikube
+
+```bash 
+# If using Minikube
+minikube service web-app-nodeport --url
+
+# If using Kind, get the node IP first
+kubectl get nodes -o wide
+# Then curl <node-internal-ip>:30080
+
+# If using Docker Desktop
+curl http://localhost:30080
+```
+
+#### Verify: Can you see the Nginx welcome page from your browser or terminal using the NodePort?
+
+OUTPUT:
+![alt text](image-10.png)
