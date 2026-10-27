@@ -351,4 +351,28 @@ kubectl apply -f loadbalancer-service.yaml
 kubectl get services
 ```
 
+On a local cluster (Minikube, Kind, Docker Desktop), the EXTERNAL-IP will show <pending> because there is no cloud provider to create a real load balancer. This is expected.
 
+If you are using Minikube:
+
+```bash 
+# Minikube can simulate a LoadBalancer
+minikube tunnel
+# In another terminal, check again:
+kubectl get services
+```
+In a real cloud cluster, the EXTERNAL-IP would be a public IP address or hostname provisioned by the cloud provider.
+OUTPUT: 
+![alt text](image-12.png)
+
+#### Verify: What does the EXTERNAL-IP column show? Why is it `<pending>` on a local cluster?
+
+The EXTERNAL-IP column shows `<pending>` for our `web-app-loadbalancer` Service.
+
+Why is it `<pending>`?
+
+- our Kubernetes cluster is running locally in a lab environment. A LoadBalancer Service asks the underlying infrastructure or cloud provider to provision an external load balancer and assign an external IP address.
+
+- Important:` <pending>` does not necessarily mean the application or Service is broken. It means the external IP has not been assigned.
+
+**Key takeaway:** Cloud clusters often provision a load balancer automatically through their cloud integration. Local clusters generally need a load-balancer implementation or another access method to expose the application externally.
