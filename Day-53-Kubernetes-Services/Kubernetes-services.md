@@ -411,6 +411,7 @@ Its type is LoadBalancer. The external IP is not shown in this describe output, 
 Note: The Endpoints field is empty, so the Service currently has no eligible backend Pods listed.
 
 # Task 7: Clean Up
+This Task is to clean up all the services we have created till now 
 ```bash 
 kubectl delete -f app-deployment.yaml
 kubectl delete -f clusterip-service.yaml
