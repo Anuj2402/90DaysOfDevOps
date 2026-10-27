@@ -409,3 +409,20 @@ Yes! Your web-app-loadbalancer Service has both assigned:
 Its type is LoadBalancer. The external IP is not shown in this describe output, but the earlier kubectl get svc showed it as `<pending>`.
 
 Note: The Endpoints field is empty, so the Service currently has no eligible backend Pods listed.
+
+# Task 7: Clean Up
+```bash 
+kubectl delete -f app-deployment.yaml
+kubectl delete -f clusterip-service.yaml
+kubectl delete -f nodeport-service.yaml
+kubectl delete -f loadbalancer-service.yaml
+
+kubectl get pods
+kubectl get services
+```
+Only the built-in kubernetes service in the default namespace is remaining.
+#### Verify: Is everything cleaned up?
+
+- Yes all the resources is cleaned up 
+
+
