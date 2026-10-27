@@ -376,3 +376,36 @@ Why is it `<pending>`?
 - Important:` <pending>` does not necessarily mean the application or Service is broken. It means the external IP has not been assigned.
 
 **Key takeaway:** Cloud clusters often provision a load balancer automatically through their cloud integration. Local clusters generally need a load-balancer implementation or another access method to expose the application externally.
+
+# Task 6: Understand the Service Types Side by Side
+
+Check all three services:
+```bash 
+kubectl get services -o wide 
+```
+Compare them:
+
+![alt text](image-13.png)
+
+Each type builds on the previous one:
+
+- LoadBalancer creates a NodePort, which creates a ClusterIP
+- So a LoadBalancer service also has a ClusterIP and a NodePort
+
+Verify this:
+```bash
+kubectl describe service web-app-loadbalancer
+```
+OUTPUT:
+![alt text](image-14.png)
+
+You should see all three: a `ClusterIP`, a `NodePort`, and the `LoadBalancer` configuration.
+
+#### Verify: Does the LoadBalancer service also have a ClusterIP and NodePort assigned?
+Yes! Your web-app-loadbalancer Service has both assigned:
+- ClusterIP: 10.43.215.7
+- NodePort: 31772
+
+Its type is LoadBalancer. The external IP is not shown in this describe output, but the earlier kubectl get svc showed it as `<pending>`.
+
+Note: The Endpoints field is empty, so the Service currently has no eligible backend Pods listed.
