@@ -320,3 +320,35 @@ curl http://localhost:30080
 
 OUTPUT:
 ![alt text](image-10.png)
+
+# Task 5: LoadBalancer Service (Cloud External Access)
+
+Exposes a Service externally through a load balancer, typically provisioned by a supported cloud or infrastructure provider.
+
+In a cloud environment (AWS, GCP, Azure), a LoadBalancer Service provisions a real external load balancer that routes traffic to your nodes.
+
+
+Example: allowing external users to access a web application.
+![alt text](image-11.png)
+
+Create `loadbalancer-service.yaml:`
+```YAML 
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+```
+Now Apply: 
+```bash 
+kubectl apply -f loadbalancer-service.yaml
+kubectl get services
+```
+
+
