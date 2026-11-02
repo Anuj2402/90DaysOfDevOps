@@ -53,4 +53,22 @@ stringData:
   DB_PASSWORD: "example-password"
 ```
 
-**Important security detail:** Kubernetes Secrets are not automatically encrypted just because they're called Secrets. Their values are commonly Base64-encoded in the data field, which is not encryption. For production, use encryption at rest, restrictive RBAC permissions, and avoid committing real credentials to Git.
+**Important security detail:** Kubernetes Secrets are not automatically encrypted just because they're called Secrets. Their values are commonly `Base64-encoded` in the data field, which is not encryption. For production, use encryption at rest, restrictive RBAC permissions, and avoid committing real credentials to Git.
+
+
+# Challenge Tasks
+
+# Task 1: Create a ConfigMap from Literals
+
+### Step 1: Create the ConfigMap
+
+Run this command in our Kubernetes lab terminal:
+```bash 
+kubectl create configmap app-config \
+  --from-literal=APP_ENV=production \
+  --from-literal=APP_DEBUG=false \
+  --from-literal=APP_PORT=8080
+
+```
+
+- This creates a ConfigMap named `app-config` with three `key-value` pairs.
