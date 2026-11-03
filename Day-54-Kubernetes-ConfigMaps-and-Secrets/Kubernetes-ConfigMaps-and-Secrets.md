@@ -72,3 +72,22 @@ kubectl create configmap app-config \
 ```
 
 - This creates a ConfigMap named `app-config` with three `key-value` pairs.
+
+### Step 2: Inspect the ConfigMap
+
+First, run:
+```bash 
+kubectl describe configmap app-config
+```
+
+Then run:
+```bash 
+kubectl get configmap app-config -o yaml
+```
+OUTPUT: 
+![alt text](image.png)
+
+---
+
+![alt text](image-1.png)
+
