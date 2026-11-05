@@ -91,3 +91,177 @@ OUTPUT:
 
 ![alt text](image-1.png)
 
+# Task 2: Create a ConfigMap from a File
+
+### Step 1: Create the Nginx configuration file
+
+Create a file named `default.conf:`
+
+```bash 
+cat <<EOF > default.conf
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        return 200 "Welcome to Nginx!";
+    }
+
+    location /health {
+        default_type text/plain;
+        return 200 "healthy";
+    }
+}
+EOF
+```
+
+#### Understanding the Nginx configuration
+
+Server block
+```bash 
+server {
+    listen 80;
+    server_name localhost;
+```
+`server { }:` Defines a virtual server configuration.
+
+`listen 80;:` Nginx listens for incoming HTTP connections on port 80.
+
+`server_name localhost;`: This server responds to requests matching the hostname localhost
+
+For example:
+```bash 
+curl http://localhost
+```
+
+- This sends an HTTP request to Nginx on port 80.
+
+Root location `(/)`
+
+```nginx 
+location / {
+    return 200 "Welcome to Nginx!";
+}
+```
+`Location /:` Matches requests whose URI starts with `/`
+
+`return 200:` Sends HTTP status code 200, meaning success.
+
+`"Welcome to Nginx!":` Sends this text as the response body
+
+For example:
+```bash 
+curl http://localhost/
+```
+
+Response:
+```
+Welcome to Nginx!
+```
+
+HTTP status:
+```
+200 OK
+```
+
+Health-check endpoint
+
+```nginx 
+location /health {
+    default_type text/plain;
+    return 200 "healthy";
+}
+```
+This creates a health-check endpoint.
+
+Let's understand each directive:
+
+- l`ocation /health:` Matches requests starting with /health.
+
+- `default_type text/plain:` Sets the response's Content-Type header to text/plain
+
+- `return 200 "healthy":` Returns HTTP 200 with the response body healthy.
+
+For example:
+```
+curl http://localhost/health
+```
+Response:
+```
+healthy 
+```
+
+HTTP headers will include:
+```http  
+HTTP/1.1 200 OK
+Content-Type: text/plain
+```
+
+HOW Request Flow :
+
+![alt text](image-2.png)
+
+### Step 3: Create the ConfigMap from the file
+
+RUN:
+```bash 
+kubectl create configmap nginx-config \
+  --from-file=default.conf=default.conf
+
+```
+#### Understand the command:
+
+- `create configmap nginx-config` — creates a ConfigMap named `nginx-config`.
+
+- `--from-file ` — reads configuration from a local file.
+
+- `default.conf=default.conf` — the first `default.conf` is the ConfigMap key; the second is your local filename.
+
+### Step 4: Verify the ConfigMap
+
+Run:
+```bash 
+kubectl get configmap nginx-config -o yaml
+```
+we should see the nginx configuration stored under:
+
+```YAML  
+data:
+  default.conf: |
+    server {
+      listen 80;
+      ...
+    }
+```
+OUTPUT:
+![alt text](image-3.png)
+
+### Important concept: Why does `default.conf` matter?
+
+we used: 
+```bash 
+kubectl create configmap nginx-config \
+  --from-file=default.conf=default.conf
+```
+
+The syntax is:
+```bash 
+--from-file=<configmap-key>=<local-file-path>
+```
+- ConfigMap key: `default.conf`
+- Local file: `default.conf`
+
+When you eventually mount this ConfigMap into a Pod, Kubernetes uses the key as the filename.
+
+For example, if you mount it at `/etc/nginx/conf.d`, the resulting file will be:
+
+```bash 
+/etc/nginx/conf.d/default.conf
+```
+
+#### Verify: Does `kubectl get configmap nginx-config -o yaml` show the file contents?
+
+OUTPUT:
+![alt text](image-4.png)
+
+Yes we can see that 
