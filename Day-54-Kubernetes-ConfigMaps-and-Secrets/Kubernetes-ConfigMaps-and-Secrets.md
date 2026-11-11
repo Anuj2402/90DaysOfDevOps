@@ -265,3 +265,226 @@ OUTPUT:
 ![alt text](image-4.png)
 
 Yes we can see that 
+
+# Task 3: Use ConfigMaps in a Pod
+
+We'll do this one Pod at a time. First, we'll inject `ConfigMap` values as environment variables. Then we'll `mount` the Nginx configuration as a volume.
+
+### Part 1: Inject ConfigMap values using envFrom
+
+we already created  `app-config` with these values:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_PORT=8080`
+
+### Step 1: Create the BusyBox Pod manifest
+Create a file named `config-env-pod.yaml`:
+
+```bash 
+cat <<EOF > config-env-pod.yaml
+apiVersion:v1 
+kind: Pod 
+metadata:
+  name: config-env-pod
+
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+
+          echo "APP_ENV=$APP_ENV"
+          echo "APP_DEBUG=$APP_DEBUG"
+          echo "APP_PORT=$APP_PORT"
+      envFrom:
+        - configMapRef:
+            name: app-config
+EOF
+```
+
+### Step 2: Understand the important part
+
+Focus on this section:
+```YAML 
+envFrom:
+  - configMapRef:
+      name: app-config
+```
+
+What does it do?
+- `envFrom` tells Kubernetes to populate container environment variables.
+- `configMapRef` references an existing ConfigMap.
+- `name: app-config` identifies which ConfigMap to use.
+- All keys in that ConfigMap become environment variables inside the container.
+
+
+For example:
+
+
+```
+ConfigMap key	     Container environment variable
+APP_ENV	                  $APP_ENV
+APP_DEBUG	              $APP_DEBUG
+APP_PORT	              $APP_PORT
+
+```
+
+### Step 3: Inspect our YAML
+
+Run: 
+```bash 
+cat config-env-pod.yaml
+```
+OUTPUT:
+![alt text](image-5.png)
+
+### Step 4: Create the Pod
+
+Run:
+```bash 
+kubectl apply -f config-env-pod.yaml
+```
+
+Check its status:
+```bash
+kubectl get pod config-env-pod
+```
+
+Then inspect the container logs:
+```bash 
+kubectl logs config-env-pod
+```
+
+OUTPUT:
+![alt text](image-6.png)
+
+#### Important SRE/Devops interview concept
+
+Question: What happens if a Pod references a `ConfigMap` that doesn't exist?
+
+- If a Pod references a non-optional `ConfigMap` that doesn't exist in the same namespace, the container cannot start and the Pod may enter `CreateContainerConfigError`. Kubernetes reports the missing ConfigMap in Pod events. Once the ConfigMap is created, kubelet can retry container creation.
+
+### Part 2: Mount the Nginx ConfigMap as a volume
+
+Before Moving with Part-02 our prerequities is :
+
+Create default.conf file as Task-02 
+```bash 
+vi default.conf
+
+#add 
+
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        return 200 "Welcome to Nginx!";
+    }
+
+    location /health {
+        default_type text/plain;
+        return 200 "healthy";
+    }
+}
+```
+
+Recreate the ConfigMap
+
+Run: 
+```bash 
+kubectl create configmap nginx-config \
+  --from-file=default.conf=default.conf
+```
+
+Verify:
+```bash 
+kubectl get configmap nginx-config -o yaml
+```
+
+OUTPUT:
+![alt text](image-7.png)
+
+### Part 2 — Step 1: Create the Nginx Pod manifest
+
+Create a file named `nginx-config-pod.yaml:`
+
+```bash 
+cat <<'EOF' > nginx-config-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-config-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/conf.d
+  volumes:
+    - name: nginx-config-volume
+      configMap:
+        name: nginx-config
+EOF
+```
+#### Understand the important sections
+
+1. Volume definition
+```YAML
+volumes:
+  - name: nginx-config-volume
+    configMap:
+      name: nginx-config
+```
+This tells Kubernetes to create a volume using the `nginx-config` ConfigMap.
+
+2. Volume mount
+
+```YAML
+volumeMounts:
+  - name: nginx-config-volume
+    mountPath: /etc/nginx/conf.d
+```
+
+This mounts the ConfigMap inside the container at `/etc/nginx/conf.d`.
+
+Because your ConfigMap key is default.conf, Nginx receives:
+```
+/etc/nginx/conf.d/default.conf
+```
+
+### Step 2: Create the Nginx Pod
+Run:
+```bash 
+kubectl apply -f nginx-config-pod.yaml
+```
+Check its status:
+
+```bash 
+kubectl get pod nginx-config-pod
+```
+
+Wait until you see:
+```bash 
+NAME               READY   STATUS
+nginx-config-pod   1/1     Running
+```
+
+### Step 3: Test the health endpoint
+Run the command from our task:
+
+```bash 
+kubectl exec nginx-config-pod -- curl -s http://localhost/health
+```
+OUTPUT:
+![alt text](image-8.png)
+
+
+
