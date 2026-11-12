@@ -499,3 +499,76 @@ healthy
 Result: The /health endpoint responds successfully with HTTP 200 OK and the body healthy.
 
 
+# Task 4: Create a Secret
+
+Unlike ConfigMaps, Secrets are intended for sensitive information such as database credentials , API tokens , and passwords. 
+
+### Step 1: Create the Secret
+
+Run:
+```bash 
+kubectl create secret generic db-crentials --from-literal=DB_USER=admin --from-literal=DB_PASSWORD='s3cureP@ssw0rd'
+```
+Understand the command:
+
+- `create secret generic` - creates a generic Kubernetes Secret.
+- `db-credentials` — Secret name.
+- `--from-literal` - stores a key-value pair.
+- `DB_USER` - database username.
+- `DB_PASSWORD` — database password.
+
+### Step 2: Inspect the Secret
+
+Run:
+```bash 
+kubectl get secret db-credentials -o yaml 
+```
+Expected structure:
+```YAML 
+apiVersion: v1
+data:
+  DB_PASSWORD: <base64-encoded-value>
+  DB_USER: <base64-encoded-value>
+kind: Secret
+type: Opaque
+
+```
+OUTPUT:
+![alt text](image-9.png)
+
+- Notice that Kubernetes displays the values in Base64 format.
+
+### Step 3: Decode the password
+Copy the Base64 value shown beside `DB_PASSWORD` and run:
+```bash 
+echo '<base64-value>' | base64 --decode 
+```
+Expected output:
+
+```
+s3cureP@ssw0rd
+```
+OUTPUT:
+![alt text](image-10.png)
+
+#### Important security concept
+
+**Base64 is encoding, not encryption.**
+
+Anyone who can read this Secret can decode its values. Kubernetes security also relies on:
+- RBAC permissions to restrict access.
+- Encryption at rest when configured.
+- Protecting access to nodes and the Kubernetes API.
+
+#### Verify: Can you decode the password back to plaintext?
+Yes — verified!
+
+Command:
+```bash 
+echo 'czNjdXJlUEBzc3cwcmQ=' | base64 -d
+```
+Successfully returned:
+```
+s3cureP@ssw0rd
+```
+The decoded password matches the original value.
