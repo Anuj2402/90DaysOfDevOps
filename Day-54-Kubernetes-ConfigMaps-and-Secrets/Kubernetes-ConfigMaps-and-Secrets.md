@@ -486,5 +486,16 @@ kubectl exec nginx-config-pod -- curl -s http://localhost/health
 OUTPUT:
 ![alt text](image-8.png)
 
+#### Verify: Does the /health endpoint respond?
+
+By Runnig Command 
+```bash 
+kubectl exec nginx-config-pod -- curl -s http://localhost/health
+```
+Returned:
+```
+healthy
+```
+Result: The /health endpoint responds successfully with HTTP 200 OK and the body healthy.
 
 
