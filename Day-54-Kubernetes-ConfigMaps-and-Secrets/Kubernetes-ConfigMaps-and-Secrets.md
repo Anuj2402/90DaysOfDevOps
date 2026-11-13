@@ -572,3 +572,147 @@ Successfully returned:
 s3cureP@ssw0rd
 ```
 The decoded password matches the original value.
+
+
+# Task 5: Use Secrets in a Pod
+
+This Task will demonstrate two ways of consuming kubernetes Secrets in the same Pod.
+
+1. **Environment variable:** Inject only DB_USER using secretKeyRef. 
+
+2. **Volume mount**: Mount the entire Secret so each key becomes a separate file.
+
+Let's do it step by step.
+
+### Step 1: Create the Pod manifest
+Create a file named secret-pod.yaml:
+```bash 
+vi secret-pod.yaml
+```
+
+```YAML 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-demo-pod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          echo "DB_USER=$DB_USER"
+          sleep 3600
+      env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: DB_USER
+      volumeMounts:
+        - name: db-secret-volume
+          mountPath: /etc/db-credentials
+          readOnly: true
+  volumes:
+    - name: db-secret-volume
+      secret:
+        secretName: db-credentials
+```
+### Step 2: Understand the two configurations
+
+A. Inject one Secret key as an environment variable
+
+```YAML 
+env:
+  - name: DB_USER
+    valueFrom:
+      secretKeyRef:
+        name: db-credentials
+        key: DB_USER
+```
+This makes the Secret's `DB_USER` value available as `$DB_USER` inside the container.
+
+B. Mount the entire Secret as a volume
+
+```YAML 
+volumeMounts:
+  - name: db-secret-volume
+    mountPath: /etc/db-credentials
+    readOnly: true
+```
+The volume references:
+
+```YAML 
+volumes:
+  - name: db-secret-volume
+    secret:
+      secretName: db-credentials
+```
+
+Kubernetes automatically creates these files:
+
+```
+/etc/db-credentials/DB_USER
+/etc/db-credentials/DB_PASSWORD
+```
+
+### Step 3: Inspect your manifest
+RUN 
+```bash 
+cat secret-pod.yaml
+```
+OUTPUT:
+![alt text](image-11.png)
+
+
+### Step 4: Create the Pod
+
+```bash 
+kubectl apply -f secret-pod.yaml
+```
+Check its status:
+```bash 
+kubectl get pod secret-demo-pod
+```
+
+Wait until it shows `1/1 Running`.
+
+### Step 4: Verify the environment variable
+
+Run:
+```bash 
+kubectl exec secret-demo-pod -- printenv DB_USER
+```
+
+OUTPUT:
+![alt text](image-12.png)
+
+### Step 5: Verify mounted files
+List the files:
+
+```bash 
+kubectl exec secret-demo-pod -- ls -l /etc/db-credentials
+```
+OUTPUT:
+![alt text](image-13.png)
+
+### Step 6: Read the mounted values
+Check username:
+```bash 
+kubectl exec secret-demo-pod -- cat /etc/db-credentials/DB_USER
+```
+Check password:
+```bash 
+kubect exec secret-demo-pod -- cat /etc/db-credentials/DB_USER
+```
+OUTPUT:
+![alt text](image-14.png)
+
+#### Verify: Are the mounted file values plaintext or base64?
+
+Mounted Secret files contain plaintext values, not Base64-encoded values.
+
+When Kubernetes mounts a Secret as a volume, it decodes the Base64-encoded data and exposes the original plaintext values inside the container.
+
