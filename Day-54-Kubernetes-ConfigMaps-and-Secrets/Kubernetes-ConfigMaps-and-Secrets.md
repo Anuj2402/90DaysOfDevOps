@@ -716,3 +716,182 @@ Mounted Secret files contain plaintext values, not Base64-encoded values.
 
 When Kubernetes mounts a Secret as a volume, it decodes the Base64-encoded data and exposes the original plaintext values inside the container.
 
+# Task 6: Update a ConfigMap and Observe Propagation
+
+This task will teach us how kubernetes propagates **ConfigMap updates to runnning pods**.
+
+### Step 1: Create the ConfigMap
+
+Create `live-config` with the key `message=hello`.
+
+Run 
+```bash 
+kubectl create configmap live-config --from-literal=message=hello
+```
+verify :
+```bash 
+kubectl get configmap live-config -o yaml
+```
+OUTPUT:
+![alt text](image-15.png)
+
+#### Understand what we're creating
+
+- ConfigMap name: `live-config`
+- Key: `message`
+- Initial value: `hello`
+
+Later, we'll mount this ConfigMap into a BusyBox Pod. The container will read the file every 5 seconds.
+
+**Important concept:** A ConfigMap mounted as a volume can receive updated values without restarting the Pod. We'll observe that behavior directly.
+
+### Step 2: Create a Pod that reads the ConfigMap every 5 seconds
+We'll use BusyBox and mount the ConfigMap as a volume.
+
+Create `live-config-pod.yaml:`
+
+```bash 
+vi live-config-pod.yaml
+```
+
+```YAML 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: live-config-pod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          while true; do
+            echo "Current message: $(cat /etc/config/message)"
+            sleep 5
+          done
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+  volumes:
+    - name: config-volume
+      configMap:
+        name: live-config
+
+```
+#### Understand the important sections
+
+1. Mount the ConfigMap
+
+```YAML 
+volumeMounts:
+  - name: config-volume
+    mountPath: /etc/config
+```
+2. Reference the ConfigMap
+
+```YAML 
+volumes:
+  - name: config-volume
+    configMap:
+      name: live-config
+```
+3. Read the file repeatedly
+```bash 
+while true; do 
+  echo "current message : $(cat /etc/config/message)"
+  sleep 5 
+done 
+```
+This continuously reads the mounted file every five seconds.
+
+### Step 3: Inspect your manifest
+Run:
+
+```bash 
+cat live-config-pod.yaml
+```
+OUTPUT:
+![alt text](image-16.png)
+
+### Step 4: Create the Pod
+Run:
+```bash 
+kubectl apply -f live-config-pod.yaml
+```
+Check its status:
+```bash 
+kubectl get pod live-config-pod
+```
+OUTPUT:
+![alt text](image-17.png)
+
+### Step 5: Observe the initial value
+
+```bash 
+kubectl logs live-config-pod
+```
+OUTPUT:
+![alt text](image-18.png)
+
+- Logs confirm that the Pod is continuously reading the mounted ConfigMap file and getting the initial value hello.
+
+### Step 6:Update the ConfigMap
+Now execute the patch command:
+```bash 
+kubectl patch configmap live-config --type merge -p '{"data":{"message":"world"}}'
+```
+Verify the updated value:
+```bash 
+kubectl get configmap live-config -o yaml
+```
+
+OUTPUT:
+![alt text](image-19.png)
+
+### Step 7: Observe propagation
+Wait approximately 30–60 seconds, then run:
+```bash 
+kubectl logs live-config-pod --tail=15
+```
+OUTPUT:
+![alt text](image-20.png)
+
+1. What happened?
+our logs initially showed:
+
+```
+Current message: hello
+Current message: hello
+```
+After updating the ConfigMap, they changed to:
+```
+Current message: world
+Current message: world
+Current message: world
+```
+Most importantly, the Pod was not restarted.
+
+2. Why did this happen?
+When you mounted the ConfigMap as a volume:
+```YAML 
+volumes:
+  - name: config-volume
+    configMap:
+      name: live-config
+```
+Kubernetes periodically checks for ConfigMap changes and updates the projected volume.
+
+our container continuously reads:
+```bash 
+cat /etc/config/message
+```
+
+So when Kubernetes updates the mounted file, the next read returns `world.`
+
+**Important:** Volume propagation is not instantaneous. It can take time depending on the kubelet sync period and its cache configuration. Applications must also reread or reload the updated file.
+
+##### Question: What happens when you update a ConfigMap used by a running Pod?
+
+- If a ConfigMap is mounted as a volume, Kubernetes eventually propagates the updated content into the mounted files without restarting the Pod. However, if ConfigMap values are injected as environment variables, they don't update automatically. The Pod must be recreated to receive the new environment variable values.
