@@ -895,3 +895,11 @@ So when Kubernetes updates the mounted file, the next read returns `world.`
 ##### Question: What happens when you update a ConfigMap used by a running Pod?
 
 - If a ConfigMap is mounted as a volume, Kubernetes eventually propagates the updated content into the mounted files without restarting the Pod. However, if ConfigMap values are injected as environment variables, they don't update automatically. The Pod must be recreated to receive the new environment variable values.
+
+
+
+# Task 7: Clean Up
+
+Deleted all pods, ConfigMaps, and Secrets we created.
+
+All Done 
