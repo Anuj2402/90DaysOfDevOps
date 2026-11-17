@@ -135,3 +135,91 @@ Remember:
 - Pod deletion → `emptyDir` data is lost.
 - New Pod with the same name → gets a fresh `emptyDir`
 
+# Task 2: Create a PersistentVolume (Static Provisioning)
+In this Task we are moving from temporary storage (`emptyDir`) to **PersistentVolumes (PV)**.
+
+In this task, we'll create a PV manually. This is called **Static Provisioning** because an administrator creates the storage resource instead of Kubernetes creating it dynamically.
+
+### Step 1: Create the PV manifest
+
+Create a file named `pv.yaml`:
+```YAML 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/k8s-pv-data
+    type: DirectoryOrCreate
+```
+
+#### Understand the configuration
+```
+Field	                                  Meaning
+kind: PersistentVolume	         Creates a PV resource
+storage: 1Gi	                   Storage capacity is 1 GiB
+ReadWriteOnce	                   Read-write access from a single node
+Retain	                         Keeps the underlying storage after PVC release
+hostPath	                       Uses a directory on the Kubernetes node
+DirectoryOrCreate                Creates the directory if it doesn't exist
+```
+
+**Important**: hostPath is suitable for this learning exercise, but generally not recommended for production storage.
+
+#### Access modes to know:
+
+- `ReadWriteOnce (RWO)` — read-write by a single node
+- `ReadOnlyMany (ROX)` — read-only by many nodes
+- `ReadWriteMany (RWX)` — read-write by many nodes
+
+
+### Step 2: Inspect your manifest
+Run:
+```bash 
+cat pv.yaml
+```
+OUTPUT:
+![alt text](image-4.png)
+
+### Step 3: Apply the PV
+
+Run:
+```bash 
+kubectl apply -f pv.yaml
+```
+### Step 4: Check PV status
+```bash 
+kubectl get pv
+```
+
+OUTPUT:
+![alt text](image-5.png)
+
+Why Available?
+
+- Because we created the `PersistentVolume`, but no `PersistentVolumeClaim `(PVC) has requested or bound to it yet.
+
+#### Q-> What is the STATUS of the PV?
+
+The PV status is `Available`.
+
+It means:
+- Kubernetes has successfully created the PersistentVolume.
+- The PV has 1 GiB capacity.
+- It supports `ReadWriteOnce`.
+- It is not yet bound to any `PersistentVolumeClaim (PVC)`.
+
+### One important concept
+
+Remember the lifecycle:
+`Available` → `Bound` → `Released` (after PVC deletion, depending on reclaim policy).
+
+our Retain policy means Kubernetes preserves the underlying storage when its PVC is deleted. It does not automatically delete the stored data.
+
+**NOTE -> A PersistentVolume is a storage resource in the cluster. It exists independently of a Pod, so its data can survive Pod deletion, unlike `emptyDir`.**
