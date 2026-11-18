@@ -223,3 +223,130 @@ Remember the lifecycle:
 our Retain policy means Kubernetes preserves the underlying storage when its PVC is deleted. It does not automatically delete the stored data.
 
 **NOTE -> A PersistentVolume is a storage resource in the cluster. It exists independently of a Pod, so its data can survive Pod deletion, unlike `emptyDir`.**
+
+# Task 3: Create a PersistentVolumeClaim
+
+our PV `local-pv` is currently `Available` with `1Gi` capacity. Now we'll request `500Mi` and let Kubernetes match the PVC to that PV.
+
+
+### Step 1: Create the PVC manifest
+Create a file:
+```bash 
+vi pvc.yaml 
+```
+
+Add this YAML:
+```YAML 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
+
+#### Understanding the important fields:
+- `kind: PersistentVolumeClaim` → request for storage.
+
+- `accessModes: ReadWriteOnce` → request storage that can be mounted read-write by one node
+
+- `storage: 500Mi` → the amount of storage requested.
+
+- Kubernetes will look for a suitable PV that meets the requirements.
+
+### Step 2: Apply it
+```bash 
+kubectl apply -f pvc.yaml
+```
+
+### Step 3: Verify both resources
+
+```bash 
+kubectl get pvc
+kubectl get pv
+```
+we should expect something similar:
+
+OUTPUT:
+![alt text](image-6.png)
+
+our YAML is correct, but the PVC is `Pending` instead of `Bound`. This is a very useful real-world Kubernetes troubleshooting scenario.
+
+Why isn't the PVC binding?
+
+Look at our output:
+```
+Resource:                  StorageClass
+
+`local-pv`     ->.     <unset> (no StorageClass)
+ 
+`my-pvc`.      ->.            `local-path`
+
+
+```
+
+our PV is a statically created PV with no StorageClass, but Kubernetes automatically assigned the default StorageClass `local-path` to our PVC.
+
+Therefore, they aren't matching as expected.
+
+- PV: no StorageClass
+
+
+
+- PVC: `local-path`
+
+
+
+- Result: `Pending`
+
+### Step 1: Update your PVC manifest
+
+Edit it:
+
+```bash 
+vi pvc.yaml
+```
+
+Add `storageClassName: "" ` under spec, like this:
+
+The empty string explicitly tells Kubernetes: don't use the default StorageClass; match with a PV that has no StorageClass.
+
+OUTPUT:
+![alt text](image-7.png)
+
+### Step 2: Delete the pending PVC and recreate it
+
+Because the PVC was already created with its StorageClass assigned, delete and recreate it:
+
+```bash 
+kubectl delete pvc my-pvc
+# Then:
+kubectl apply -f pvc.yaml
+
+```
+### Step 3: Verify
+
+```bash 
+kubectl get pvc
+kubectl get pv
+```
+OUTPUT:
+![alt text](image-8.png)
+
+#### Verify: What does the VOLUME column in kubectl get pvc show?
+
+The `VOLUME` column in the PVC output shows:
+```
+local-pv
+```
+This means your PVC `my-pvc` has successfully claimed the PV `local-pv`.
+
+
+**Important:** PVCs don't necessarily need an exact capacity match. The PV can be larger than the requested storage.
+
+
+
