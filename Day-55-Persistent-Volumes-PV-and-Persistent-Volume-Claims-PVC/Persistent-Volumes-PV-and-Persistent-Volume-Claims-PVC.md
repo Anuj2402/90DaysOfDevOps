@@ -624,4 +624,49 @@ Interview-ready answer:
 I currently have two PVs. One is a statically provisioned PV that I manually created, and the other was dynamically provisioned by the `local-path` StorageClass when a PVC requested storage. Both PVs are successfully bound to their respective PVCs.
 
 
+# Task 7: Clean Up — What you should observe
 
+Based on our previous PV configuration, here is the expected result.
+
+1. Delete all Pods first
+```bash 
+kubectl delete pod --all
+```
+
+2. Delete all PVCs
+
+```bash 
+kubectl delete pvc --all
+```
+
+3. Check the PV status
+```bash 
+kubectl get pv
+```
+
+OUTPUT:
+![alt text](image-15.png)
+
+Expected behavior:
+
+| PV | Reclaim Policy | Expected Result |
+|---|---|---|
+| pvc-008ff15e-e47c-4528-bc9f-db51cdb7a450 | Delete | Automatically deleted |
+| local-pv | Retain | Remains in Released state |
+
+
+Why?
+
+- **Dynamic PV**: Its reclaim policy is Delete. When its PVC is deleted, Kubernetes and the storage provisioner delete the PV and, depending on the provisioner, the underlying storage.
+
+- **Manual PV**: Its reclaim policy is Retain. When its PVC is deleted, the PV and underlying data are preserved, and its status becomes Released. It is not automatically made available for another claim.
+
+4. Delete the remaining PV manually
+
+```bash 
+kubectl delete pv local-pv
+```
+
+Verify — interview-ready answer
+
+- The dynamically provisioned PV was automatically deleted because its reclaim policy was `Delete`. The manually created PV was retained in the `Released` state because its reclaim policy was `Retain`. I then deleted the retained PV manually.
