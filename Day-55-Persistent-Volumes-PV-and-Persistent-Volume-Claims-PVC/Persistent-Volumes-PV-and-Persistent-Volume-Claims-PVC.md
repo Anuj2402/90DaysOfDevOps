@@ -443,3 +443,56 @@ This confirms that the PVC preserved the data across Pod deletion and recreation
 A PersistentVolumeClaim provides persistent storage to a Pod. Unlike emptyDir, data stored on a PVC-backed volume survives Pod deletion and can be accessed by a newly created Pod that mounts the same PVC.
 
 One important distinction: PVC-backed data survives Pod deletion, but not necessarily deletion or reset of the underlying storage.
+
+# Task 5: StorageClasses and Dynamic Provisioning.
+
+From our earlier PVC output, Kubernetes automatically assigned `local-path` as the StorageClass. This suggests that `local-path` is your cluster's default StorageClass.
+
+### Step 1: List StorageClasses
+Run:
+
+```bash 
+kubectl get storageclass
+```
+OUTPUT:
+![alt text](image-11.png)
+
+- The `(default)` label identifies the default StorageClass.
+
+
+### Step 2: Describe the StorageClass
+Run:
+```bash 
+kubectl describe storageclass
+```
+Or describe the specific class:
+
+```bash 
+kubectl describe storageclass local-path
+```
+OUTPUT:
+![alt text](image-12.png)
+
+
+Pay attention to these three fields:
+
+- `Provisioner` ->   Component responsible for creating storage , Here in output it is  `Provisioner:           rancher.io/local-path` , The local-path provisioner dynamically creates storage using local node directories.
+
+
+
+- `ReclaimPolicy`	  -> What happens to the PV when its PVC is deleted , Here it is  `ReclaimPolicy:         Delete` , When the PVC is deleted, the dynamically provisioned PV is deleted, and its associated storage data is generally removed by the provisioner.
+
+
+
+- `VolumeBindingMode` ->    	When Kubernetes binds the PVC to a PV , here `VolumeBindingMode:     WaitForFirstConsumer`This is particularly important. Kubernetes waits until a Pod using the PVC is scheduled before provisioning and binding the volume.  Why? Because it helps select storage on a node suitable for the Pod.
+
+### Step 3: Understand dynamic provisioning
+
+- Without dynamic provisioning -> Developer creates PVC → Kubernetes searches for an existing suitable PV.
+
+- With dynamic provisioning -> Developer creates PVC → StorageClass provisioner automatically creates a PV → PVC gets bound.
+
+
+#### Q: What is a StorageClass in Kubernetes?
+
+A StorageClass provides a way for administrators to define different types of storage. It enables dynamic provisioning, where developers create PVCs and Kubernetes automatically provisions the required PV through the configured provisioner.
