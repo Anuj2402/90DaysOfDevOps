@@ -349,4 +349,97 @@ This means your PVC `my-pvc` has successfully claimed the PV `local-pv`.
 **Important:** PVCs don't necessarily need an exact capacity match. The PV can be larger than the requested storage.
 
 
+# Task 4: Use the PVC in a Pod — Data That Survives
 
+Repeat the Task-02 and Task-03 if you are preacticing in LAB enviromment 
+
+Now our PVC `my-pvc` is already Bound to `local-pv`. Now we'll use it inside a Pod.
+
+### Step 1: Create the Pod manifest
+Create a file:
+```bash 
+vi pvc-pod.yaml 
+```
+Add this YAML:
+```YAML 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-demo-pod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          echo "Data written by first Pod" >> /data/message.txt
+          sleep 3600
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: my-pvc
+```
+
+### Step 2: Create the first Pod
+```bash 
+kubectl apply -f pvc-pod.yaml
+kubectl get pod pvc-demo-pod
+```
+Wait until its status is `Running`.
+
+Check the file:
+```bash 
+kubectl exec pvc-demo-pod -- cat /data/message.txt
+```
+
+OUTPUT:
+![alt text](image-9.png)
+
+### Step 3: Delete the first Pod
+```bash 
+kubectl delete pod pvc-demo-pod
+```
+Wait for it to be deleted.
+
+### Step 4: Recreate the Pod
+
+```bash 
+kubectl apply -f pvc-pod.yaml
+kubectl get pod pvc-demo-pod
+```
+Wait until it is Running.
+
+### Step 5: Check the file again
+```bash 
+kubectl exec pvc-demo-pod -- cat /data/message.txt
+```
+OUTPUT:
+![alt text](image-10.png)
+
+Why two lines? The first Pod wrote one line. The second Pod mounted the same PVC and appended another line to the existing file.
+
+`emptyDir` -> Data is lost when the Pod is removed
+
+PVC-backed volume -> Data persists independently of the Pod
+
+#### Verify: Does the file contain data from both the first and second Pod?
+
+Yes! Both lines are present in `/data/message.txt`:
+
+```
+Data written by first Pod
+Data written by first Pod
+```
+- First line: written by the first Pod.
+- Second line: appended by the second Pod after recreating it.
+
+This confirms that the PVC preserved the data across Pod deletion and recreation.
+
+A PersistentVolumeClaim provides persistent storage to a Pod. Unlike emptyDir, data stored on a PVC-backed volume survives Pod deletion and can be accessed by a newly created Pod that mounts the same PVC.
+
+One important distinction: PVC-backed data survives Pod deletion, but not necessarily deletion or reset of the underlying storage.
