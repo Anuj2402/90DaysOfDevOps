@@ -496,3 +496,132 @@ Pay attention to these three fields:
 #### Q: What is a StorageClass in Kubernetes?
 
 A StorageClass provides a way for administrators to define different types of storage. It enables dynamic provisioning, where developers create PVCs and Kubernetes automatically provisions the required PV through the configured provisioner.
+
+# Task 6: Dynamic Provisioning.
+
+In Task 5, we confirmed that our cluster's default StorageClass is local-path, not standard.
+
+We'll use `local-path` for this exercise.
+
+### Step 1: Create a dynamic PVC
+Create a file:
+
+```bash 
+vi dynamic-pvc.yaml
+```
+
+Add:
+```YAML
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-pvc
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
+Apply it:
+
+```bash 
+kubectl apply -f dynamic-pvc.yaml
+```
+Check:
+```bash 
+kubectl get pvc
+kubectl get pv
+```
+OutPut:
+![alt text](image-13.png)
+
+### Step 2: Create a Pod using the dynamic PVC
+
+Create:
+```bash 
+vi dynamic-pvc-pod.yaml
+```
+
+Add:
+```YAML 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dynamic-pvc-pod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          echo "Data created using dynamic provisioning" > /data/message.txt
+          sleep 3600
+      volumeMounts:
+        - name: storage
+          mountPath: /data
+  volumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: dynamic-pvc
+  
+  ```
+Apply:
+
+```bash 
+kubectl apply -f dynamic-pvc-pod.yaml
+```
+Wait for the Pod:
+```bash 
+kubectl get pod dynamic-pvc-pod
+```
+
+### Step 3: Verify the data
+```bash 
+kubectl exec dynamic-pvc-pod -- cat /data/message.txt
+```
+### Step 4: Check your PVs
+Run:
+
+```bash 
+kubectl get pv
+kubectl get pvc
+```
+OUTPUT:
+![alt text](image-14.png)
+
+#### Understand the difference
+- Static provisioning -> Administrator manually creates PV -> `local-pv`
+
+- Dynamic provisioning -> StorageClass provisioner automatically creates PV -> PV created for `dynamic-pvc`
+
+### Verify: How many PVs exist now? Which was manual, which was dynamic?
+There are 2 Persistent Volumes (PVs) in your cluster now. Both are in the Bound state.
+
+| PV Name | Type | Capacity | StorageClass | Reclaim Policy | PVC |
+|---|---|---|---|---|---|
+| local-pv | Manual (Static) | 1Gi | None | Retain | my-pvc |
+| pvc-008ff15e-e47c-4528-bc9f-db51cdb7a450 | Dynamic | 500Mi | local-path | Delete | dynamic-pvc |
+
+
+How to identify them
+1. Manual (Static) PV — `local-pv`
+- we manually created it using `pv.yaml`.
+- It uses `hostPath: /tmp/k8s-pv-data`.
+- It has a `Retain` reclaim policy.
+
+
+2. Dynamic PV — `pvc-008ff15e-e47c-4528-bc9f-db51cdb7a450`
+- Kubernetes automatically created it through the local-path StorageClass.
+- It was created when `dynamic-pvc` was used by a Pod.
+- It has a `Delete` reclaim policy.
+
+Interview-ready answer:
+
+I currently have two PVs. One is a statically provisioned PV that I manually created, and the other was dynamically provisioned by the `local-path` StorageClass when a PVC requested storage. Both PVs are successfully bound to their respective PVCs.
+
+
+
