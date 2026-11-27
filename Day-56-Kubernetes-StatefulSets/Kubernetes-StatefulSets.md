@@ -123,3 +123,4 @@ db-2                ->     Database node 2
 
 If `db-1` crashes, Kubernetes recreates `db-1`, not some entirely new identity like `db-x7p9q`.
 
+# Task 2: Create a Headless Service
