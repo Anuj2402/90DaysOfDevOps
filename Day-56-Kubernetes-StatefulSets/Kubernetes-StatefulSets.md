@@ -124,3 +124,73 @@ db-2                ->     Database node 2
 If `db-1` crashes, Kubernetes recreates `db-1`, not some entirely new identity like `db-x7p9q`.
 
 # Task 2: Create a Headless Service
+Repeate The Task-01 Again and come to this Task afterwards 
+
+In this Task we are going to create a **Headless Service**, which is important for StatefulSets because it allows each Pod to be individually discoverable through DNS
+
+### Step 1: Create the manifest
+Create a file:
+```bash 
+vi headless-service.yaml
+```
+Add the following: 
+```YAML 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-headless
+spec:
+  clusterIP: None
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+```
+### Step 2: Apply it
+```bash 
+kubectl apply -f headless-service.yaml
+```
+
+### Step 3: Verify
+```bash 
+kubectl get svc 
+```
+OUTPUT:
+![alt text](image-2.png)
+
+- A Headless Service creates individual DNS entries for each pod instead of load-balancing to one IP. StatefulSets require this.
+
+####  Why `clusterIP: None` ?
+
+Normally, a Service gets a virtual IP (`ClusterIP`), and traffic to that IP is load-balanced across matching Pods.
+
+A Headless Service skips that virtual IP. Instead, Kubernetes DNS can return the individual Pod IP addresses, allowing clients to discover and communicate with specific Pods.
+
+For StatefulSets, this enables stable DNS identities such as:
+`nginx-0.nginx-headless.default.svc.cluster.local`
+
+#### Verify: What does the `CLUSTER-IP` column show?
+
+`Verified: CLUSTER-IP = None`
+
+What does this mean?
+- Normally, a Kubernetes Service gets a ClusterIP, which acts as a virtual IP and load-balances traffic across matching Pods.
+
+our Headless Service
+```YAML 
+clusterIP: None
+```
+does not create a virtual IP for load balancing. Instead, Kubernetes DNS can return the IP addresses of the individual Pods that match the Service selector.
+
+our selector is also correct:
+```YAML 
+selector:
+  app: nginx
+```
+- This means the Service will discover Pods carrying the label `app: nginx`.
+
+
+
+
