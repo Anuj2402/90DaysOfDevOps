@@ -191,6 +191,148 @@ selector:
 ```
 - This means the Service will discover Pods carrying the label `app: nginx`.
 
+# Task 3: Create a StatefulSet
+
+This is the most important task so far because now we'll see how a StatefulSet manages **stable Pod identity** and **dedicated storage for each replica**.
+
+Unlike a Deployment, a StatefulSet creates Pods in an ordered sequence by default:
+
+`web-0 → web-1 → web-2`
+
+It waits for the preceding Pod to become Ready before creating the next one.
+
+### Step 1: Create the StatefulSet YAML
+Create the manifest:
+```bash 
+vi statefulset.yaml
+```
+
+ADD:
+```YAML 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  serviceName: nginx-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: web-data
+              mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+    - metadata:
+        name: web-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+```
+
+### Step 2: Understand the important parts
+
+`serviceName: nginx-headless` ->     Connects the StatefulSet to your Headless Service
+
+`replicas: 3` ->   Creates three Pods
+
+`matchLabels: app: nginx`   -> Matches the Pod labels
+
+`volumeClaimTemplates`     -> Automatically creates a separate PVC for each Pod
+
+`name: web-data`           -> PVC name prefix
+
+`storage: 100Mi`          ->    Each Pod requests 100Mi of storage
+
+`ReadWriteOnce`           ->    Volume can be mounted read-write from one node at a time
 
 
+The key part is `volumeClaimTemplates`. You don't manually create three PVCs. Kubernetes automatically creates one PVC per StatefulSet Pod.
+
+### Step 3: Apply the StatefulSet
+
+```bash 
+kubectl apply -f statefulset.yaml
+```
+Watch the Pods being created in order:
+
+```bash 
+kubectl get pods -l app=nginx -w
+```
+OUTPUT:
+![alt text](image-5.png)
+
+### Step 4: Verify Pod names
+
+```bash
+kubectl get pods -l app=nginx
+```
+OUTPUT:
+![alt text](image-4.png)
+
+
+- Unlike Deployment Pods, these names are predictable and stable.
+
+
+### Step 5: Verify PVCs
+```bash 
+kubectl get pvc
+```
+OUTPUT:
+![alt text](image-3.png)
+
+- All three PVCs are Bound, meaning Kubernetes successfully matched each storage claim to a Persistent Volume.
+
+
+The naming pattern is:
+
+`<volumeClaimTemplate-name>-<StatefulSet-pod-name>`
+
+So:
+- `web-data + web-0 → web-data-web-0`
+- `web-data + web-1 → web-data-web-1`
+- `web-data + web-2 → web-data-web-2`
+
+
+If `web-1` is deleted, Kubernetes recreates `web-1` and reconnects it to its existing PVC web-data-web-1, rather than giving it a new identity and new storage claim.
+
+That's the core reason StatefulSets are useful for databases and distributed storage systems.
+
+    
+#### Verify: What are the exact pod names and PVC names?
+
+
+From our terminal output, the exact names are:
+Pod names
+```bash 
+web-0
+web-1
+web-2
+```
+PVC names
+```
+web-data-web-0
+web-data-web-1
+web-data-web-2
+```
+Mapping
+```
+web-0 → web-data-web-0
+web-1 → web-data-web-1
+web-2 → web-data-web-2
+```
+All 3 PVCs are `Bound`, each requesting 100Mi of storage.
 
